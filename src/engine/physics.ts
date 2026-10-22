@@ -138,7 +138,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   cue.body.addEventListener('collide', (event: { body: Body }) => {
     if (firstContact === null) firstContact = bodyIds.get(event.body.id) ?? null;
   });
-  const simulation: Simulation = { frames: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, duration: 0 };
+  const simulation: Simulation = { frames: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, duration: 0, stopped: false };
   const saveFrame = (time: number) => {
     simulation.frames.push({ time, balls: bodies.map(({ id, body, pocketed }) => ({ id, position: { x: body.position.x, y: body.position.y }, pocketed })) });
     if (!cue.pocketed) simulation.cuePath.push({ x: cue.body.position.x, y: cue.body.position.y });
@@ -173,7 +173,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     simulation.duration = step * TABLE.step;
     if (record && step % 8 === 0) saveFrame(simulation.duration);
     quietSteps = moving ? 0 : quietSteps + 1;
-    if (quietSteps >= 8) break;
+    if (quietSteps >= 8) { simulation.stopped = true; break; }
   }
   if (record) saveFrame(simulation.duration);
   simulation.cueEnd = { x: cue.body.position.x, y: cue.body.position.y };

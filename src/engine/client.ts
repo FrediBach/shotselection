@@ -1,18 +1,26 @@
-import type { AnalyzeOptions, RoundAnalysis, Scenario, Selection } from './types';
+import type { AnalyzeOptions, PreparedRound, RoundAnalysis, Scenario, Selection } from './types';
 
-export function analyzeRoundAsync(scenario: Scenario, selection: Selection, options: AnalyzeOptions & { signal?: AbortSignal } = {}): Promise<RoundAnalysis> {
+function runWorker<Result>(request: object, signal?: AbortSignal): Promise<Result> {
   return new Promise((resolve, reject) => {
-    if (options.signal?.aborted) { reject(new DOMException('Analysis cancelled', 'AbortError')); return; }
+    if (signal?.aborted) { reject(new DOMException('Analysis cancelled', 'AbortError')); return; }
     const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
-    const cleanup = () => { worker.terminate(); options.signal?.removeEventListener('abort', abort); };
+    const cleanup = () => { worker.terminate(); signal?.removeEventListener('abort', abort); };
     const abort = () => { cleanup(); reject(new DOMException('Analysis cancelled', 'AbortError')); };
-    options.signal?.addEventListener('abort', abort, { once: true });
-    worker.onmessage = (event: MessageEvent<{ result?: RoundAnalysis; error?: string }>) => {
+    signal?.addEventListener('abort', abort, { once: true });
+    worker.onmessage = (event: MessageEvent<{ result?: Result; error?: string }>) => {
       cleanup();
       if (event.data.result) resolve(event.data.result);
-      else reject(new Error(event.data.error ?? 'The ensemble could not be calculated.'));
+      else reject(new Error(event.data.error ?? 'The simulation could not be calculated.'));
     };
     worker.onerror = event => { cleanup(); reject(new Error(event.message || 'The simulation worker stopped unexpectedly.')); };
-    worker.postMessage({ scenario, selection, options: { samples: options.samples } });
+    worker.postMessage(request);
   });
+}
+
+export function prepareRoundAsync(scenario: Scenario, options: { signal?: AbortSignal } = {}): Promise<PreparedRound> {
+  return runWorker({ method: 'prepare', scenario }, options.signal);
+}
+
+export function analyzeRoundAsync(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions & { signal?: AbortSignal } = {}): Promise<RoundAnalysis> {
+  return runWorker({ method: 'analyze', prepared, selection, options: { samples: options.samples } }, options.signal);
 }

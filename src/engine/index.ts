@@ -1,6 +1,7 @@
 export * from './types';
 export { TABLE, POCKETS, PHYSICS_NOTES, positionToleranceForLevel } from './constants';
-export { generateScenario, recommendedTarget } from './scenarios';
+export { generateScenario } from './scenarios';
 export { simulateShot } from './physics';
 export { analyzeRound, analyzeShot, pointsFor } from './analysis';
-export { analyzeRoundAsync } from './client';
+export { prepareRound, MIN_FINISH_SEPARATION } from './preparation';
+export { analyzeRoundAsync, prepareRoundAsync } from './client';

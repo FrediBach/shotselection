@@ -9,7 +9,7 @@ export interface Scenario {
   description: string;
   balls: Ball[];
 }
-export interface Selection { ballId: number; target: Vec2 }
+export interface Selection { ballId: number; optionId: string }
 export interface ShotPlan {
   id: string;
   ballId: number;
@@ -23,6 +23,21 @@ export interface ShotPlan {
   sideSpin: number;
   label: string;
 }
+export interface FinishOption {
+  id: string;
+  label: 'A' | 'B' | 'C';
+  plan: ShotPlan;
+}
+export interface BallFinishOptions {
+  ballId: number;
+  options: [FinishOption, FinishOption, FinishOption];
+}
+export interface PreparedRound {
+  /** Can differ from the input if a blocked layout required regeneration. */
+  scenario: Scenario;
+  /** Balls absent from this list remain on the table but are not selectable. */
+  balls: BallFinishOptions[];
+}
 export interface SimulationBall extends Ball { pocketed: boolean }
 export interface SimulationFrame { time: number; balls: SimulationBall[] }
 export interface Simulation {
@@ -34,6 +49,8 @@ export interface Simulation {
   scratch: boolean;
   firstContact: number | null;
   duration: number;
+  /** True only when all unpocketed balls have settled before the time limit. */
+  stopped: boolean;
 }
 export interface ShotAnalysis {
   plan: ShotPlan;

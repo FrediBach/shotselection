@@ -3,7 +3,8 @@ import { analyzeRound, analyzeShot, pointsFor } from './analysis';
 import { TABLE, positionToleranceForLevel } from './constants';
 import { distance } from './math';
 import { simulateShot } from './physics';
-import { generateScenario, recommendedTarget } from './scenarios';
+import { generateScenario } from './scenarios';
+import { prepareRound } from './preparation';
 import type { Scenario, ShotPlan } from './types';
 
 const straight: Scenario = {
@@ -115,11 +116,15 @@ describe('shot-selection scoring', () => {
     expect(pointsFor({ score: 0.3, successRate: 0.25 }, { score: 0.9 })).toBe(0);
   });
 
-  it('evaluates the chosen target and compares actual simulated alternatives', () => {
+  it('scores only the offered plans and preserves the exact chosen stroke', () => {
     const scenario = generateScenario(1);
-    const result = analyzeRound(scenario, { ballId: 1, target: recommendedTarget(scenario, 1) }, { samples: 8 });
-    expect(result.selected.plan.target).toEqual(recommendedTarget(scenario, 1));
-    expect(result.candidates).toHaveLength(4);
+    const prepared = prepareRound(scenario);
+    const option = prepared.balls[0].options[1];
+    const result = analyzeRound(prepared, { ballId: option.plan.ballId, optionId: option.id }, { samples: 8 });
+    expect(result.selected.plan).toEqual(option.plan);
+    expect(result.candidates).toHaveLength(prepared.balls.length * 3);
+    expect(result.candidates.map(candidate => candidate.plan.id).sort()).toEqual(prepared.balls.flatMap(ball => ball.options.map(finish => finish.id)).sort());
+    expect(result.candidates).toContain(result.selected);
     expect(result.best.score).toBeGreaterThan(0.25);
     expect(result.best.nominal.firstContact).toBe(result.best.plan.ballId);
     expect(result.best.nominal.potted).toContain(result.best.plan.ballId);

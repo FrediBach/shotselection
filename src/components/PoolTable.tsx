@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import { RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
-import type { Scenario, ShotAnalysis, SimulationBall, Vec2 } from '../engine/types'
+import type { FinishOption, Scenario, ShotAnalysis, SimulationBall, Vec2 } from '../engine/types'
 import { TABLE, positionToleranceForLevel } from '../engine/constants'
 
 export interface PoolTableProps {
@@ -12,7 +12,10 @@ export interface PoolTableProps {
   selectedBall: number | null
   target: Vec2 | null
   onSelectBall: (id: number) => void
-  onSelectTarget: (position: Vec2) => void
+  finishOptions: FinishOption[]
+  selectedOptionId: string | null
+  onSelectOption: (id: string) => void
+  selectableBallIds: number[]
   analysis: ShotAnalysis | null
   showEnsemble: boolean
   playing: boolean
@@ -161,15 +164,10 @@ function Cushion({ start, end, side }: { start: number; end: number; side: 'top'
   return <mesh geometry={geometry} castShadow receiveShadow><meshStandardMaterial color="#286e5b" roughness={0.94} side={THREE.DoubleSide} /></mesh>
 }
 
-function TableBed({ interactive, onSelectTarget }: Pick<PoolTableProps, 'interactive' | 'onSelectTarget'>) {
+function TableBed() {
   const cloth = useMemo(makeClothTexture, [])
   const wood = useMemo(makeWoodTexture, [])
   useEffect(() => () => { cloth.dispose(); wood.dispose() }, [cloth, wood])
-  const selectTarget = (e: ThreeEvent<PointerEvent>) => {
-    if (!interactive) return
-    e.stopPropagation()
-    onSelectTarget({ x: clamp(e.point.x + WIDTH / 2, RADIUS, WIDTH - RADIUS), y: clamp(e.point.z + DEPTH / 2, RADIUS, DEPTH - RADIUS) })
-  }
   return <group>
     <RoundedBox args={[2.985, 0.19, 1.715]} radius={0.065} smoothness={4} position={[0, -0.065, 0]} castShadow receiveShadow>
       <meshStandardMaterial color="#141b19" roughness={0.52} metalness={0.12} />
@@ -183,7 +181,7 @@ function TableBed({ interactive, onSelectTarget }: Pick<PoolTableProps, 'interac
     {[-1, 1].map(sign => <RoundedBox key={`short-rail-${sign}`} args={[0.14, 0.052, 1.41]} radius={0.014} smoothness={3} position={[sign * 1.402, 0.079, 0]} receiveShadow castShadow>
       <meshStandardMaterial map={wood} roughness={0.52} metalness={0.06} />
     </RoundedBox>)}
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, CLOTH_Y, 0]} receiveShadow onPointerDown={selectTarget}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, CLOTH_Y, 0]} receiveShadow>
       <planeGeometry args={[WIDTH + 0.035, DEPTH + 0.035]} />
       <meshStandardMaterial map={cloth} roughness={1} />
     </mesh>
@@ -351,6 +349,116 @@ function TargetMarker({ target, tolerance }: { target: Vec2; tolerance: number }
   </group>
 }
 
+
+/** Separate letter badges in screen space while leaders preserve exact physical endpoints. */
+function separateBadges(points: Vec2[], minDistance: number, bounds?: { left: number; right: number; top: number; bottom: number }) {
+  const result = points.map(point => ({ ...point }))
+  for (let step = 0; step < 24; step++) {
+    let moved = false
+    for (let i = 0; i < result.length; i++) {
+      for (let j = i + 1; j < result.length; j++) {
+        const a = result[i], b = result[j]
+        const dx = b.x - a.x, dy = b.y - a.y
+        const length = Math.hypot(dx, dy)
+        if (length >= minDistance - 0.01) continue
+        moved = true
+        const ux = length > 0.01 ? dx / length : 1
+        const uy = length > 0.01 ? dy / length : 0
+        const shift = (minDistance - length) / 2
+        a.x -= ux * shift; a.y -= uy * shift
+        b.x += ux * shift; b.y += uy * shift
+      }
+    }
+    if (bounds) for (const point of result) {
+      const x = clamp(point.x, bounds.left, bounds.right), y = clamp(point.y, bounds.top, bounds.bottom)
+      if (x !== point.x || y !== point.y) moved = true
+      point.x = x; point.y = y
+    }
+    if (!moved) break
+  }
+  return result
+}
+
+function makeFinishTexture(label: string, selected: boolean) {
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 128
+  const ctx = canvas.getContext('2d')!
+  ctx.clearRect(0, 0, 128, 128)
+  ctx.beginPath()
+  ctx.arc(64, 64, 49, 0, Math.PI * 2)
+  ctx.fillStyle = selected ? '#e9c389' : '#1a342b'
+  ctx.fill()
+  ctx.lineWidth = selected ? 5 : 3
+  ctx.strokeStyle = selected ? '#f8dfb3' : '#d5e2b9'
+  ctx.stroke()
+  ctx.font = '600 58px Arial, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = selected ? '#243126' : '#eef1dd'
+  ctx.fillText(label, 64, 66)
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+
+function FinishBadge({ option, selected, interactive, onSelect, location }: { option: FinishOption; selected: boolean; interactive: boolean; onSelect: (id: string) => void; location: THREE.Vector3 }) {
+  const sprite = useRef<THREE.Sprite>(null)
+  const [hovered, setHovered] = useState(false)
+  const { camera } = useThree()
+  const textures = useMemo(() => [makeFinishTexture(option.label, false), makeFinishTexture(option.label, true)], [option.label])
+  const leader = useMemo(() => {
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(6), 3))
+    const material = new THREE.LineBasicMaterial({ color: '#e1e6bd', transparent: true, opacity: 0.7, depthWrite: false, depthTest: false })
+    const line = new THREE.Line(geometry, material)
+    line.renderOrder = 18
+    line.raycast = () => {}
+    return line
+  }, [])
+  useEffect(() => () => { textures.forEach(texture => texture.dispose()); leader.geometry.dispose(); (leader.material as THREE.Material).dispose() }, [textures, leader])
+  useEffect(() => {
+    if (hovered && interactive) document.body.style.cursor = 'pointer'
+    return () => { document.body.style.cursor = '' }
+  }, [hovered, interactive])
+  useFrame(() => {
+    if (!sprite.current) return
+    sprite.current.position.copy(location)
+    const scale = (hovered && interactive ? 41 : 38) / (camera as THREE.OrthographicCamera).zoom
+    sprite.current.scale.set(scale, scale, 1)
+    const positions = leader.geometry.getAttribute('position') as THREE.BufferAttribute
+    positions.setXYZ(0, option.plan.target.x - WIDTH / 2, CLOTH_Y + 0.012, option.plan.target.y - DEPTH / 2)
+    positions.setXYZ(1, location.x, location.y, location.z)
+    positions.needsUpdate = true
+    leader.geometry.computeBoundingSphere()
+  })
+  return <>
+    <primitive object={leader} />
+    <mesh position={toWorld(option.plan.target, CLOTH_Y + 0.012)} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+      <circleGeometry args={[0.01, 24]} /><meshBasicMaterial color={selected ? '#f1cc91' : '#dce9be'} depthWrite={false} />
+    </mesh>
+    <sprite ref={sprite} position={toWorld(option.plan.target, CLOTH_Y + 0.025)} renderOrder={20} onClick={event => { event.stopPropagation(); if (interactive) onSelect(option.id) }} onPointerDown={event => event.stopPropagation()} onPointerOver={event => { event.stopPropagation(); setHovered(true) }} onPointerOut={() => setHovered(false)}>
+      <spriteMaterial map={textures[selected ? 1 : 0]} transparent depthTest={false} depthWrite={false} toneMapped={false} />
+    </sprite>
+  </>
+}
+
+function FinishMarkers({ options, selectedOptionId, interactive, onSelect }: { options: FinishOption[]; selectedOptionId: string | null; interactive: boolean; onSelect: (id: string) => void }) {
+  const { camera, size } = useThree()
+  const locations = useMemo(() => options.map(option => new THREE.Vector3(...toWorld(option.plan.target, CLOTH_Y + 0.025))), [options])
+  const projections = useMemo(() => options.map(() => new THREE.Vector3()), [options])
+  useFrame(() => {
+    const points = options.map((option, i) => {
+      projections[i].set(...toWorld(option.plan.target, CLOTH_Y + 0.025)).project(camera)
+      return { x: (projections[i].x + 1) * size.width / 2, y: (1 - projections[i].y) * size.height / 2 }
+    })
+    const spaced = separateBadges(points, 42, { left: 24, right: size.width - 24, top: 24, bottom: size.height - 24 })
+    spaced.forEach((point, i) => {
+      locations[i].set(clamp(point.x, 24, size.width - 24) / size.width * 2 - 1, 1 - clamp(point.y, 24, size.height - 24) / size.height * 2, projections[i].z).unproject(camera)
+    })
+  }, -0.5)
+  return <>{options.map((option, i) => <FinishBadge key={option.id} option={option} selected={option.id === selectedOptionId} interactive={interactive} onSelect={onSelect} location={locations[i]} />)}</>
+}
+
 function EnsembleEndpoints({ points }: { points: Vec2[] }) {
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry()
@@ -378,10 +486,11 @@ function Scene(props: PoolTableProps) {
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.165, 0]} receiveShadow>
       <planeGeometry args={[3.5, 2.25]} /><shadowMaterial transparent opacity={0.22} />
     </mesh>
-    <TableBed interactive={interactive && !playing} onSelectTarget={props.onSelectTarget} />
+    <TableBed />
     <PlaybackDriver {...props} runtime={runtime} />
-    {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} interactive={interactive && !playing} onSelect={props.onSelectBall} runtime={runtime} />)}
+    {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} interactive={interactive && !playing && props.selectableBallIds.includes(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
     {selected && cue && !analysis && !playing && <PathLines paths={aimPath} color="#e1e9cd" opacity={0.38} dashed height={BALL_Y} />}
+    {!analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
     {target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
     {showEnsemble && analysis && <>
       <PathLines paths={analysis.samplePaths} color="#dbecb3" opacity={0.14} />
@@ -402,6 +511,17 @@ class CanvasBoundary extends Component<{ children: ReactNode; fallback: ReactNod
 function FlatTable(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, interactive, playing, playbackKey, onPlaybackEnd } = props
   const [frame, setFrame] = useState<SimulationBall[] | null>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [svgScale, setSvgScale] = useState(2)
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const update = () => { const box = svg.getBoundingClientRect(); setSvgScale(Math.max(0.1, Math.min(box.width / 298, box.height / 175))) }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(svg)
+    return () => observer.disconnect()
+  }, [])
   const callback = useRef(onPlaybackEnd)
   useEffect(() => { callback.current = onPlaybackEnd }, [onPlaybackEnd])
   useEffect(() => { setFrame(null) }, [scenario, analysis])
@@ -423,19 +543,8 @@ function FlatTable(props: PoolTableProps) {
     return () => cancelAnimationFrame(request)
   }, [playing, playbackKey, analysis])
   const balls = frame || scenario.balls.map(ball => ({ ...ball, pocketed: false }))
-  const onPoint = (e: React.PointerEvent<SVGRectElement>) => {
-    if (!interactive || playing) return
-    const svg = e.currentTarget.ownerSVGElement
-    if (!svg) return
-    const point = svg.createSVGPoint()
-    point.x = e.clientX
-    point.y = e.clientY
-    const screenMatrix = svg.getScreenCTM()
-    if (!screenMatrix) return
-    const local = point.matrixTransform(screenMatrix.inverse())
-    props.onSelectTarget({ x: clamp(local.x / 100, RADIUS, WIDTH - RADIUS), y: clamp(local.y / 100, RADIUS, DEPTH - RADIUS) })
-  }
-  return <svg viewBox="-22 -24 298 175" width="100%" height="100%" role="img" aria-label="Interactive pool table, top view" style={{ display: 'block' }}>
+  const badgePositions = separateBadges(props.finishOptions.map(option => ({ x: option.plan.target.x * 100, y: option.plan.target.y * 100 })), 42 / svgScale, { left: -22 + 19 / svgScale, right: 276 - 19 / svgScale, top: -24 + 19 / svgScale, bottom: 151 - 19 / svgScale })
+  return <svg ref={svgRef} viewBox="-22 -24 298 175" width="100%" height="100%" role="group" aria-label="Interactive pool table, top view" style={{ display: 'block' }}>
     <defs>
       <linearGradient id="table-cloth" x2="0.9" y2="1"><stop stopColor="#337b68" /><stop offset="1" stopColor="#256b59" /></linearGradient>
       <radialGradient id="ball-shine" cx=".3" cy=".2" r=".8"><stop stopColor="white" stopOpacity=".65" /><stop offset=".45" stopColor="white" stopOpacity="0" /><stop offset="1" stopColor="black" stopOpacity=".3" /></radialGradient>
@@ -444,18 +553,32 @@ function FlatTable(props: PoolTableProps) {
     <rect x="-19" y="-16" width="292" height="164" rx="7" fill="#121b17" />
     <rect x="-18" y="-18" width="290" height="163" rx="6" fill="#322e26" stroke="#50483a" strokeWidth=".5" />
     <rect x="-4" y="-4" width="262" height="135" rx="2" fill="#235443" />
-    <rect width="254" height="127" fill="url(#table-cloth)" onPointerDown={onPoint} />
+    <rect width="254" height="127" fill="url(#table-cloth)" />
     {POCKET_POSITIONS.map(([x, y, side], i) => <circle key={i} cx={(x + WIDTH / 2) * 100} cy={(y + DEPTH / 2) * 100} r={side ? 7 : 7.6} fill="#080e0b" stroke="#4a4339" strokeWidth="1.2" />)}
     {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x, i) => [-1, 1].map(sign => <rect key={`${i}-${sign}`} x={(x + WIDTH / 2) * 100 - .6} y={(sign * .772 + DEPTH / 2) * 100 - .6} width="1.2" height="1.2" fill="#bfb9a7" transform={`rotate(45 ${(x + WIDTH / 2) * 100} ${(sign * .772 + DEPTH / 2) * 100})`} />))}
     {showEnsemble && analysis?.samplePaths.map((path, i) => <polyline key={i} points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} fill="none" stroke="#d5e6a7" strokeWidth=".3" opacity=".25" pointerEvents="none" />)}
     {target && !playing && <g pointerEvents="none" stroke="#dce9b6" fill="none"><circle cx={target.x * 100} cy={target.y * 100} r={positionToleranceForLevel(scenario.level) * 100} strokeWidth=".3" opacity=".55" /><path d={`M${target.x * 100 - 2},${target.y * 100}h4M${target.x * 100},${target.y * 100 - 2}v4`} strokeWidth=".3" /></g>}
-    {balls.filter(b => !b.pocketed).map(ball => <g key={ball.id} transform={`translate(${ball.position.x * 100} ${ball.position.y * 100})`} onPointerDown={e => e.stopPropagation()} onClick={() => { if (interactive && ball.id && !playing) props.onSelectBall(ball.id) }} style={{ cursor: interactive && ball.id ? 'pointer' : undefined }}>
+    {balls.filter(b => !b.pocketed).map(ball => <g key={ball.id} transform={`translate(${ball.position.x * 100} ${ball.position.y * 100})`} role={ball.id ? 'button' : 'img'} aria-label={ball.id ? `Table ball ${ball.id}` : 'Cue ball'} aria-disabled={ball.id ? !interactive || playing || !props.selectableBallIds.includes(ball.id) : undefined} tabIndex={interactive && !playing && props.selectableBallIds.includes(ball.id) ? 0 : -1} onPointerDown={e => e.stopPropagation()} onClick={() => { if (interactive && props.selectableBallIds.includes(ball.id) && !playing) props.onSelectBall(ball.id) }} onKeyDown={event => { if (interactive && !playing && props.selectableBallIds.includes(ball.id) && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); props.onSelectBall(ball.id) } }} style={{ cursor: interactive && props.selectableBallIds.includes(ball.id) ? 'pointer' : undefined }}>
       {selectedBall === ball.id && !playing && <circle r="4.5" fill="none" stroke="#dbe9b5" strokeWidth=".4" />}
       <circle r="2.8575" fill={COLORS[ball.id]} filter="url(#ball-shadow)" />
       <circle r="2.8575" fill="url(#ball-shine)" />
       {!!ball.id && <><circle r="1.48" fill="#f2f0e4" /><text y=".08" textAnchor="middle" dominantBaseline="central" fontFamily="Arial,sans-serif" fontWeight="700" fontSize="2.25" fill="#20271f">{ball.id}</text></>}
       <circle r="5" fill="transparent" />
     </g>)}
+    {!analysis && !playing && props.finishOptions.map((option, i) => {
+      const selected = option.id === props.selectedOptionId
+      const point = badgePositions[i]
+      const select = () => { if (interactive) props.onSelectOption(option.id) }
+      return <g key={option.id}>
+        <line x1={option.plan.target.x * 100} y1={option.plan.target.y * 100} x2={point.x} y2={point.y} stroke="#dce5b7" strokeWidth={1 / svgScale} opacity=".7" pointerEvents="none" />
+        <circle cx={option.plan.target.x * 100} cy={option.plan.target.y * 100} r="1" fill="#dce5b7" pointerEvents="none" />
+        <g transform={`translate(${point.x} ${point.y})`} role="button" aria-label={`Table finish ${option.label}`} aria-pressed={selected} aria-disabled={!interactive} tabIndex={interactive ? 0 : -1} onClick={select} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select() } }} style={{ cursor: interactive ? 'pointer' : undefined }}>
+          <circle r={19 / svgScale} fill="transparent" />
+          <circle r={15 / svgScale} fill={selected ? '#e9c389' : '#1a342b'} stroke={selected ? '#f8dfb3' : '#d5e2b9'} strokeWidth={(selected ? 1.5 : 1) / svgScale} />
+          <text y={.5 / svgScale} textAnchor="middle" dominantBaseline="central" fontFamily="Arial,sans-serif" fontWeight="600" fontSize={17 / svgScale} fill={selected ? '#243126' : '#eef1dd'} pointerEvents="none">{option.label}</text>
+        </g>
+      </g>
+    })}
   </svg>
 }
 
