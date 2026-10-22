@@ -28,7 +28,7 @@ test('first visit shows help, remembers dismissal and supports manual reopening'
 
   await page.setViewportSize({ width: 1440, height: 1050 })
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Make your call.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Choose your ball.' })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.locator('.simulation-overlay')).toHaveCount(0, { timeout: 30_000 })
   await page.screenshot({ path: '/tmp/shot-selection-compact-desktop.png', fullPage: true })
@@ -52,7 +52,7 @@ for (const dismissal of ['Escape', 'close button', 'outside click'] as const) {
     await expect(page.getByRole('dialog')).toHaveCount(0)
     expect(await page.evaluate(() => localStorage.getItem('shot-selection-help-dismissed'))).toBe('true')
     await page.reload()
-    await expect(page.getByRole('heading', { name: 'Make your call.' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Choose your ball.' })).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 }
@@ -74,6 +74,8 @@ test('blocked browser storage leaves help and shot selection usable', async ({ p
   await page.getByRole('button', { name: 'Close dialog' }).click()
   await expect(page.locator('.ball-choice:enabled').first()).toBeVisible({ timeout: 30_000 })
   await page.locator('.ball-choice:enabled').first().click()
+  await expect(page.locator('.finish-option')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Choose a finish', exact: true }).click()
   await expect(page.locator('.finish-option')).toHaveCount(3)
   await page.getByRole('button', { name: 'Choose finish A', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Lock in your shot' })).toBeEnabled()

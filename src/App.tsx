@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDownRight, ArrowRight, Check, ChevronRight, CircleHelp, Crosshair, Flag, FlaskConical, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Sparkles, Target, Trophy } from 'lucide-react'
+import { ArrowDownRight, ArrowLeft, ArrowRight, Check, ChevronRight, CircleHelp, Crosshair, Flag, FlaskConical, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Target, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
@@ -42,6 +42,7 @@ export default function App() {
   const [prepareAttempt, setPrepareAttempt] = useState(0)
   const [selectedBall, setSelectedBall] = useState<number | null>(null)
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
+  const [selectionStep, setSelectionStep] = useState<'ball' | 'finish'>('ball')
   const [result, setResult] = useState<RoundAnalysis | null>(null)
   const [inspected, setInspected] = useState<ShotAnalysis | null>(null)
   const [busy, setBusy] = useState(false)
@@ -50,12 +51,12 @@ export default function App() {
   const [playing, setPlaying] = useState(false)
   const [playbackKey, setPlaybackKey] = useState(0)
   const [modal, setModal] = useState<Modal>(initialModal)
-  const verdictHeading = useRef<HTMLHeadingElement>(null)
+  const sidebarHeading = useRef<HTMLHeadingElement>(null)
+  const previousStep = useRef(1)
   const request = useRef(0)
   const analysisController = useRef<AbortController | null>(null)
   useEffect(() => () => { request.current += 1; analysisController.current?.abort() }, [])
   useEffect(() => { try { localStorage.setItem('shot-selection-session', JSON.stringify(session)) } catch { /* Browser storage can be unavailable. */ } }, [session])
-  useEffect(() => { if (result) verdictHeading.current?.focus() }, [result])
   useEffect(() => {
     const controller = new AbortController()
     setPreparing(true); setPrepared(null); setError('')
@@ -75,7 +76,11 @@ export default function App() {
   const target = selectedOption?.plan.target ?? null
   const finishLabel = (id: string) => prepared?.balls.flatMap(ball => ball.options).find(option => option.id === id)?.label ?? ''
   const difficulty = scenario.level <= 3 ? 'Fundamentals' : scenario.level <= 7 ? 'Position play' : 'Precision play'
-  const step = result ? 3 : selectedBall === null ? 1 : target === null ? 2 : 3
+  const step = result ? 3 : selectionStep === 'ball' ? 1 : 2
+  useEffect(() => {
+    if (previousStep.current !== step) sidebarHeading.current?.focus({ preventScroll: true })
+    previousStep.current = step
+  }, [step])
   const selectBall = (id: number) => {
     if (!busy && !preparing && !result && selectableBallIds.includes(id)) {
       if (id !== selectedBall) setSelectedOptionId(null)
@@ -83,17 +88,18 @@ export default function App() {
     }
   }
   const selectOption = (id: string) => {
-    if (!busy && !preparing && !result && finishOptions.some(option => option.id === id)) { setSelectedOptionId(id); setError('') }
+    if (selectionStep === 'finish' && !busy && !preparing && !result && finishOptions.some(option => option.id === id)) { setSelectedOptionId(id); setError('') }
   }
   function clearRound(next: Session) {
     request.current += 1
     analysisController.current?.abort()
     setSession(next); setScenario(generateScenario(next.level, next.seed + next.level * 919)); setSelectedBall(null); setSelectedOptionId(null)
     setPrepared(null); setPreparing(true)
+    setSelectionStep('ball')
     setResult(null); setInspected(null); setBusy(false); setPlaying(false); setError('')
   }
   async function submit() {
-    if (!prepared || selectedBall === null || !selectedOption || busy || preparing || result) return
+    if (selectionStep !== 'finish' || !prepared || selectedBall === null || !selectedOption || busy || preparing || result) return
     const id = ++request.current
     analysisController.current = new AbortController()
     setBusy(true); setError('')
@@ -129,50 +135,68 @@ export default function App() {
         <section className="table-panel" aria-label="Interactive pool table">
           <div className="table-toolbar"><div className="level-label"><span className="level-number">{String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">LEVEL {String(scenario.level).padStart(2, '0')} <span>·</span> {objectBalls.length} OBJECT BALLS</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" onClick={() => setModal('reset')} disabled={busy}><RotateCcw size={16} /></Button></div></div>
           <div className="table-stage">
-            <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? 'Preparing playable finish options' : selectedBall === null ? 'Start by selecting an object ball' : target === null ? 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
-            <div className="pool-canvas"><PoolTable scenario={scenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : target} onSelectBall={selectBall} finishOptions={result ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} playing={playing} playbackKey={playbackKey} onPlaybackEnd={() => setPlaying(false)} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
+            <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? 'Preparing playable finish options' : selectionStep === 'ball' ? (selectedBall === null ? 'Start by selecting an object ball' : `Ball ${selectedBall} selected. Choose a finish next.`) : target === null ? 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
+            <div className="pool-canvas"><PoolTable scenario={scenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : selectionStep === 'finish' ? target : null} onSelectBall={selectBall} finishOptions={result || selectionStep !== 'finish' ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} playing={playing} playbackKey={playbackKey} onPlaybackEnd={() => setPlaying(false)} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
             <div className="table-watermark">SHOT SELECTION <span>EST. 2026</span></div>
             {(busy || preparing) && <div className="simulation-overlay" role="status"><LoaderCircle className="spin" size={25} /><strong>{preparing ? 'Finding three playable finishes' : 'Finding the margin for error'}</strong><span>{preparing ? 'Checking the pot, cue-ball position, and stroke for each option…' : 'Simulating small variations in every offered shot…'}</span></div>}
           </div>
           <div className="table-footer"><div className="table-legend"><span><i className={result ? "legend-cue-path" : "legend-cue"} /> {result ? 'Cue paths' : 'Cue ball'}</span><span><i className="legend-target" /> Desired finish</span>{result && <><span><i className="legend-object-pot" /> Object pots</span><span><i className="legend-object-miss" /> Misses / fouls</span></>}</div><span className="interactive-hint"><MousePointer2 size={13} /> {result ? 'Select a shot below to inspect' : 'Pick a ball, then A, B, or C'}</span></div>
         </section>
 
-        <aside className="shot-panel">
-          <div className="shot-panel-heading"><span className="eyebrow">{result ? 'THE VERDICT' : 'YOUR NEXT MOVE'}</span><span className="tiny-pill">{result ? 'ROUND COMPLETE' : 'SOLO PLAY'}</span></div>
-          {result ? <>
-            <div className={`verdict-icon ${result.points === 0 ? 'verdict-low' : ''}`}>{result.points === 1 ? <Trophy size={25} /> : result.points === 0.5 ? <Target size={25} /> : <Layers3 size={25} />}</div>
-            <h2 ref={verdictHeading} tabIndex={-1}>{result.candidates.every(shot => shot.successRate === 0) ? 'A difficult table.' : result.points === 1 ? 'That’s the smart shot.' : result.points === 0.5 ? 'A very close call.' : 'There’s a safer way.'}</h2>
-            <p className="panel-description">{result.candidates.every(shot => shot.successRate === 0) ? 'None of the sampled shots found a reliable pot and finish. Explore the paths, then try the next layout.' : result.points === 1 ? 'Your choice gave you the strongest margin for error.' : result.points === 0.5 ? 'Your shot was within reach of the most reliable option.' : 'A different ball or finish position offers more room for error.'}</p>
-            <div className="points-awarded"><span>Points this round</span><strong>+{result.points.toFixed(1)} <span>pts</span></strong></div>
-            <div className="result-comparison"><div><span>Your shot · {finishLabel(result.selected.plan.id)}</span><strong>{percent(result.selected.successRate)}</strong></div><div><span>Best <BallIcon id={result.best.plan.ballId} small /> · {finishLabel(result.best.plan.id)}</span><strong>{percent(result.best.successRate)}</strong></div><p>Pot + safe finish, within {Math.round(result.positionTolerance * 100)} cm of the target.</p></div>
-            <Button className="full-width" onClick={() => playShot(result.best)} disabled={playing}><Play size={16} fill="currentColor" /> {playing ? 'Shot in motion…' : 'Play the best shot'}</Button>
-            <Button className="full-width next-level" variant="outline" onClick={() => clearRound(session)}>Next level <ArrowRight size={16} /></Button>
-          </> : <>
-            <h2>Make your call.</h2><p className="panel-description">The best shot isn’t the most impressive.<br />It’s the one you can make again.</p>
-            <div className={`choice-step ${selectedBall !== null ? 'step-complete' : ''}`}><span className="step-number">{selectedBall !== null ? <Check size={12} /> : '1'}</span><div><h3>Choose your object ball</h3><p>Which ball would you pocket?</p></div></div>
-            <div className="ball-choices">{objectBalls.map(ball => <button key={ball.id} className={`ball-choice ${selectedBall === ball.id ? 'selected' : ''}`} onClick={() => selectBall(ball.id)} disabled={busy || preparing || !selectableBallIds.includes(ball.id)} title={prepared && !selectableBallIds.includes(ball.id) ? 'No three playable finishes found for this ball' : `Choose ball ${ball.id}`} aria-pressed={selectedBall === ball.id} aria-label={`Select ball ${ball.id}`}><BallIcon id={ball.id} /><span>Ball {ball.id}</span>{selectedBall === ball.id && <span className="ball-check"><Check size={10} /></span>}</button>)}</div>
-            {prepared && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">Dimmed balls have no set of three playable finishes.</p>}
-            <div className={`choice-step position-step ${target ? 'step-complete' : ''}`}><span className="step-number">{target ? <Check size={12} /> : '2'}</span><div><h3>Leave yourself in position</h3><p>Three positions. Three different strokes.</p></div></div>
-            <div className="finish-options" role="group" aria-label="Cue-ball finish options">
-              {finishOptions.length ? finishOptions.map(option => <button
-                key={option.id}
-                className={`finish-option ${selectedOptionId === option.id ? 'finish-selected' : ''}`}
-                aria-label={`Choose finish ${option.label}`}
-                aria-pressed={selectedOptionId === option.id}
-                disabled={busy}
-                onClick={() => selectOption(option.id)}
-              >
-                <span className="finish-letter">{option.label}</span>
-                <span className="finish-copy"><strong>{option.plan.speed.toFixed(2)} m/s <span>cue-ball speed</span></strong><span title="Spin percentage is relative to natural rolling at launch, not cue-tip offset.">{strokeDescription(option.plan)}</span></span>
-                {selectedOptionId === option.id && <Check size={14} />}
-              </button>) : <div className="finish-placeholder"><Crosshair size={22} /><span>{preparing ? 'Checking possible finishes…' : 'Select a ball to reveal three finishes.'}</span></div>}
-            </div>
-            {finishOptions.length > 0 && <p className="finish-assurance">All three are playable. Which gives you more room for error?</p>}
-            <div className="decision-note"><Sparkles size={16} /><p>A little less risk.<br /><strong>A lot more consistency.</strong></p></div>
+        <aside className="shot-panel" aria-label="Shot selection steps">
+          <div className="shot-panel-heading"><span className="eyebrow">{result ? 'ROUND COMPLETE' : 'YOUR NEXT MOVE'}</span><span className="tiny-pill">STEP {step} OF 3</span></div>
+          <ol className="shot-progress" aria-label="Round progress">
+            {['Ball', 'Finish', 'Result'].map((label, index) => <li key={label} className={step === index + 1 ? 'step-current' : step > index + 1 ? 'step-complete' : ''} aria-current={step === index + 1 ? 'step' : undefined}>
+              <span>{step > index + 1 ? <Check size={11} /> : index + 1}</span>{label}
+            </li>)}
+          </ol>
+          <div className="shot-panel-body" data-step={result ? 'result' : selectionStep} key={`${scenario.level}-${step}`}>
+            {result ? <>
+              <div className={`verdict-icon ${result.points === 0 ? 'verdict-low' : ''}`}>{result.points === 1 ? <Trophy size={25} /> : result.points === 0.5 ? <Target size={25} /> : <Layers3 size={25} />}</div>
+              <h2 ref={sidebarHeading} tabIndex={-1}>{result.candidates.every(shot => shot.successRate === 0) ? 'A difficult table.' : result.points === 1 ? 'That’s the smart shot.' : result.points === 0.5 ? 'A very close call.' : 'There’s a safer way.'}</h2>
+              <p className="panel-description">{result.candidates.every(shot => shot.successRate === 0) ? 'None of the sampled shots found a reliable pot and finish. Explore the paths, then try the next layout.' : result.points === 1 ? 'Your choice gave you the strongest margin for error.' : result.points === 0.5 ? 'Your shot was within reach of the most reliable option.' : 'A different ball or finish position offers more room for error.'}</p>
+              <div className="points-awarded"><span>Points this round</span><strong>+{result.points.toFixed(1)} <span>pts</span></strong></div>
+              <div className="result-comparison"><div><span>Your shot · {finishLabel(result.selected.plan.id)}</span><strong>{percent(result.selected.successRate)}</strong></div><div><span>Best <BallIcon id={result.best.plan.ballId} small /> · {finishLabel(result.best.plan.id)}</span><strong>{percent(result.best.successRate)}</strong></div><p>Pot + safe finish, within {Math.round(result.positionTolerance * 100)} cm of the target.</p></div>
+            </> : selectionStep === 'ball' ? <>
+              <h2 ref={sidebarHeading} tabIndex={-1}>Choose your ball.</h2>
+              <p className="panel-description">Which ball gives you the most room for error?</p>
+              <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <button key={ball.id} className={`ball-choice ${selectedBall === ball.id ? 'selected' : ''}`} onClick={() => selectBall(ball.id)} disabled={preparing || !selectableBallIds.includes(ball.id)} title={prepared && !selectableBallIds.includes(ball.id) ? 'No three playable finishes found for this ball' : `Choose ball ${ball.id}`} aria-pressed={selectedBall === ball.id} aria-label={`Select ball ${ball.id}`}><BallIcon id={ball.id} /><span>Ball {ball.id}</span>{selectedBall === ball.id && <span className="ball-check"><Check size={10} /></span>}</button>)}</div>
+              {prepared && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">Dimmed balls have no set of three playable finishes.</p>}
+              <div className="wizard-hint"><MousePointer2 size={17} /><p>Choose a ball here or directly on the table. Then move on to its finish positions.</p></div>
+            </> : <>
+              <h2 ref={sidebarHeading} tabIndex={-1}>Choose your finish.</h2>
+              <p className="panel-description">Where should the cue ball stop? Pick A, B, or C on the table or below.</p>
+              {selectedBall !== null && <div className="selected-ball-summary"><BallIcon id={selectedBall} /><span>Your object ball<strong>Ball {selectedBall}</strong></span></div>}
+              <div className="finish-options" role="group" aria-label="Cue-ball finish options">
+                {finishOptions.map(option => <button
+                  key={option.id}
+                  className={`finish-option ${selectedOptionId === option.id ? 'finish-selected' : ''}`}
+                  aria-label={`Choose finish ${option.label}`}
+                  aria-pressed={selectedOptionId === option.id}
+                  disabled={busy}
+                  onClick={() => selectOption(option.id)}
+                >
+                  <span className="finish-letter">{option.label}</span>
+                  <span className="finish-copy"><strong>{option.plan.speed.toFixed(2)} m/s <span>cue-ball speed</span></strong><span title="Spin percentage is relative to natural rolling at launch, not cue-tip offset.">{strokeDescription(option.plan)}</span></span>
+                  {selectedOptionId === option.id && <Check size={14} />}
+                </button>)}
+              </div>
+              <p className="finish-assurance">All three are playable. Choose the most forgiving.</p>
+            </>}
             {error && <div role="alert" className="error-message"><p>{error}</p>{!prepared && !preparing && <Button variant="outline" size="sm" onClick={() => setPrepareAttempt(attempt => attempt + 1)}>Retry preparation</Button>}</div>}
-            <Button className="lock-button full-width" onClick={submit} disabled={step < 3 || busy || preparing || !prepared}>{busy ? <><LoaderCircle size={17} className="spin" /> Running ensemble…</> : <>Lock in your shot <ArrowRight size={17} /></>}</Button>
-            <p className="lock-caption">{busy ? 'Your table stays responsive while we calculate.' : 'Choose first. See the probabilities after.'}</p>
-          </>}
+          </div>
+          <div className="shot-panel-actions">
+            {result ? <>
+              <Button className="full-width" onClick={() => playShot(result.best)} disabled={playing}><Play size={16} fill="currentColor" /> {playing ? 'Shot in motion…' : 'Play the best shot'}</Button>
+              <Button className="full-width next-level" variant="outline" onClick={() => clearRound(session)}>Next level <ArrowRight size={16} /></Button>
+            </> : selectionStep === 'ball' ? <>
+              <Button className="full-width lock-button" onClick={() => setSelectionStep('finish')} disabled={selectedBall === null || preparing || !prepared}>Choose a finish <ArrowRight size={17} /></Button>
+              <p className="lock-caption">{preparing ? 'Checking playable shots…' : selectedBall === null ? 'Select a ball to continue.' : `Ball ${selectedBall} selected.`}</p>
+            </> : <>
+              <Button className="lock-button full-width" onClick={submit} disabled={!selectedOption || busy || preparing || !prepared}>{busy ? <><LoaderCircle size={17} className="spin" /> Running ensemble…</> : <>Lock in your shot <ArrowRight size={17} /></>}</Button>
+              <Button className="wizard-back full-width" variant="ghost" onClick={() => setSelectionStep('ball')} disabled={busy}><ArrowLeft size={14} /> Back to balls</Button>
+            </>}
+          </div>
         </aside>
       </div>
 
@@ -181,7 +205,7 @@ export default function App() {
     </main>
 
     <Dialog open={modal !== null} onOpenChange={open => { if (!open) closeModal() }}><DialogContent>
-      {modal === 'help' && <><div className="modal-symbol"><Crosshair size={25} /></div><DialogTitle>Play the percentages.</DialogTitle><DialogDescription>Shot Selection is about choosing the shot with room for a human mistake.</DialogDescription><ol className="help-steps"><li><strong>Choose a ball.</strong> Choose an available colored ball. Dimmed balls have no set of three playable finishes.</li><li><strong>Choose a finish.</strong> Pick one of the three marked positions: A, B, or C. Use the table markers or the matching buttons. Each finish is reachable with its own cue speed and spin; switching balls clears your choice.</li><li><strong>Commit to your choice.</strong> The engine repeats the exact stroke behind each option with small variations in aim, speed, and spin. All three work with a precise stroke, but some tolerate mistakes better.</li><li><strong>Read the ensemble.</strong> Compare the pale cue-ball paths, cyan object-ball pots, and dashed coral misses or fouls. A cyan path can still scratch or miss the cue-ball finish, so compare overall success too. Watch the best shot, then advance.</li></ol><div className="scoring-guide"><span><strong>1 pt</strong> Best or close</span><span><strong>½ pt</strong> Near the best</span><span><strong>0 pts</strong> A less reliable choice</span></div><p className="modal-note">Rankings compare all offered ball-and-finish options. Each option first passes a nominal pot-and-safe-stop check. A tight spread only helps when the shot also succeeds.</p><Button className="full-width" onClick={() => closeModal()}>Let’s read the table <ArrowRight size={16} /></Button></>}
+      {modal === 'help' && <><div className="modal-symbol"><Crosshair size={25} /></div><DialogTitle>Play the percentages.</DialogTitle><DialogDescription>Shot Selection is about choosing the shot with room for a human mistake.</DialogDescription><ol className="help-steps"><li><strong>Choose a ball.</strong> Choose an available colored ball, then select “Choose a finish”. Dimmed balls have no set of three playable finishes.</li><li><strong>Choose a finish.</strong> Pick one of the three marked positions: A, B, or C. Use the table markers or the matching buttons. Each finish is reachable with its own cue speed and spin. Use “Back to balls” to change your target; switching balls clears the finish.</li><li><strong>Commit to your choice.</strong> The engine repeats the exact stroke behind each option with small variations in aim, speed, and spin. All three work with a precise stroke, but some tolerate mistakes better.</li><li><strong>Read the ensemble.</strong> Compare the pale cue-ball paths, cyan object-ball pots, and dashed coral misses or fouls. A cyan path can still scratch or miss the cue-ball finish, so compare overall success too. Watch the best shot, then advance.</li></ol><div className="scoring-guide"><span><strong>1 pt</strong> Best or close</span><span><strong>½ pt</strong> Near the best</span><span><strong>0 pts</strong> A less reliable choice</span></div><p className="modal-note">Rankings compare all offered ball-and-finish options. Each option first passes a nominal pot-and-safe-stop check. A tight spread only helps when the shot also succeeds.</p><Button className="full-width" onClick={() => closeModal()}>Let’s read the table <ArrowRight size={16} /></Button></>}
       {modal === 'physics' && <><div className="modal-symbol"><FlaskConical size={25} /></div><DialogTitle>Real dimensions. Honest physics.</DialogTitle><DialogDescription>A deterministic simulation, with uncertainty added at the cue.</DialogDescription><dl className="physics-specs"><div><dt>Playing surface</dt><dd>2,540 × 1,270 mm</dd></div><div><dt>Ball diameter / mass</dt><dd>57.15 mm / 170 g</dd></div><div><dt>Physics engine</dt><dd>cannon-es · SI units</dd></div><div><dt>Simulation timestep</dt><dd>1 / 240 second</dd></div><div><dt>Ensemble</dt><dd>64 trials per candidate</dd></div></dl><p>The model includes ball collisions, cushion rebounds, sliding and rolling resistance, spin, pockets, and scratches. Shot planning searches direct pots and different stroke settings.</p><p className="modal-note">This is a training prototype. Cloth and cushion parameters are assumptions, pocket capture is simplified, and jump shots, masse, cue deflection, and full ball–ball throw are not calibrated. Real-table accuracy needs measured validation.</p><a className="source-link" href="https://wpapool.com/wp-content/uploads/2024/01/RECOMMENDED-EQUIPMENT-SPECIFICATIONS.pdf" target="_blank" rel="noreferrer">WPA equipment specifications <ArrowRight size={14} /></a></>}
       {modal === 'stats' && <><div className="modal-symbol"><Trophy size={25} /></div><DialogTitle>Your table sense, in numbers.</DialogTitle><DialogDescription>Session progress is saved in this browser.</DialogDescription><div className="stats-grid"><div><strong>{session.score.toFixed(1)}</strong><span>Total points</span></div><div><strong>{session.rounds}</strong><span>Rounds played</span></div><div><strong>{session.perfect}</strong><span>Full-point choices</span></div><div><strong>{session.rounds ? Math.round(session.score / session.rounds * 100) : 0}%</strong><span>Points earned</span></div></div><Button className="full-width" onClick={() => closeModal()}>Back to the table</Button></>}
       {modal === 'reset' && <><DialogTitle>A fresh table?</DialogTitle><DialogDescription>This resets your saved session score and starts at level one with a new layout.</DialogDescription><div className="dialog-actions"><Button variant="outline" onClick={() => closeModal()}>Keep playing</Button><Button onClick={() => { clearRound(freshSession()); closeModal() }}><RotateCcw size={15} /> Start fresh</Button></div></>}

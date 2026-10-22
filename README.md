@@ -37,11 +37,13 @@ A local studio environment supplies overhead strip reflections, supported by sof
 
 The table opens directly below the header. First-time visitors see the instructions automatically; dismissing them saves that preference in this browser. Open **How to play** in the header to read them again. If browser storage is unavailable, the game still works, but the instructions can reappear on the next visit.
 
-1. Wait for the engine to prepare the table, then choose an available object ball to pot.
-2. Choose one of its three marked cue-ball finishes: A, B, or C. Each comes from a simulated successful stroke; the options differ in how forgiving they are.
-3. Lock in your choice to reveal the ensemble comparison. Changing the object ball clears the finish choice.
+1. In **Ball**, choose an available object ball on the table or in the sidebar, then press **Choose a finish**.
+2. In **Finish**, choose one of its three marked cue-ball finishes: A, B, or C. Each comes from a simulated successful stroke; the options differ in how forgiving they are.
+3. Press **Lock in your shot** to reach **Result** and reveal the ensemble comparison.
 4. Inspect the candidate paths, potting and position rates, and cue-ball spread.
 5. Play the best shot, then advance to a harder layout.
+
+The sidebar shows one step at a time so its controls fit without scrolling at normal text size, while the table and action buttons keep their position. **Back to balls** preserves the finish for the same ball; selecting a different ball clears it. In Finish, selecting another ball directly on the table keeps you on that step and shows its three options. Table finish markers appear only during Finish.
 
 The round awards one point for a best-equivalent plan, half a point for a close alternative, and zero for a weak choice. The engine evaluates each full plan: both potting the chosen ball and controlling the cue-ball finish matter.
 
