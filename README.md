@@ -35,6 +35,8 @@ A local studio environment supplies overhead strip reflections, supported by sof
 
 ## Play
 
+The table opens directly below the header. First-time visitors see the instructions automatically; dismissing them saves that preference in this browser. Open **How to play** in the header to read them again. If browser storage is unavailable, the game still works, but the instructions can reappear on the next visit.
+
 1. Wait for the engine to prepare the table, then choose an available object ball to pot.
 2. Choose one of its three marked cue-ball finishes: A, B, or C. Each comes from a simulated successful stroke; the options differ in how forgiving they are.
 3. Lock in your choice to reveal the ensemble comparison. Changing the object ball clears the finish choice.

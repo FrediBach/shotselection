@@ -8,6 +8,12 @@ import { analyzeRoundAsync, generateScenario, prepareRoundAsync } from '@/engine
 import type { PreparedRound, RoundAnalysis, ShotAnalysis, ShotPlan } from '@/engine/types'
 
 type Session = { level: number; score: number; rounds: number; perfect: number; seed: number }
+type Modal = 'help' | 'physics' | 'stats' | 'reset' | null
+const HELP_DISMISSED_KEY = 'shot-selection-help-dismissed'
+function initialModal(): Modal {
+  try { return localStorage.getItem(HELP_DISMISSED_KEY) === 'true' ? null : 'help' }
+  catch { return 'help' }
+}
 const freshSession = (): Session => ({ level: 1, score: 0, rounds: 0, perfect: 0, seed: Math.floor(Math.random() * 1000000) })
 function loadSession(): Session {
   try {
@@ -43,7 +49,7 @@ export default function App() {
   const [showEnsemble, setShowEnsemble] = useState(true)
   const [playing, setPlaying] = useState(false)
   const [playbackKey, setPlaybackKey] = useState(0)
-  const [modal, setModal] = useState<'help' | 'physics' | 'stats' | 'reset' | null>(null)
+  const [modal, setModal] = useState<Modal>(initialModal)
   const verdictHeading = useRef<HTMLHeadingElement>(null)
   const request = useRef(0)
   const analysisController = useRef<AbortController | null>(null)
@@ -101,17 +107,24 @@ export default function App() {
       if (id === request.current) setError(cause instanceof Error ? cause.message : 'The simulation could not finish. Please try again.')
     } finally { if (id === request.current) setBusy(false) }
   }
+  function closeModal() {
+    if (modal === 'help') {
+      try { localStorage.setItem(HELP_DISMISSED_KEY, 'true') }
+      catch { /* Help remains usable when browser storage is unavailable. */ }
+    }
+    setModal(null)
+  }
   function playShot(shot: ShotAnalysis) { setInspected(shot); setPlaying(true); setPlaybackKey(previous => previous + 1) }
 
   return <div className="app-shell">
     <header className="site-header">
       <a className="brand" href="/" aria-label="Shot Selection home"><span className="brand-mark"><span /></span><span>shot<span className="brand-light">selection</span><span className="brand-period">.</span></span></a>
-      <nav className="main-nav" aria-label="Main navigation"><button className="nav-active" onClick={() => setModal(null)}>The game</button><button onClick={() => setModal('help')}>How to play <ArrowDownRight size={13} /></button><button onClick={() => setModal('physics')}>Behind the physics</button></nav>
+      <nav className="main-nav" aria-label="Main navigation"><button className="nav-active" onClick={() => closeModal()}>The game</button><button className="nav-help" aria-label="How to play" onClick={() => setModal('help')}><CircleHelp className="nav-help-icon" size={18} /><span className="nav-help-label">How to play</span><ArrowDownRight className="nav-help-arrow" size={13} /></button><button onClick={() => setModal('physics')}>Behind the physics</button></nav>
       <button className="session-score" onClick={() => setModal('stats')} aria-label={`View session stats, ${session.score} points`}><Trophy size={15} /><span>{session.score.toFixed(1)} <span className="muted">pts</span></span><span className="score-divider" /><span className="session-label">This session</span><ChevronRight size={14} /></button>
     </header>
 
     <main>
-      <section className="intro"><div><div className="eyebrow"><span className="live-dot" /> A GAME OF PROBABILITY & POSITION</div><h1>Good players make shots.<br className="mobile-break" /> <span>Great players choose them.</span></h1><p>Read the table. Find the forgiving shot. Let the physics do the talking.</p></div><button className="how-link" aria-label="How to play" onClick={() => setModal('help')}><CircleHelp size={16} /><span>First time here?</span></button></section>
+      <h1 className="sr-only">Shot Selection</h1>
       <div className="game-layout">
         <section className="table-panel" aria-label="Interactive pool table">
           <div className="table-toolbar"><div className="level-label"><span className="level-number">{String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">LEVEL {String(scenario.level).padStart(2, '0')} <span>·</span> {objectBalls.length} OBJECT BALLS</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" onClick={() => setModal('reset')} disabled={busy}><RotateCcw size={16} /></Button></div></div>
@@ -167,11 +180,11 @@ export default function App() {
       <footer className="site-footer"><span>PLAY THE PERCENTAGES.</span><button onClick={() => setModal('physics')}><span className="live-dot" /> Regulation dimensions. Simulated outcomes. <ArrowRight size={12} /></button><span>shotselection.app</span></footer>
     </main>
 
-    <Dialog open={modal !== null} onOpenChange={open => { if (!open) setModal(null) }}><DialogContent>
-      {modal === 'help' && <><div className="modal-symbol"><Crosshair size={25} /></div><DialogTitle>Play the percentages.</DialogTitle><DialogDescription>Shot Selection is about choosing the shot with room for a human mistake.</DialogDescription><ol className="help-steps"><li><strong>Choose a ball.</strong> Choose an available colored ball. Dimmed balls have no set of three playable finishes.</li><li><strong>Choose a finish.</strong> Pick one of the three marked positions: A, B, or C. Use the table markers or the matching buttons. Each finish is reachable with its own cue speed and spin; switching balls clears your choice.</li><li><strong>Commit to your choice.</strong> The engine repeats the exact stroke behind each option with small variations in aim, speed, and spin. All three work with a precise stroke, but some tolerate mistakes better.</li><li><strong>Read the ensemble.</strong> Compare the pale cue-ball paths, cyan object-ball pots, and dashed coral misses or fouls. A cyan path can still scratch or miss the cue-ball finish, so compare overall success too. Watch the best shot, then advance.</li></ol><div className="scoring-guide"><span><strong>1 pt</strong> Best or close</span><span><strong>½ pt</strong> Near the best</span><span><strong>0 pts</strong> A less reliable choice</span></div><p className="modal-note">Rankings compare all offered ball-and-finish options. Each option first passes a nominal pot-and-safe-stop check. A tight spread only helps when the shot also succeeds.</p><Button className="full-width" onClick={() => setModal(null)}>Let’s read the table <ArrowRight size={16} /></Button></>}
+    <Dialog open={modal !== null} onOpenChange={open => { if (!open) closeModal() }}><DialogContent>
+      {modal === 'help' && <><div className="modal-symbol"><Crosshair size={25} /></div><DialogTitle>Play the percentages.</DialogTitle><DialogDescription>Shot Selection is about choosing the shot with room for a human mistake.</DialogDescription><ol className="help-steps"><li><strong>Choose a ball.</strong> Choose an available colored ball. Dimmed balls have no set of three playable finishes.</li><li><strong>Choose a finish.</strong> Pick one of the three marked positions: A, B, or C. Use the table markers or the matching buttons. Each finish is reachable with its own cue speed and spin; switching balls clears your choice.</li><li><strong>Commit to your choice.</strong> The engine repeats the exact stroke behind each option with small variations in aim, speed, and spin. All three work with a precise stroke, but some tolerate mistakes better.</li><li><strong>Read the ensemble.</strong> Compare the pale cue-ball paths, cyan object-ball pots, and dashed coral misses or fouls. A cyan path can still scratch or miss the cue-ball finish, so compare overall success too. Watch the best shot, then advance.</li></ol><div className="scoring-guide"><span><strong>1 pt</strong> Best or close</span><span><strong>½ pt</strong> Near the best</span><span><strong>0 pts</strong> A less reliable choice</span></div><p className="modal-note">Rankings compare all offered ball-and-finish options. Each option first passes a nominal pot-and-safe-stop check. A tight spread only helps when the shot also succeeds.</p><Button className="full-width" onClick={() => closeModal()}>Let’s read the table <ArrowRight size={16} /></Button></>}
       {modal === 'physics' && <><div className="modal-symbol"><FlaskConical size={25} /></div><DialogTitle>Real dimensions. Honest physics.</DialogTitle><DialogDescription>A deterministic simulation, with uncertainty added at the cue.</DialogDescription><dl className="physics-specs"><div><dt>Playing surface</dt><dd>2,540 × 1,270 mm</dd></div><div><dt>Ball diameter / mass</dt><dd>57.15 mm / 170 g</dd></div><div><dt>Physics engine</dt><dd>cannon-es · SI units</dd></div><div><dt>Simulation timestep</dt><dd>1 / 240 second</dd></div><div><dt>Ensemble</dt><dd>64 trials per candidate</dd></div></dl><p>The model includes ball collisions, cushion rebounds, sliding and rolling resistance, spin, pockets, and scratches. Shot planning searches direct pots and different stroke settings.</p><p className="modal-note">This is a training prototype. Cloth and cushion parameters are assumptions, pocket capture is simplified, and jump shots, masse, cue deflection, and full ball–ball throw are not calibrated. Real-table accuracy needs measured validation.</p><a className="source-link" href="https://wpapool.com/wp-content/uploads/2024/01/RECOMMENDED-EQUIPMENT-SPECIFICATIONS.pdf" target="_blank" rel="noreferrer">WPA equipment specifications <ArrowRight size={14} /></a></>}
-      {modal === 'stats' && <><div className="modal-symbol"><Trophy size={25} /></div><DialogTitle>Your table sense, in numbers.</DialogTitle><DialogDescription>Session progress is saved in this browser.</DialogDescription><div className="stats-grid"><div><strong>{session.score.toFixed(1)}</strong><span>Total points</span></div><div><strong>{session.rounds}</strong><span>Rounds played</span></div><div><strong>{session.perfect}</strong><span>Full-point choices</span></div><div><strong>{session.rounds ? Math.round(session.score / session.rounds * 100) : 0}%</strong><span>Points earned</span></div></div><Button className="full-width" onClick={() => setModal(null)}>Back to the table</Button></>}
-      {modal === 'reset' && <><DialogTitle>A fresh table?</DialogTitle><DialogDescription>This resets your saved session score and starts at level one with a new layout.</DialogDescription><div className="dialog-actions"><Button variant="outline" onClick={() => setModal(null)}>Keep playing</Button><Button onClick={() => { clearRound(freshSession()); setModal(null) }}><RotateCcw size={15} /> Start fresh</Button></div></>}
+      {modal === 'stats' && <><div className="modal-symbol"><Trophy size={25} /></div><DialogTitle>Your table sense, in numbers.</DialogTitle><DialogDescription>Session progress is saved in this browser.</DialogDescription><div className="stats-grid"><div><strong>{session.score.toFixed(1)}</strong><span>Total points</span></div><div><strong>{session.rounds}</strong><span>Rounds played</span></div><div><strong>{session.perfect}</strong><span>Full-point choices</span></div><div><strong>{session.rounds ? Math.round(session.score / session.rounds * 100) : 0}%</strong><span>Points earned</span></div></div><Button className="full-width" onClick={() => closeModal()}>Back to the table</Button></>}
+      {modal === 'reset' && <><DialogTitle>A fresh table?</DialogTitle><DialogDescription>This resets your saved session score and starts at level one with a new layout.</DialogDescription><div className="dialog-actions"><Button variant="outline" onClick={() => closeModal()}>Keep playing</Button><Button onClick={() => { clearRound(freshSession()); closeModal() }}><RotateCcw size={15} /> Start fresh</Button></div></>}
     </DialogContent></Dialog>
   </div>
 }
