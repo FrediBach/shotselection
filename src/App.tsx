@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDownRight, ArrowRight, Check, ChevronRight, CircleHelp, Crosshair, Expand, Flag, FlaskConical, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Sparkles, Target, Trophy } from 'lucide-react'
+import { ArrowDownRight, ArrowRight, Check, ChevronRight, CircleHelp, Crosshair, Flag, FlaskConical, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Sparkles, Target, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
@@ -43,7 +43,6 @@ export default function App() {
   const [showEnsemble, setShowEnsemble] = useState(true)
   const [playing, setPlaying] = useState(false)
   const [playbackKey, setPlaybackKey] = useState(0)
-  const [view, setView] = useState<'table' | 'top'>('table')
   const [modal, setModal] = useState<'help' | 'physics' | 'stats' | 'reset' | null>(null)
   const verdictHeading = useRef<HTMLHeadingElement>(null)
   const request = useRef(0)
@@ -115,10 +114,10 @@ export default function App() {
       <section className="intro"><div><div className="eyebrow"><span className="live-dot" /> A GAME OF PROBABILITY & POSITION</div><h1>Good players make shots.<br className="mobile-break" /> <span>Great players choose them.</span></h1><p>Read the table. Find the forgiving shot. Let the physics do the talking.</p></div><button className="how-link" aria-label="How to play" onClick={() => setModal('help')}><CircleHelp size={16} /><span>First time here?</span></button></section>
       <div className="game-layout">
         <section className="table-panel" aria-label="Interactive pool table">
-          <div className="table-toolbar"><div className="level-label"><span className="level-number">{String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">LEVEL {String(scenario.level).padStart(2, '0')} <span>·</span> {objectBalls.length} OBJECT BALLS</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" aria-label={view === 'table' ? 'Switch to overhead view' : 'Switch to angled view'} title="Change camera view" onClick={() => setView(view === 'table' ? 'top' : 'table')}><Expand size={17} /></Button><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" onClick={() => setModal('reset')} disabled={busy}><RotateCcw size={16} /></Button></div></div>
+          <div className="table-toolbar"><div className="level-label"><span className="level-number">{String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">LEVEL {String(scenario.level).padStart(2, '0')} <span>·</span> {objectBalls.length} OBJECT BALLS</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" onClick={() => setModal('reset')} disabled={busy}><RotateCcw size={16} /></Button></div></div>
           <div className="table-stage">
             <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? 'Preparing playable finish options' : selectedBall === null ? 'Start by selecting an object ball' : target === null ? 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
-            <div className="pool-canvas"><PoolTable scenario={scenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : target} onSelectBall={selectBall} finishOptions={result ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} playing={playing} playbackKey={playbackKey} onPlaybackEnd={() => setPlaying(false)} view={view} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
+            <div className="pool-canvas"><PoolTable scenario={scenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : target} onSelectBall={selectBall} finishOptions={result ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} playing={playing} playbackKey={playbackKey} onPlaybackEnd={() => setPlaying(false)} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
             <div className="table-watermark">SHOT SELECTION <span>EST. 2026</span></div>
             {(busy || preparing) && <div className="simulation-overlay" role="status"><LoaderCircle className="spin" size={25} /><strong>{preparing ? 'Finding three playable finishes' : 'Finding the margin for error'}</strong><span>{preparing ? 'Checking the pot, cue-ball position, and stroke for each option…' : 'Simulating small variations in every offered shot…'}</span></div>}
           </div>

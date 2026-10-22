@@ -31,7 +31,7 @@ Browser tests use Playwright and an available local Chrome on macOS. On other sy
 
 The 3D table uses locally generated, seamless albedo, bump, and roughness maps for walnut, worsted cloth, and pocket leather. Texture coordinates follow the physical surface scale, including grain along each rail. The bed has six actual openings with recessed pocket wells, profiled cushions, beveled rails, and inlaid sights. Balls use polished resin materials and curved, lit number patches.
 
-A local studio environment supplies overhead strip reflections, supported by soft directional shadows and contact shading. No remote texture or HDR downloads are required. The rendering shares the engine's playing-surface and ball dimensions; material and lighting changes do not alter shot calculations. The SVG fallback retains the controls and ensemble overlays. Browser appearance checks capture both camera views at desktop, large, and mobile sizes.
+A local studio environment supplies overhead strip reflections, supported by soft directional shadows and contact shading. No remote texture or HDR downloads are required. The rendering shares the engine's playing-surface and ball dimensions; material and lighting changes do not alter shot calculations. The table uses a permanent top-down camera. The SVG fallback retains the controls and ensemble overlays. Browser appearance checks capture the overhead table at desktop, large, and mobile sizes.
 
 ## Play
 
@@ -68,7 +68,7 @@ The game evaluates each candidate with 64 seeded Monte Carlo runs. (The engine's
 
 Candidates use the same random draws to make their comparison less noisy. The target zone starts with a 19 cm radius and shrinks by 6% per level to an 8 cm minimum: `max(0.08, 0.19 × 0.94^(level - 1))` metres. A successful run must contact the selected ball first, pot it, avoid a scratch, and finish the cue ball inside that zone. The visible ring uses this same acceptance radius.
 
-Preparation and analysis run in Web Workers to keep the interface responsive. Both table views show the selected object ball's trajectories from all 64 scored trials, plus the first 24 cue-ball paths. Cyan object paths represent pots after correct first contact; coral paths represent misses or pots after incorrect first contact. Pale gold paths show the cue ball. Object paths include the actual simulated drop position instead of stopping at the last animation frame before the pocket.
+Preparation and analysis run in Web Workers to keep the interface responsive. The WebGL table and SVG fallback show the selected object ball's trajectories from all 64 scored trials, plus the first 24 cue-ball paths. Cyan object paths represent pots after correct first contact; coral paths represent misses or pots after incorrect first contact. Pale gold paths show the cue ball. Object paths include the actual simulated drop position instead of stopping at the last animation frame before the pocket.
 
 The cyan-path fraction matches the displayed pot rate. A cyan object-ball pot may still be followed by a cue-ball scratch or a poor finish; the joint-success rate and utility score account for those failures. These are the same simulated trials used for scoring, not separately generated illustrations. The 3D table also shows cue-ball endpoints from completed, non-scratch samples. The replay shows the nominal stroke without random perturbations.
 

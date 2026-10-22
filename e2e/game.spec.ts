@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
 for (const viewport of visualViewports) {
   test.describe(`${viewport.name} table appearance`, () => {
     test.use({ deviceScaleFactor: viewport.name === 'large' ? 2 : 1 })
-    test(`table appearance renders clean angled and overhead views at ${viewport.name} size`, async ({ page }, testInfo) => {
+    test(`table appearance renders a clean permanent overhead view at ${viewport.name} size`, async ({ page }, testInfo) => {
       const pageErrors: string[] = []
       const renderingErrors: string[] = []
       page.on('pageerror', error => pageErrors.push(error.message))
@@ -41,21 +41,16 @@ for (const viewport of visualViewports) {
         node.addEventListener('webglcontextlost', () => { (node as HTMLCanvasElement).dataset.contextLost = 'true' })
       })
 
-      const screenshots: Buffer[] = []
-      for (const view of ['angled', 'overhead'] as const) {
-        if (view === 'overhead') await page.getByRole('button', { name: 'Switch to overhead view' }).click()
-        await expect(page.getByRole('button', { name: view === 'angled' ? 'Switch to overhead view' : 'Switch to angled view' })).toBeVisible()
-        // Let the camera effect and the following WebGL frame finish before capture.
-        await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
-        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-        const path = `/tmp/shot-selection-realism-${viewport.name}-${view}.png`
-        screenshots.push(await page.locator('.table-panel').screenshot({ path, animations: 'disabled' }))
-        await testInfo.attach(`${viewport.name} ${view} table`, { path, contentType: 'image/png' })
-        await expect(canvas).not.toHaveAttribute('data-context-lost', 'true')
-        await expect(page.locator('.finish-option')).toHaveCount(0)
-      }
-      // A camera toggle must change the actual rendered table, not only its label.
-      expect(screenshots[0].equals(screenshots[1])).toBe(false)
+      await expect(page.getByRole('button', { name: /Switch to (?:overhead|angled) view/ })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Restart session', exact: true })).toBeVisible()
+      // Let the fixed camera effect and the following WebGL frame finish before capture.
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      const path = `/tmp/shot-selection-realism-${viewport.name}-overhead.png`
+      await page.locator('.table-panel').screenshot({ path, animations: 'disabled' })
+      await testInfo.attach(`${viewport.name} overhead table`, { path, contentType: 'image/png' })
+      await expect(canvas).not.toHaveAttribute('data-context-lost', 'true')
+      await expect(page.locator('.finish-option')).toHaveCount(0)
       expect(pageErrors).toEqual([])
       expect(renderingErrors).toEqual([])
     })
@@ -121,7 +116,7 @@ test('three feasible finish choices, comparison, replay and advancement without 
   expect(errors).toEqual([])
 })
 
-test('mobile fixed choices work with keyboard, help, camera and reset', async ({ page }) => {
+test('mobile fixed choices work with keyboard, help and reset in the overhead view', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
   await page.getByRole('button', { name: 'How to play', exact: true }).click()
@@ -136,8 +131,8 @@ test('mobile fixed choices work with keyboard, help, camera and reset', async ({
   await expect(finishC).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('button', { name: 'Lock in your shot' })).toBeEnabled()
   await page.screenshot({ path: '/tmp/shot-selection-fixed-mobile.png', fullPage: true })
-  await page.getByRole('button', { name: 'Switch to overhead view' }).click()
-  await expect(page.getByRole('button', { name: 'Switch to angled view' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Switch to (?:overhead|angled) view/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Restart session', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Restart session' }).click()
   await page.getByRole('button', { name: 'Keep playing' }).click()
   await expect(finishC).toHaveAttribute('aria-pressed', 'true')

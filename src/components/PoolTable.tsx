@@ -22,7 +22,6 @@ export interface PoolTableProps {
   playing: boolean
   playbackKey: number
   onPlaybackEnd: () => void
-  view: 'table' | 'top'
   interactive: boolean
 }
 
@@ -109,16 +108,16 @@ function makeStripeTexture(id: number) {
   return texture
 }
 
-function CameraRig({ view }: Pick<PoolTableProps, 'view'>) {
+function TopDownCamera() {
   const { camera, size } = useThree()
   useEffect(() => {
     const cam = camera as THREE.OrthographicCamera
-    cam.position.set(0, view === 'top' ? 6 : 4.8, view === 'top' ? 0.001 : 3.1)
+    cam.position.set(0, 6, 0.001)
     cam.up.set(0, 1, 0)
     cam.lookAt(0, 0, 0)
-    cam.zoom = Math.min(size.width / 3.23, size.height / (view === 'top' ? 1.9 : 1.75))
+    cam.zoom = Math.min(size.width / 3.23, size.height / 1.9)
     cam.updateProjectionMatrix()
-  }, [camera, size.width, size.height, view])
+  }, [camera, size.width, size.height])
   return null
 }
 
@@ -397,7 +396,7 @@ function Scene(props: PoolTableProps) {
   const pottedObjectPaths = useMemo(() => analysis?.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map(trial => trial.path) ?? [], [analysis])
   const missedObjectPaths = useMemo(() => analysis?.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map(trial => trial.path) ?? [], [analysis])
   return <>
-    <CameraRig view={props.view} />
+    <TopDownCamera />
     <TableLighting />
     <TableFurniture />
     <PlaybackDriver {...props} runtime={runtime} />
@@ -539,7 +538,7 @@ export default function PoolTable(props: PoolTableProps) {
   const fallback = <FlatTable {...props} />
   return <div className="pool-table-scene" style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
     {available ? <CanvasBoundary fallback={fallback}>
-      <Canvas orthographic camera={{ position: [0, 4.8, 3.1], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08 }} style={{ touchAction: 'none' }}>
+      <Canvas orthographic camera={{ position: [0, 6, 0.001], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08 }} style={{ touchAction: 'none' }}>
         <Suspense fallback={null}><Scene {...props} /></Suspense>
       </Canvas>
     </CanvasBoundary> : fallback}
