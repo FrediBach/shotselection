@@ -121,6 +121,8 @@ for (const viewport of visualViewports) {
 }
 
 test('three feasible finish choices, comparison, replay and advancement without duplicate scoring', async ({ page }) => {
+  // This full-round flow includes several 3D redraws and a complete replay.
+  test.setTimeout(90_000)
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/')

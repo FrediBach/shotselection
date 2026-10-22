@@ -1,0 +1,172 @@
+.perfect-celebration {
+  --celebration-spread: 1;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.perfect-celebration-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.perfect-celebration-art {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.perfect-celebration-halo {
+  position: absolute;
+  width: 440px;
+  height: 350px;
+  max-width: 130%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #e6bc8029 0, #1722199c 38%, #1722194d 53%, transparent 72%);
+  animation: perfect-celebration-glow 3s ease-out both;
+}
+
+.perfect-celebration-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  width: 228px;
+  height: 228px;
+  border: 1px solid #e6bc806e;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 15%, #364333 0, #202d22 49%, #18221b 100%);
+  box-shadow: 0 0 0 6px #1a261c99, 0 0 0 7px #e6bc8021, 0 18px 48px #080f0a66, inset 0 0 40px #e6bc8008;
+  animation: perfect-celebration-arrive 3s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.perfect-celebration-badge::before,
+.perfect-celebration-badge::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  background: #e6bc809c;
+  transform: rotate(45deg);
+}
+
+.perfect-celebration-badge::before { left: 17px; }
+.perfect-celebration-badge::after { right: 17px; }
+
+.perfect-celebration-trophy {
+  display: grid;
+  place-items: center;
+  width: 39px;
+  height: 39px;
+  margin-bottom: 3px;
+  border: 1px solid #e6bc802e;
+  border-radius: 50%;
+  color: #e6bc80;
+  background: #e6bc8009;
+}
+
+.perfect-celebration-score {
+  color: #f0d4a7;
+  font-size: 77px;
+  font-weight: 550;
+  line-height: 1.04;
+  letter-spacing: -5px;
+  padding-right: 5px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 22px #e6bc8024;
+}
+
+.perfect-celebration-label {
+  margin-top: 9px;
+  color: #e6bc80;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 2.25px;
+  text-transform: uppercase;
+}
+
+.perfect-celebration-caption {
+  margin-top: 8px;
+  color: #b5c1aa;
+  font-size: 9px;
+  letter-spacing: .15px;
+}
+
+.perfect-celebration-confetti {
+  position: absolute;
+  inset: 0;
+}
+
+.perfect-celebration-confetti i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 4px;
+  height: 11px;
+  border-radius: 1px;
+  background: var(--confetti-color);
+  animation: perfect-celebration-burst 2.45s cubic-bezier(.12, .72, .25, 1) var(--burst-delay) both;
+}
+
+.perfect-celebration-confetti i:nth-child(3n) { width: 5px; height: 5px; }
+.perfect-celebration-confetti i:nth-child(5n) { width: 3px; height: 14px; }
+
+@keyframes perfect-celebration-arrive {
+  0% { opacity: 0; transform: translateY(15px) scale(.7); }
+  13% { opacity: 1; transform: translateY(0) scale(1.045); }
+  23%, 81% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-8px) scale(1.015); }
+}
+
+@keyframes perfect-celebration-glow {
+  0% { opacity: 0; transform: scale(.8); }
+  16%, 76% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+
+@keyframes perfect-celebration-burst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  6% { opacity: 1; }
+  45% {
+    opacity: 1;
+    transform: translate(calc(var(--burst-x) * var(--celebration-spread)), calc(var(--burst-y) * var(--celebration-spread))) rotate(var(--burst-turn)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--burst-x) * var(--celebration-spread) * 1.1), calc(var(--burst-y) * var(--celebration-spread) + 50px)) rotate(calc(var(--burst-turn) + 90deg)) scale(.65);
+  }
+}
+
+@media (max-width: 720px) {
+  .perfect-celebration {
+    --celebration-spread: .8;
+    position: fixed;
+    z-index: 20;
+  }
+  .perfect-celebration-badge { width: 204px; height: 204px; }
+  .perfect-celebration-score { font-size: 67px; }
+  .perfect-celebration-trophy { width: 34px; height: 34px; }
+  .perfect-celebration-trophy svg { width: 20px; height: 20px; }
+  .perfect-celebration-label { font-size: 8px; letter-spacing: 1.8px; }
+  .perfect-celebration-caption { font-size: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perfect-celebration-confetti { display: none; }
+  .perfect-celebration-badge,
+  .perfect-celebration-halo { animation: none !important; }
+}

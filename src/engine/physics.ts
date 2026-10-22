@@ -1,4 +1,5 @@
 import { Body, ContactMaterial, GSSolver, Material, Sphere, Vec3, World } from 'cannon-es';
+import type { ContactEquation } from 'cannon-es';
 import { POCKETS, TABLE } from './constants';
 import { clamp, distance } from './math';
 import type { Scenario, ShotPlan, Simulation, SimulateOptions, Vec2 } from './types';
@@ -67,6 +68,7 @@ function applyCloth(body: Body, dt: number) {
 }
 
 function resolveRails(body: Body) {
+  let strongestImpact = 0;
   for (const rail of RAILS) {
     const dx = rail.b.x - rail.a.x;
     const dy = rail.b.y - rail.a.y;
@@ -81,6 +83,7 @@ function resolveRails(body: Body) {
     const ny = ny0 / gap;
     const normalSpeed = body.velocity.x * nx + body.velocity.y * ny;
     if (normalSpeed >= 0) continue;
+    strongestImpact = Math.max(strongestImpact, -normalSpeed);
     body.position.x += nx * (R - gap + 1e-6);
     body.position.y += ny * (R - gap + 1e-6);
     const normalImpulse = -(1 + TABLE.cushionRestitution) * normalSpeed;
@@ -95,6 +98,7 @@ function resolveRails(body: Body) {
     body.velocity.y += tangentImpulse * ty;
     body.angularVelocity.z -= 2.5 * tangentImpulse / R;
   }
+  return strongestImpact;
 }
 
 function isPocketed(position: Vec2): boolean {
@@ -139,7 +143,24 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   cue.body.addEventListener('collide', (event: { body: Body }) => {
     if (firstContact === null) firstContact = bodyIds.get(event.body.id) ?? null;
   });
-  const simulation: Simulation = { frames: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, duration: 0, stopped: false };
+  const simulation: Simulation = { frames: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, duration: 0, stopped: false };
+  let soundTime = 0;
+  const lastSoundTimes = record ? new Map<string, number>() : null;
+  const recordImpact = (type: 'ball' | 'cushion', key: string, impactSpeed: number) => {
+    // Suppress tiny resting contacts and repeated chatter at a cushion jaw.
+    if (!lastSoundTimes || impactSpeed < 0.035) return;
+    if (soundTime - (lastSoundTimes.get(key) ?? -Infinity) < 0.045) return;
+    lastSoundTimes.set(key, soundTime);
+    simulation.soundEvents.push({ type, time: soundTime, strength: clamp(impactSpeed / 2.5, 0, 1) });
+  };
+  if (record) {
+    simulation.soundEvents.push({ type: 'cue', time: 0, strength: clamp(speed / 2.5, 0, 1) });
+    for (const { body } of bodies) body.addEventListener('collide', (event: { body: Body; contact: ContactEquation }) => {
+      // Cannon dispatches each contact to both bodies, before resolving it.
+      if (body.id > event.body.id) return;
+      recordImpact('ball', `ball:${body.id}:${event.body.id}`, event.contact.getImpactVelocityAlongNormal());
+    });
+  }
   const object = bodies.find(ball => ball.id === plan.ballId);
   const appendPathPoint = (path: Vec2[], body: Body) => {
     const previous = path.at(-1);
@@ -157,6 +178,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   const maxSteps = Math.ceil((options.maxTime ?? 15) / TABLE.step);
   let quietSteps = 0;
   for (let step = 1; step <= maxSteps; step++) {
+    soundTime = step * TABLE.step;
     for (const ball of bodies) if (!ball.pocketed) applyCloth(ball.body, TABLE.step);
     world.step(TABLE.step);
     let moving = false;
@@ -164,10 +186,12 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       if (ball.pocketed) continue;
       ball.body.position.z = 0;
       ball.body.velocity.z = 0;
-      resolveRails(ball.body);
+      const cushionImpact = resolveRails(ball.body);
+      if (record && cushionImpact > 0) recordImpact('cushion', `cushion:${ball.id}`, cushionImpact);
       if (isPocketed(ball.body.position)) {
         ball.pocketed = true;
         simulation.potted.push(ball.id);
+        if (record) simulation.soundEvents.push({ type: 'pocket', time: soundTime, strength: clamp(Math.hypot(ball.body.velocity.x, ball.body.velocity.y) / 2.5, 0, 1) });
         world.removeBody(ball.body);
         ball.body.velocity.setZero();
         ball.body.angularVelocity.setZero();
@@ -175,6 +199,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
         // A ball travelling completely beyond an open pocket throat has dropped.
         ball.pocketed = true;
         simulation.potted.push(ball.id);
+        if (record) simulation.soundEvents.push({ type: 'pocket', time: soundTime, strength: clamp(Math.hypot(ball.body.velocity.x, ball.body.velocity.y) / 2.5, 0, 1) });
         world.removeBody(ball.body);
       } else if (Math.hypot(ball.body.velocity.x, ball.body.velocity.y) > 0.005 || Math.hypot(ball.body.angularVelocity.x, ball.body.angularVelocity.y) * R > 0.008) moving = true;
       if (ball.pocketed && recordPaths) {

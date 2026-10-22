@@ -43,6 +43,7 @@ svg { flex-shrink: 0; }
 .toolbar-caption { font-size: 8px; margin-top: 6px; letter-spacing: 1.1px; color: #8e9789; }
 .toolbar-caption span { padding: 0 5px; }
 .table-actions { display: flex; align-items: center; gap: 4px; }
+.sound-toggle[aria-pressed='true'] { color: var(--gold); }
 .table-size { color: #d5d7c8; font-size: 8px; letter-spacing: 1px; margin-right: 10px; }
 .table-size > span { color: #7c897c; margin-left: 5px; }
 .table-stage { position: relative; flex: 1; min-height: 400px; display: flex; align-items: center; background: radial-gradient(ellipse at 50% 45%, #28352b 0, #202920 47%, #1b221c 80%); }
@@ -157,6 +158,9 @@ svg { flex-shrink: 0; }
 .points-awarded > span svg { color: var(--gold); }
 .points-awarded > strong { font-size: 26px; line-height: 1.2; color: var(--gold); font-weight: 450; }
 .points-awarded strong span { font-size: 12px; color: #99a389; }
+.points-perfect { position: relative; border-color: #e6bc8055; background: linear-gradient(90deg, #e6bc8012, transparent); }
+.points-perfect > strong { text-shadow: 0 0 20px #e6bc8040; animation: perfect-score-pop .55s cubic-bezier(.2, .8, .3, 1.2); }
+@keyframes perfect-score-pop { from { opacity: .3; transform: scale(.75); } to { opacity: 1; transform: scale(1); } }
 .score-breakdown h3 { margin: 0 0 9px; color: #d4dfc5; font-size: 11px; font-weight: 500; }
 .score-breakdown dl { margin: 0; }
 .score-breakdown dl > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 9px 0; }

@@ -5,8 +5,9 @@ import type { ThreeEvent } from '@react-three/fiber'
 import { TableFurniture } from './table/TableFurniture'
 import { TableLighting } from './table/TableLighting'
 import * as THREE from 'three'
-import type { FinishOption, Scenario, ShotAnalysis, SimulationBall, Vec2 } from '../engine/types'
+import type { FinishOption, Scenario, ShotAnalysis, SimulationBall, SimulationSoundEvent, Vec2 } from '../engine/types'
 import { TABLE, positionToleranceForLevel } from '../engine/constants'
+import { PlaybackSoundCursor } from '../lib/playback-events'
 
 export interface PoolTableProps {
   scenario: Scenario
@@ -22,6 +23,7 @@ export interface PoolTableProps {
   playing: boolean
   playbackKey: number
   onPlaybackEnd: () => void
+  onPlaybackSound?: (event: SimulationSoundEvent) => void
   interactive: boolean
 }
 
@@ -121,29 +123,36 @@ function TopDownCamera() {
   return null
 }
 
-function PlaybackDriver({ scenario, analysis, playing, playbackKey, onPlaybackEnd, runtime }: Pick<PoolTableProps, 'scenario' | 'analysis' | 'playing' | 'playbackKey' | 'onPlaybackEnd'> & { runtime: Runtime }) {
+function PlaybackDriver({ scenario, analysis, playing, playbackKey, onPlaybackEnd, onPlaybackSound, runtime }: Pick<PoolTableProps, 'scenario' | 'analysis' | 'playing' | 'playbackKey' | 'onPlaybackEnd' | 'onPlaybackSound'> & { runtime: Runtime }) {
   const callback = useRef(onPlaybackEnd)
+  const soundCallback = useRef(onPlaybackSound)
+  const sounds = useRef<PlaybackSoundCursor | null>(null)
   useEffect(() => { callback.current = onPlaybackEnd }, [onPlaybackEnd])
+  useEffect(() => { soundCallback.current = onPlaybackSound }, [onPlaybackSound])
   useEffect(() => {
     runtime.balls = new Map(scenario.balls.map(ball => [ball.id, { ...ball, position: { ...ball.position }, pocketed: false }]))
     runtime.active = false
     runtime.complete = false
     runtime.elapsed = 0
+    sounds.current = null
   }, [scenario, analysis, runtime])
   useEffect(() => {
     if (playing && analysis?.nominal.frames.length) {
       runtime.elapsed = 0
       runtime.complete = false
       runtime.active = true
+      sounds.current = new PlaybackSoundCursor(analysis.nominal.soundEvents ?? [])
     } else runtime.active = false
-  }, [playing, playbackKey, analysis, runtime])
+    return () => { runtime.active = false; sounds.current = null }
+  }, [playing, playbackKey, scenario, analysis, runtime])
   useFrame((_, delta) => {
-    if (!runtime.active || !analysis) return
+    if (!playing || !runtime.active || !analysis || document.hidden) return
     runtime.elapsed += Math.min(delta, 0.05) * 1.15
     const frames = analysis.nominal.frames
     if (!frames.length) return
     const last = frames[frames.length - 1]
     const current = Math.min(runtime.elapsed, last.time)
+    sounds.current?.advance(current, soundCallback.current)
     let low = 0
     let high = frames.length - 1
     while (low < high) {
@@ -423,7 +432,7 @@ class CanvasBoundary extends Component<{ children: ReactNode; fallback: ReactNod
 
 /** Fully interactive 2D fallback for browsers without WebGL. */
 function FlatTable(props: PoolTableProps) {
-  const { scenario, selectedBall, target, analysis, showEnsemble, interactive, playing, playbackKey, onPlaybackEnd } = props
+  const { scenario, selectedBall, target, analysis, showEnsemble, interactive, playing, playbackKey, onPlaybackEnd, onPlaybackSound } = props
   const [frame, setFrame] = useState<SimulationBall[] | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const [svgScale, setSvgScale] = useState(2)
@@ -437,25 +446,33 @@ function FlatTable(props: PoolTableProps) {
     return () => observer.disconnect()
   }, [])
   const callback = useRef(onPlaybackEnd)
+  const soundCallback = useRef(onPlaybackSound)
   useEffect(() => { callback.current = onPlaybackEnd }, [onPlaybackEnd])
+  useEffect(() => { soundCallback.current = onPlaybackSound }, [onPlaybackSound])
   useEffect(() => { setFrame(null) }, [scenario, analysis])
   useEffect(() => {
     if (!playing || !analysis?.nominal.frames.length) return
     let request = 0
-    let started = 0
+    let previous: number | null = null
+    let elapsed = 0
     const frames = analysis.nominal.frames
+    const sounds = new PlaybackSoundCursor(analysis.nominal.soundEvents ?? [])
     const tick = (now: number) => {
-      if (!started) started = now
-      const t = (now - started) / 1000 * 1.15
+      const delta = previous === null ? 0 : Math.min((now - previous) / 1000, 0.05)
+      previous = now
+      if (document.hidden) { request = requestAnimationFrame(tick); return }
+      elapsed += delta * 1.15
+      const t = Math.min(elapsed, frames[frames.length - 1].time)
+      sounds.advance(t, soundCallback.current)
       let low = 0, high = frames.length - 1
       while (low < high) { const mid = (low + high) >>> 1; if (frames[mid].time < t) low = mid + 1; else high = mid }
       setFrame(frames[low].balls)
-      if (t > frames[frames.length - 1].time + 0.5) callback.current()
+      if (elapsed > frames[frames.length - 1].time + 0.5) callback.current()
       else request = requestAnimationFrame(tick)
     }
     request = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(request)
-  }, [playing, playbackKey, analysis])
+  }, [playing, playbackKey, scenario, analysis])
   const balls = frame || scenario.balls.map(ball => ({ ...ball, pocketed: false }))
   const nominalObjectPotted = Boolean(analysis && analysis.nominal.potted.includes(analysis.plan.ballId) && analysis.nominal.firstContact === analysis.plan.ballId)
   const badgePositions = separateBadges(props.finishOptions.map(option => ({ x: option.plan.target.x * 100, y: option.plan.target.y * 100 })), 42 / svgScale, { left: -22 + 19 / svgScale, right: 276 - 19 / svgScale, top: -24 + 19 / svgScale, bottom: 151 - 19 / svgScale })

@@ -42,8 +42,17 @@ export interface PreparedRound {
 }
 export interface SimulationBall extends Ball { pocketed: boolean }
 export interface SimulationFrame { time: number; balls: SimulationBall[] }
+export interface SimulationSoundEvent {
+  type: 'cue' | 'ball' | 'cushion' | 'pocket';
+  /** Time in simulation seconds, shared with replay frames. */
+  time: number;
+  /** Impact strength normalized to [0, 1]. */
+  strength: number;
+}
 export interface Simulation {
   frames: SimulationFrame[];
+  /** Physical impacts for full replays; empty for ensemble trials. */
+  soundEvents: SimulationSoundEvent[];
   cuePath: Vec2[];
   objectPath: Vec2[];
   cueEnd: Vec2;
@@ -89,7 +98,7 @@ export interface RoundAnalysis {
 }
 export interface AnalyzeOptions { samples?: number }
 export interface SimulateOptions {
-  /** Record full replay frames (and paths). Defaults to true. */
+  /** Record full replay frames, paths and sound events. Defaults to true. */
   record?: boolean;
   /** Record lightweight cue/object paths even when full frames are disabled. */
   recordPaths?: boolean;
