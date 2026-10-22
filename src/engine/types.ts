@@ -62,12 +62,19 @@ export interface ShotAnalysis {
   spread: number;
   meanEnd: Vec2;
   samplePaths: Vec2[][];
+  /** All trial object-ball paths, in the same trial order as samplePaths. */
+  sampleObjectPaths: ObjectBallTrial[];
   sampleEnds: Vec2[];
   /** Robust utility in [0,1], based on actual ensemble outcomes. */
   score: number;
   nominal: Simulation;
   samples: number;
   explanation: string;
+}
+export interface ObjectBallTrial {
+  path: Vec2[];
+  /** A pot requires correct first contact; scratch is a separate cue-ball event. */
+  outcome: 'pot' | 'miss' | 'foul';
 }
 export interface RoundAnalysis {
   candidates: ShotAnalysis[];
@@ -78,4 +85,10 @@ export interface RoundAnalysis {
   positionTolerance: number;
 }
 export interface AnalyzeOptions { samples?: number }
-export interface SimulateOptions { record?: boolean; maxTime?: number }
+export interface SimulateOptions {
+  /** Record full replay frames (and paths). Defaults to true. */
+  record?: boolean;
+  /** Record lightweight cue/object paths even when full frames are disabled. */
+  recordPaths?: boolean;
+  maxTime?: number;
+}

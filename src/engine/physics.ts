@@ -107,6 +107,7 @@ function isPocketed(position: Vec2): boolean {
 
 export function simulateShot(scenario: Scenario, plan: ShotPlan, options: SimulateOptions = {}): Simulation {
   const record = options.record !== false;
+  const recordPaths = record || options.recordPaths === true;
   const world = new World({ gravity: undefined, allowSleep: false });
   world.gravity.set(0, 0, 0);
   world.frictionGravity = new Vec3(0, 0, -G);
@@ -139,13 +140,20 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     if (firstContact === null) firstContact = bodyIds.get(event.body.id) ?? null;
   });
   const simulation: Simulation = { frames: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, duration: 0, stopped: false };
-  const saveFrame = (time: number) => {
-    simulation.frames.push({ time, balls: bodies.map(({ id, body, pocketed }) => ({ id, position: { x: body.position.x, y: body.position.y }, pocketed })) });
-    if (!cue.pocketed) simulation.cuePath.push({ x: cue.body.position.x, y: cue.body.position.y });
-    const object = bodies.find(ball => ball.id === plan.ballId);
-    if (object && !object.pocketed) simulation.objectPath.push({ x: object.body.position.x, y: object.body.position.y });
+  const object = bodies.find(ball => ball.id === plan.ballId);
+  const appendPathPoint = (path: Vec2[], body: Body) => {
+    const previous = path.at(-1);
+    // Suppress stationary repetitions, including after a ball has dropped.
+    if (!previous || previous.x !== body.position.x || previous.y !== body.position.y) path.push({ x: body.position.x, y: body.position.y });
   };
-  if (record) saveFrame(0);
+  const saveSnapshot = (time: number) => {
+    if (record && simulation.frames.at(-1)?.time !== time) simulation.frames.push({ time, balls: bodies.map(({ id, body, pocketed }) => ({ id, position: { x: body.position.x, y: body.position.y }, pocketed })) });
+    if (recordPaths) {
+      if (!cue.pocketed) appendPathPoint(simulation.cuePath, cue.body);
+      if (object && !object.pocketed) appendPathPoint(simulation.objectPath, object.body);
+    }
+  };
+  saveSnapshot(0);
   const maxSteps = Math.ceil((options.maxTime ?? 15) / TABLE.step);
   let quietSteps = 0;
   for (let step = 1; step <= maxSteps; step++) {
@@ -169,13 +177,19 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
         simulation.potted.push(ball.id);
         world.removeBody(ball.body);
       } else if (Math.hypot(ball.body.velocity.x, ball.body.velocity.y) > 0.005 || Math.hypot(ball.body.angularVelocity.x, ball.body.angularVelocity.y) * R > 0.008) moving = true;
+      if (ball.pocketed && recordPaths) {
+        // Save the exact physics capture location on the actual drop step. The
+        // next 30 Hz snapshot may be later; never extend paths to pocket centers.
+        if (ball.id === 0) appendPathPoint(simulation.cuePath, ball.body);
+        if (ball.id === plan.ballId) appendPathPoint(simulation.objectPath, ball.body);
+      }
     }
     simulation.duration = step * TABLE.step;
-    if (record && step % 8 === 0) saveFrame(simulation.duration);
+    if ((record || recordPaths) && step % 8 === 0) saveSnapshot(simulation.duration);
     quietSteps = moving ? 0 : quietSteps + 1;
     if (quietSteps >= 8) { simulation.stopped = true; break; }
   }
-  if (record) saveFrame(simulation.duration);
+  saveSnapshot(simulation.duration);
   simulation.cueEnd = { x: cue.body.position.x, y: cue.body.position.y };
   simulation.scratch = cue.pocketed;
   simulation.firstContact = firstContact;

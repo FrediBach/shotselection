@@ -55,12 +55,14 @@ h1 > span { color: #a8b49f; }
 .table-watermark { position: absolute; bottom: 19px; left: 50%; transform: translateX(-50%); font-size: 8px; letter-spacing: 3px; color: #c3cbb436; pointer-events: none; white-space: nowrap; }
 .table-watermark span { font-size: 6px; letter-spacing: 1.5px; margin-left: 10px; }
 .table-footer { min-height: 47px; display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 22px; border-top: 1px solid #ffffff08; background: #1a1e1a; }
-.table-legend { display: flex; align-items: center; gap: 18px; }
+.table-legend { display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; }
 .table-legend > span { display: flex; align-items: center; gap: 6px; font-size: 9px; color: #9ca597; }
 .table-legend i { height: 6px; width: 6px; display: inline-block; border-radius: 50%; }
 .legend-cue { background: #eeeae0; }
 .legend-target { outline: 1px dashed #ddbb83; outline-offset: 2px; }
-.table-legend .legend-path { height: 1px; width: 12px; background: #bfcdae; }
+.table-legend .legend-cue-path { height: 1px; width: 12px; background: #dbecb3; border-radius: 0; }
+.table-legend .legend-object-pot { height: 2px; width: 12px; background: #78d9ec; border-radius: 0; }
+.table-legend .legend-object-miss { height: 0; width: 12px; border-top: 2px dashed #f49b85; border-radius: 0; }
 .interactive-hint { display: flex; align-items: center; gap: 6px; font-size: 9px; color: #758471; }
 .shot-panel { background: #1d221d; border: 1px solid #ffffff13; border-radius: 11px; padding: 24px; }
 .shot-panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 7px; }

@@ -1,7 +1,7 @@
 import { TABLE, positionToleranceForLevel } from './constants';
 import { clamp, distance, normalRandom, seededRandom } from './math';
 import { simulateShot } from './physics';
-import type { AnalyzeOptions, PreparedRound, RoundAnalysis, Scenario, Selection, ShotAnalysis, ShotPlan, Vec2 } from './types';
+import type { AnalyzeOptions, ObjectBallTrial, PreparedRound, RoundAnalysis, Scenario, Selection, ShotAnalysis, ShotPlan, Vec2 } from './types';
 
 export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): ShotAnalysis {
   const count = clamp(Math.floor(samples), 8, 128);
@@ -10,6 +10,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): S
   const nominal = simulateShot(scenario, plan);
   const endpoints: Vec2[] = [];
   const samplePaths: Vec2[][] = [];
+  const sampleObjectPaths: ObjectBallTrial[] = [];
   let pots = 0;
   let scratches = 0;
   let positions = 0;
@@ -26,8 +27,10 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): S
       topSpin: plan.topSpin + normalRandom(random) * 0.085,
       sideSpin: plan.sideSpin + normalRandom(random) * 3,
     };
-    const simulation = simulateShot(scenario, perturbed, { record: index < 24 });
-    const potted = simulation.potted.includes(plan.ballId) && simulation.firstContact === plan.ballId;
+    const simulation = simulateShot(scenario, perturbed, { record: false, recordPaths: true });
+    const dropped = simulation.potted.includes(plan.ballId);
+    const potted = dropped && simulation.firstContact === plan.ballId;
+    sampleObjectPaths.push({ path: simulation.objectPath, outcome: potted ? 'pot' : dropped ? 'foul' : 'miss' });
     const legal = potted && !simulation.scratch && simulation.stopped;
     const error = distance(simulation.cueEnd, plan.target);
     const positioned = !simulation.scratch && simulation.stopped && error <= tolerance;
@@ -52,7 +55,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): S
       : scratches / count > 0.12
         ? 'The cue ball runs close to a pocket. Scratch risk makes this route less dependable.'
         : 'The pot is available, but speed and spin need care to hold the chosen cue-ball position.';
-  return { plan, successRate, potRate: pots / count, scratchRate: scratches / count, positionRate: positions / count, spread, meanEnd, samplePaths, sampleEnds: endpoints, score, nominal, samples: count, explanation };
+  return { plan, successRate, potRate: pots / count, scratchRate: scratches / count, positionRate: positions / count, spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, score, nominal, samples: count, explanation };
 }
 
 export function pointsFor(selected: Pick<ShotAnalysis, 'score' | 'successRate'>, best: Pick<ShotAnalysis, 'score'>): 0 | 0.5 | 1 {

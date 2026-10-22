@@ -32,6 +32,7 @@ const CORNER_GAP = TABLE.cornerMouth / Math.SQRT2
 const SIDE_GAP = TABLE.sideMouth / 2
 const CLOTH_Y = 0.062
 const BALL_Y = CLOTH_Y + RADIUS
+const ENSEMBLE_COLORS = { cue: '#dbecb3', pot: '#78d9ec', miss: '#f49b85' } as const
 const COLORS: Record<number, string> = {
   0: '#f6f5e9', 1: '#e5bb37', 2: '#3763b0', 3: '#bd4337', 4: '#65458a',
   5: '#dd783c', 6: '#287a65', 7: '#81372d', 8: '#202523', 9: '#e5bb37',
@@ -318,23 +319,31 @@ function PoolBall({ id, position, selected, interactive, onSelect, runtime }: { 
   </group>
 }
 
-function PathLines({ paths, color, opacity = 1, dashed = false, height = CLOTH_Y + 0.005 }: { paths: Vec2[][]; color: string; opacity?: number; dashed?: boolean; height?: number }) {
+function PathLines({ paths, color, opacity = 1, dashed = false, height = CLOTH_Y + 0.005, dashSize = 0.025, gapSize = 0.018 }: { paths: Vec2[][]; color: string; opacity?: number; dashed?: boolean; height?: number; dashSize?: number; gapSize?: number }) {
   const object = useMemo(() => {
     const positions: number[] = []
+    const distances: number[] = []
     for (const path of paths) {
-      for (let i = 1; i < path.length; i++) positions.push(...toWorld(path[i - 1], height), ...toWorld(path[i], height))
+      let distance = 0
+      for (let i = 1; i < path.length; i++) {
+        positions.push(...toWorld(path[i - 1], height), ...toWorld(path[i], height))
+        distances.push(distance)
+        distance += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y)
+        distances.push(distance)
+      }
     }
     const geometry = new THREE.BufferGeometry()
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+    // Restart each trial's dash phase at its origin so overlapping misses stay dashed.
+    if (dashed) geometry.setAttribute('lineDistance', new THREE.Float32BufferAttribute(distances, 1))
     const material = dashed
-      ? new THREE.LineDashedMaterial({ color, transparent: true, opacity, dashSize: 0.025, gapSize: 0.018, depthWrite: false })
-      : new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false })
+      ? new THREE.LineDashedMaterial({ color, transparent: true, opacity, dashSize, gapSize, depthWrite: false, toneMapped: false })
+      : new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false, toneMapped: false })
     const line = new THREE.LineSegments(geometry, material)
-    line.computeLineDistances()
     line.renderOrder = 3
     line.raycast = () => {}
     return line
-  }, [paths, color, opacity, dashed, height])
+  }, [paths, color, opacity, dashed, height, dashSize, gapSize])
   useEffect(() => () => { object.geometry.dispose(); (object.material as THREE.Material).dispose() }, [object])
   return <primitive object={object} />
 }
@@ -477,6 +486,9 @@ function Scene(props: PoolTableProps) {
   const aimPath = useMemo(() => cue && selected ? [[cue.position, selected.position]] : [], [cue, selected])
   const nominalPaths = useMemo(() => analysis ? [analysis.nominal.cuePath] : [], [analysis])
   const objectPaths = useMemo(() => analysis ? [analysis.nominal.objectPath] : [], [analysis])
+  const nominalObjectPotted = Boolean(analysis && analysis.nominal.potted.includes(analysis.plan.ballId) && analysis.nominal.firstContact === analysis.plan.ballId)
+  const pottedObjectPaths = useMemo(() => analysis?.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map(trial => trial.path) ?? [], [analysis])
+  const missedObjectPaths = useMemo(() => analysis?.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map(trial => trial.path) ?? [], [analysis])
   return <>
     <CameraRig view={props.view} />
     <ambientLight intensity={1.2} color="#dce6d9" />
@@ -493,10 +505,12 @@ function Scene(props: PoolTableProps) {
     {!analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
     {target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
     {showEnsemble && analysis && <>
-      <PathLines paths={analysis.samplePaths} color="#dbecb3" opacity={0.14} />
+      <PathLines paths={analysis.samplePaths} color={ENSEMBLE_COLORS.cue} opacity={0.14} />
       <EnsembleEndpoints points={analysis.sampleEnds} />
-      <PathLines paths={nominalPaths} color="#e0edbf" opacity={0.85} dashed height={CLOTH_Y + 0.006} />
-      <PathLines paths={objectPaths} color="#8ddac7" opacity={0.75} height={CLOTH_Y + 0.007} />
+      <PathLines paths={nominalPaths} color={ENSEMBLE_COLORS.cue} opacity={0.32} dashed height={CLOTH_Y + 0.006} />
+      <PathLines paths={objectPaths} color={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} opacity={0.16} dashed={!nominalObjectPotted} dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.014} />
+      <PathLines paths={pottedObjectPaths} color={ENSEMBLE_COLORS.pot} opacity={0.30} height={CLOTH_Y + 0.015} />
+      <PathLines paths={missedObjectPaths} color={ENSEMBLE_COLORS.miss} opacity={0.50} dashed dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.016} />
     </>}
   </>
 }
@@ -543,6 +557,7 @@ function FlatTable(props: PoolTableProps) {
     return () => cancelAnimationFrame(request)
   }, [playing, playbackKey, analysis])
   const balls = frame || scenario.balls.map(ball => ({ ...ball, pocketed: false }))
+  const nominalObjectPotted = Boolean(analysis && analysis.nominal.potted.includes(analysis.plan.ballId) && analysis.nominal.firstContact === analysis.plan.ballId)
   const badgePositions = separateBadges(props.finishOptions.map(option => ({ x: option.plan.target.x * 100, y: option.plan.target.y * 100 })), 42 / svgScale, { left: -22 + 19 / svgScale, right: 276 - 19 / svgScale, top: -24 + 19 / svgScale, bottom: 151 - 19 / svgScale })
   return <svg ref={svgRef} viewBox="-22 -24 298 175" width="100%" height="100%" role="group" aria-label="Interactive pool table, top view" style={{ display: 'block' }}>
     <defs>
@@ -556,7 +571,13 @@ function FlatTable(props: PoolTableProps) {
     <rect width="254" height="127" fill="url(#table-cloth)" />
     {POCKET_POSITIONS.map(([x, y, side], i) => <circle key={i} cx={(x + WIDTH / 2) * 100} cy={(y + DEPTH / 2) * 100} r={side ? 7 : 7.6} fill="#080e0b" stroke="#4a4339" strokeWidth="1.2" />)}
     {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x, i) => [-1, 1].map(sign => <rect key={`${i}-${sign}`} x={(x + WIDTH / 2) * 100 - .6} y={(sign * .772 + DEPTH / 2) * 100 - .6} width="1.2" height="1.2" fill="#bfb9a7" transform={`rotate(45 ${(x + WIDTH / 2) * 100} ${(sign * .772 + DEPTH / 2) * 100})`} />))}
-    {showEnsemble && analysis?.samplePaths.map((path, i) => <polyline key={i} points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} fill="none" stroke="#d5e6a7" strokeWidth=".3" opacity=".25" pointerEvents="none" />)}
+    {showEnsemble && analysis && <g data-testid="ensemble-paths" fill="none" pointerEvents="none">
+      {analysis.samplePaths.map((path, i) => <polyline key={`cue-${i}`} data-testid="cue-ensemble-path" points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".14" />)}
+      <polyline points={analysis.nominal.cuePath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".32" strokeDasharray="2.5 1.8" />
+      <polyline points={analysis.nominal.objectPath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".16" strokeDasharray={nominalObjectPotted ? undefined : '4.5 2.5'} />
+      {analysis.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map((trial, i) => <polyline key={`object-pot-${i}`} data-testid="object-pot-path" points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.pot} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".30" />)}
+      {analysis.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map((trial, i) => <polyline key={`object-miss-${i}`} data-testid={trial.outcome === 'foul' ? 'object-foul-path' : 'object-miss-path'} points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".50" strokeDasharray="4.5 2.5" />)}
+    </g>}
     {target && !playing && <g pointerEvents="none" stroke="#dce9b6" fill="none"><circle cx={target.x * 100} cy={target.y * 100} r={positionToleranceForLevel(scenario.level) * 100} strokeWidth=".3" opacity=".55" /><path d={`M${target.x * 100 - 2},${target.y * 100}h4M${target.x * 100},${target.y * 100 - 2}v4`} strokeWidth=".3" /></g>}
     {balls.filter(b => !b.pocketed).map(ball => <g key={ball.id} transform={`translate(${ball.position.x * 100} ${ball.position.y * 100})`} role={ball.id ? 'button' : 'img'} aria-label={ball.id ? `Table ball ${ball.id}` : 'Cue ball'} aria-disabled={ball.id ? !interactive || playing || !props.selectableBallIds.includes(ball.id) : undefined} tabIndex={interactive && !playing && props.selectableBallIds.includes(ball.id) ? 0 : -1} onPointerDown={e => e.stopPropagation()} onClick={() => { if (interactive && props.selectableBallIds.includes(ball.id) && !playing) props.onSelectBall(ball.id) }} onKeyDown={event => { if (interactive && !playing && props.selectableBallIds.includes(ball.id) && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); props.onSelectBall(ball.id) } }} style={{ cursor: interactive && props.selectableBallIds.includes(ball.id) ? 'pointer' : undefined }}>
       {selectedBall === ball.id && !playing && <circle r="4.5" fill="none" stroke="#dbe9b5" strokeWidth=".4" />}
