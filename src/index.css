@@ -151,16 +151,22 @@ svg { flex-shrink: 0; }
 .error-message { background: #b74d3c12; border: 1px solid #b74d3c45; border-radius: 5px; padding: 10px; font-size: 11px; color: #e2a798; }
 .error-message > p { margin: 0; }
 .error-message .ui-button { margin-top: 10px; }
-.verdict-icon { margin-top: 8px; width: 36px; height: 36px; border: 1px solid #e4be7e40; border-radius: 50%; background: #e4be7e08; color: var(--gold); display: grid; place-items: center; }
-.verdict-icon > svg { width: 20px; height: 20px; }
-.verdict-low { color: #bbc9a5; border-color: #bbc9a540; }
-.verdict-icon + h2 { font-size: 23px; margin-top: 12px; }
-.shot-panel-body[data-step='result'] .panel-description { margin-bottom: 12px; }
+.shot-panel-body[data-step='result'] h2 { font-size: 23px; margin-top: 8px; }
 .points-awarded { margin: 12px 0; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ffffff0c; border-bottom: 1px solid #ffffff0c; padding: 10px 0; }
-.points-awarded > span { color: #9aa88e; font-size: 11px; }
+.points-awarded > span { color: #9aa88e; font-size: 11px; display: flex; align-items: center; gap: 7px; }
+.points-awarded > span svg { color: var(--gold); }
 .points-awarded > strong { font-size: 26px; line-height: 1.2; color: var(--gold); font-weight: 450; }
 .points-awarded strong span { font-size: 12px; color: #99a389; }
-.result-comparison { margin: 12px 0 0; }
+.score-breakdown h3 { margin: 0 0 9px; color: #d4dfc5; font-size: 11px; font-weight: 500; }
+.score-breakdown dl { margin: 0; }
+.score-breakdown dl > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 9px 0; }
+.score-breakdown dt { color: #b4c1a7; font-size: 11px; }
+.score-breakdown dt span { display: block; margin-top: 3px; color: #929f87; font-size: 9px; }
+.score-breakdown dd { margin: 0; color: var(--gold); font-size: 19px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.score-breakdown dd span { font-size: 10px; color: #99a389; }
+.score-breakdown p { font-size: 10px; line-height: 1.55; color: #a4b296; margin: 9px 0 0; }
+.score-breakdown .score-rounding { color: #89987d; font-size: 9px; }
+.result-comparison { margin: 12px 0 0; border-top: 1px solid #ffffff0c; padding-top: 4px; }
 .result-comparison > div { display: flex; align-items: center; justify-content: space-between; font-size: 12px; margin: 7px 0; }
 .result-comparison > div > span { color: #a7b299; display: flex; gap: 8px; align-items: center; }
 .result-comparison strong { font-size: 16px; line-height: 1.35; font-weight: 500; color: #d4dfc5; }
@@ -182,6 +188,8 @@ svg { flex-shrink: 0; }
 .analysis-card-title { display: flex; align-items: center; gap: 8px; }
 .analysis-card-title > strong { font-size: 11px; font-weight: 500; }
 .analysis-card-title > svg { margin-left: auto; color: #748b68; }
+.analysis-placement { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #a4b296; font-size: 10px; margin: 14px 0 0; }
+.analysis-placement strong { color: var(--gold); font-size: 13px; font-weight: 500; white-space: nowrap; }
 .best-tag { font-size: 7px; letter-spacing: .7px; color: #dec08b; background: #e2b96f0a; border: 1px solid #c5a66b30; padding: 4px; border-radius: 3px; margin-left: auto; }
 .analysis-rate { margin: 20px 0 12px; display: flex; align-items: baseline; gap: 9px; font-size: 29px; font-weight: 450; letter-spacing: -1px; }
 .analysis-rate > span { font-size: 8px; color: #8c9d7e; letter-spacing: 0; }
@@ -218,6 +226,12 @@ svg { flex-shrink: 0; }
 .stats-grid span { display: block; margin-top: 8px; font-size: 11px; color: #95ac82; }
 .dialog-actions { margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (min-width: 721px) and (max-width: 900px) {
+  .points-awarded { margin: 8px 0; padding: 8px 0; }
+  .score-breakdown dl > div { margin: 7px 0; }
+  .score-breakdown p { margin-top: 7px; }
+  .result-comparison { margin-top: 8px; }
+}
 @media (min-width: 1500px) { .pool-canvas { height: 470px; } .shot-panel { --shot-panel-padding: 28px; } .game-layout { grid-template-columns: minmax(0, 1fr) 350px; } }
 @media (max-width: 1150px) { .app-shell { padding: 0 3%; } .main-nav { margin: 0; gap: 22px; } .game-layout { --game-panel-height: 640px; gap: 16px; grid-template-columns: minmax(0, 1fr) 295px; } .shot-panel { --shot-panel-padding: 21px; } .table-size > span { display: none; } .interactive-hint { display: none; } .table-toolbar { padding: 18px; } .pool-canvas { height: 405px; } .game-principles { gap: 18px; } .game-principles > div + div { padding-left: 18px; } .principle-index { display: none; } }
 @media (max-width: 900px) { .brand { font-size: 21px; } .main-nav { gap: 20px; } .main-nav button { font-size: 11px; } .main-nav button:last-child { display: none; } .session-label, .score-divider { display: none; } .game-layout { --game-panel-height: 620px; grid-template-columns: minmax(0, 1fr) 270px; gap: 12px; } .shot-panel { --shot-panel-padding: 18px; } .table-size { display: none; } .table-toolbar { padding: 14px; } .pool-canvas { height: 370px; } .table-instruction { font-size: 8px; } .table-footer { padding: 12px; } .table-legend { gap: 12px; } .game-principles > div { gap: 10px; } .game-principles h3 { font-size: 10px; } .game-principles p { font-size: 9px; } .principle-icon { width: 30px; height: 34px; border: 0; background: none; } .principle-icon svg { width: 21px; } }

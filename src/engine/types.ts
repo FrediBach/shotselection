@@ -1,3 +1,5 @@
+import type { RoundScore } from './scoring';
+
 /** All positions are in metres; x: 0..2.54, y: 0..1.27; cue ball id is 0. */
 export interface Vec2 { x: number; y: number }
 export interface Ball { id: number; position: Vec2 }
@@ -80,7 +82,8 @@ export interface RoundAnalysis {
   candidates: ShotAnalysis[];
   selected: ShotAnalysis;
   best: ShotAnalysis;
-  points: 0 | 0.5 | 1;
+  points: RoundScore['points'];
+  scoring: RoundScore;
   samples: number;
   positionTolerance: number;
 }

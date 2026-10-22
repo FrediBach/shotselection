@@ -109,13 +109,6 @@ describe('shot-selection scoring', () => {
     expect(positionToleranceForLevel(8)).toBeLessThan(positionToleranceForLevel(4));
     expect(positionToleranceForLevel(100)).toBe(0.08);
   });
-  it('never rewards a deterministic failure and assigns full, half and zero points', () => {
-    expect(pointsFor({ score: 0, successRate: 0 }, { score: 0 })).toBe(0);
-    expect(pointsFor({ score: 0.89, successRate: 0.9 }, { score: 0.9 })).toBe(1);
-    expect(pointsFor({ score: 0.77, successRate: 0.75 }, { score: 0.9 })).toBe(0.5);
-    expect(pointsFor({ score: 0.3, successRate: 0.25 }, { score: 0.9 })).toBe(0);
-  });
-
   it('scores only the offered plans and preserves the exact chosen stroke', () => {
     const scenario = generateScenario(1);
     const prepared = prepareRound(scenario);
@@ -130,5 +123,8 @@ describe('shot-selection scoring', () => {
     expect(result.best.nominal.potted).toContain(result.best.plan.ballId);
     expect(result.best.nominal.scratch).toBe(false);
     expect(result.selected.samples).toBe(8);
+    expect(result.points).toBe(pointsFor(result.selected, result.candidates));
+    expect(result.points).toBe(result.scoring.qualityPoints + result.scoring.rankPoints);
+    expect(result.scoring.candidateCount).toBe(result.candidates.length);
   }, 30000);
 });

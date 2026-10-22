@@ -1,6 +1,8 @@
 import { TABLE, positionToleranceForLevel } from './constants';
 import { clamp, distance, normalRandom, seededRandom } from './math';
 import { simulateShot } from './physics';
+import { scoreSelection } from './scoring';
+export { pointsFor } from './scoring';
 import type { AnalyzeOptions, ObjectBallTrial, PreparedRound, RoundAnalysis, Scenario, Selection, ShotAnalysis, ShotPlan, Vec2 } from './types';
 
 export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): ShotAnalysis {
@@ -58,13 +60,6 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): S
   return { plan, successRate, potRate: pots / count, scratchRate: scratches / count, positionRate: positions / count, spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, score, nominal, samples: count, explanation };
 }
 
-export function pointsFor(selected: Pick<ShotAnalysis, 'score' | 'successRate'>, best: Pick<ShotAnalysis, 'score'>): 0 | 0.5 | 1 {
-  if (selected.successRate === 0 || best.score <= 0) return 0;
-  if (selected.score >= best.score - 0.045) return 1;
-  if (selected.score >= best.score - 0.18 && selected.score >= best.score * 0.72) return 0.5;
-  return 0;
-}
-
 export function analyzeRound(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions = {}): RoundAnalysis {
   const offered = prepared.balls.flatMap(ball => ball.options);
   const chosen = offered.find(option => option.id === selection.optionId && option.plan.ballId === selection.ballId);
@@ -76,5 +71,6 @@ export function analyzeRound(prepared: PreparedRound, selection: Selection, opti
   const selected = candidates.find(candidate => candidate.plan.id === chosen.id)!;
   candidates.sort((a, b) => b.score - a.score);
   const best = candidates[0];
-  return { candidates, selected, best, points: pointsFor(selected, best), samples: selected.samples, positionTolerance: positionToleranceForLevel(scenario.level) };
+  const scoring = scoreSelection(selected, candidates);
+  return { candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForLevel(scenario.level) };
 }

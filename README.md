@@ -45,9 +45,9 @@ The table opens directly below the header. First-time visitors see the instructi
 
 The sidebar shows one step at a time so its controls fit without scrolling at normal text size, while the table and action buttons keep their position. **Back to balls** preserves the finish for the same ball; selecting a different ball clears it. In Finish, selecting another ball directly on the table keeps you on that step and shows its three options. Table finish markers appear only during Finish.
 
-The round awards one point for a best-equivalent plan, half a point for a close alternative, and zero for a weak choice. The engine evaluates each full plan: both potting the chosen ball and controlling the cue-ball finish matter.
+Each round awards 0–100 points in steps of 10. Up to 70 points reflect how close your shot's ensemble quality is to the best offered plan, and up to 30 reflect its rank among all offered choices. The Result step shows both contributions and their sum; each comparison card also shows its rank and round score. Both potting the chosen ball and controlling the cue-ball finish matter.
 
-Score and progress are saved in this browser's local storage. Completing a round saves the next unplayed level, so reloading after a verdict advances rather than scoring the same round twice. Restarting the session clears that progress and generates a new layout sequence.
+Score and progress are saved in this browser's local storage. Existing totals from the old 0 / 0.5 / 1 scoring system are converted once to the new scale by multiplying by 100, preserving completed rounds, perfect choices, level, and layout sequence. Completing a round saves the next unplayed level, so reloading after a verdict advances rather than scoring the same round twice. Restarting the session clears that progress and generates a new layout sequence.
 
 ## Ensemble and scoring
 
@@ -86,7 +86,17 @@ The utility score is:
 
 Missing the pot, scratching, or reaching the simulation time limit before coming to rest gives zero utility for that run. The score prioritizes a repeatable, successful outcome; the displayed root-mean-square endpoint spread is an additional diagnostic, not the score itself. Pot rate reports observed pots after correct first contact, including pots followed by a scratch, while joint success requires a completed, scratch-free result. Position rate reports stopping inside the target without a scratch, whether or not the object ball was potted.
 
-A plan scores one game point when its utility is within 0.045 of the best candidate. It scores half a point when within 0.18 and at least 72% of the best utility. Both awards require at least one joint-success sample; otherwise the award is zero. These thresholds are game design choices. With 64 samples, small probability differences are noisy, so close plans are intentionally treated as equivalent; this is not a statistical significance test.
+Game points use that utility in two parts, each rounded to the nearest 10 points:
+
+```text
+quality points = round_to_10(70 × selected utility / best utility)
+rank points    = round_to_10(30 × (number of choices − shared rank) / (number of choices − 1))
+round points   = quality points + rank points
+```
+
+The quality component measures how much of the best available ensemble quality your choice retains. The rank component rewards placing ahead of other offered ball-and-finish pairs. A sole candidate receives the full 30 rank points. Both components are zero if the selected shot has no successful pot-and-safe-finish samples or the best utility is zero. Choosing a top-utility plan with at least one successful trial earns 100 even on a difficult layout: this measures shot selection relative to the available choices, not an absolute success probability.
+
+To soften sampling noise, sort candidates by utility and group shots within 0.045 of each group's strongest member. Each group shares its first position in the ordering (for example, 1, 1, 3); anchoring to the strongest member prevents a chain of small differences from tying very different plans. These are game design choices, not a statistical significance test. Quality points still use each shot's own utility, so members of a shared rank can earn different totals. Session statistics track accumulated points, 100-point choices, and the percentage of available points earned.
 
 ## Physical scale and accuracy
 

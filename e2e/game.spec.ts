@@ -62,6 +62,10 @@ async function expectControlInsideSidebar(control: Locator) {
   })).toBe(true)
 }
 
+function statValue(page: Page, label: string) {
+  return page.locator('.stats-grid > div').filter({ has: page.getByText(label, { exact: true }) }).locator('strong')
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
@@ -181,6 +185,22 @@ test('three feasible finish choices, comparison, replay and advancement without 
   await expect(page.locator('.analysis-card')).toHaveCount(offeredBallCount * 3)
   await expect(page.locator('.analysis-active')).toContainText('Your selection · B')
   await expect(page.locator('.analysis-active .analysis-stroke')).toContainText(strokes[1].split('cue-ball speed')[0].trim())
+  const roundScore = page.locator('.points-awarded strong')
+  await expect(roundScore).toHaveText(/^(?:0|[1-9]0|100)\s*\/\s*100$/)
+  const awardedPoints = Number.parseInt((await roundScore.textContent())!, 10)
+  const breakdown = page.getByRole('region', { name: 'How your score adds up' })
+  await expect(breakdown).toBeVisible()
+  await expect(breakdown.locator('dd').nth(0)).toHaveText(/^(?:0|[1-7]0)\s*\/\s*70$/)
+  await expect(breakdown.locator('dd').nth(1)).toHaveText(/^(?:0|[1-3]0)\s*\/\s*30$/)
+  const components = (await breakdown.locator('dd').allTextContents()).map(text => Number.parseInt(text, 10))
+  expect(components.reduce((sum, points) => sum + points, 0)).toBe(awardedPoints)
+  await expect(breakdown).toContainText(new RegExp(`rank \\d+ of ${offeredBallCount * 3} choices`))
+  await expect(page.locator('.analysis-placement')).toHaveCount(offeredBallCount * 3)
+  for (const placement of await page.locator('.analysis-placement').all()) {
+    await expect(placement.locator('span')).toHaveText(new RegExp(`^(?:Joint rank|Rank) \\d+ of ${offeredBallCount * 3}$`))
+    await expect(placement.locator('strong')).toHaveText(/^(?:0|[1-9]0|100)\s*\/\s*100$/)
+  }
+  await expect(page.locator('.analysis-active .analysis-placement strong')).toHaveText(`${awardedPoints} / 100`)
   await page.locator('.analysis-card').last().click()
   await expect(page.locator('.analysis-card').last()).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByText('Object pots', { exact: true })).toBeVisible()
@@ -198,6 +218,14 @@ test('three feasible finish choices, comparison, replay and advancement without 
   const completed = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
   expect(completed.rounds).toBe(1)
   expect(completed.level).toBe(2)
+  expect(completed.score).toBe(awardedPoints)
+  expect(completed.scoringVersion).toBe(2)
+  expect(completed.perfect).toBe(Number(awardedPoints === 100))
+  await page.getByRole('button', { name: /^View session stats/ }).click()
+  await expect(statValue(page, 'Total points')).toHaveText(String(awardedPoints))
+  await expect(statValue(page, '100-point choices')).toHaveText(String(completed.perfect))
+  await expect(statValue(page, 'Points earned')).toHaveText(`${Math.round(completed.score / completed.rounds)}%`)
+  await page.getByRole('button', { name: 'Back to the table', exact: true }).click()
   await page.getByRole('button', { name: 'Next level' }).click()
   await expect(page.getByText('LEVEL 02', { exact: false })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Choose a finish', exact: true })).toBeDisabled()
@@ -209,6 +237,24 @@ test('three feasible finish choices, comparison, replay and advancement without 
   const reloaded = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
   expect(reloaded).toEqual(completed)
   expect(errors).toEqual([])
+})
+
+test('legacy session points migrate once and retain progress and correct stats', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'View session stats, 0 points', exact: true })).toBeVisible()
+  const legacy = { level: 3, score: 1.5, rounds: 2, perfect: 1, seed: 71431 }
+  await page.evaluate(saved => localStorage.setItem('shot-selection-session', JSON.stringify(saved)), legacy)
+  const migrated = { ...legacy, score: 150, scoringVersion: 2 }
+  for (let reload = 0; reload < 2; reload++) {
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'View session stats, 150 points', exact: true })).toBeVisible()
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toEqual(migrated)
+    await page.getByRole('button', { name: 'View session stats, 150 points', exact: true }).click()
+    await expect(statValue(page, 'Total points')).toHaveText('150')
+    await expect(statValue(page, 'Rounds played')).toHaveText('2')
+    await expect(statValue(page, '100-point choices')).toHaveText('1')
+    await expect(statValue(page, 'Points earned')).toHaveText('75%')
+  }
 })
 
 test('360px mobile wizard works with keyboard, help and reset in the overhead view', async ({ page }) => {
@@ -363,4 +409,5 @@ for (const width of [860, 360]) test(`${width}px later-level wizard fits extra b
   await expectWizardStep(page, 'Result')
   await expectStableGameFrame(page, initialFrame, 'after showing the later-level verdict')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: `/tmp/shot-selection-scoring-${width}.png`, fullPage: true })
 })
