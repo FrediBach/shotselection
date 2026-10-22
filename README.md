@@ -27,6 +27,12 @@ npm run preview
 
 Browser tests use Playwright and an available local Chrome on macOS. On other systems, run `npx playwright install chromium` once, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to an installed Chromium browser. The test suite covers the complete round, comparison and replay flow, mobile controls, saved progress, and the WebGL fallback.
 
+## Table rendering
+
+The 3D table uses locally generated, seamless albedo, bump, and roughness maps for walnut, worsted cloth, and pocket leather. Texture coordinates follow the physical surface scale, including grain along each rail. The bed has six actual openings with recessed pocket wells, profiled cushions, beveled rails, and inlaid sights. Balls use polished resin materials and curved, lit number patches.
+
+A local studio environment supplies overhead strip reflections, supported by soft directional shadows and contact shading. No remote texture or HDR downloads are required. The rendering shares the engine's playing-surface and ball dimensions; material and lighting changes do not alter shot calculations. The SVG fallback retains the controls and ensemble overlays. Browser appearance checks capture both camera views at desktop, large, and mobile sizes.
+
 ## Play
 
 1. Wait for the engine to prepare the table, then choose an available object ball to pot.

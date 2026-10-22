@@ -2,7 +2,8 @@ import { Component, Suspense, useEffect, useMemo, useRef, useState } from 'react
 import type { ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
-import { RoundedBox } from '@react-three/drei'
+import { TableFurniture } from './table/TableFurniture'
+import { TableLighting } from './table/TableLighting'
 import * as THREE from 'three'
 import type { FinishOption, Scenario, ShotAnalysis, SimulationBall, Vec2 } from '../engine/types'
 import { TABLE, positionToleranceForLevel } from '../engine/constants'
@@ -28,14 +29,12 @@ export interface PoolTableProps {
 const WIDTH = TABLE.length
 const DEPTH = TABLE.width
 const RADIUS = TABLE.ballRadius
-const CORNER_GAP = TABLE.cornerMouth / Math.SQRT2
-const SIDE_GAP = TABLE.sideMouth / 2
 const CLOTH_Y = 0.062
 const BALL_Y = CLOTH_Y + RADIUS
 const ENSEMBLE_COLORS = { cue: '#dbecb3', pot: '#78d9ec', miss: '#f49b85' } as const
 const COLORS: Record<number, string> = {
-  0: '#f6f5e9', 1: '#e5bb37', 2: '#3763b0', 3: '#bd4337', 4: '#65458a',
-  5: '#dd783c', 6: '#287a65', 7: '#81372d', 8: '#202523', 9: '#e5bb37',
+  0: '#f5f1df', 1: '#e7af12', 2: '#174593', 3: '#b6251d', 4: '#4c207d',
+  5: '#e36a16', 6: '#076342', 7: '#681e27', 8: '#11161a', 9: '#e7af12',
   10: '#3763b0', 11: '#bd4337', 12: '#65458a', 13: '#dd783c', 14: '#287a65', 15: '#81372d',
 }
 const POCKET_POSITIONS: [number, number, boolean][] = [
@@ -47,52 +46,6 @@ const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 type Runtime = { balls: Map<number, SimulationBall>; elapsed: number; active: boolean; complete: boolean }
 
-function makeClothTexture() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 256
-  canvas.height = 256
-  const ctx = canvas.getContext('2d')!
-  ctx.fillStyle = '#287969'
-  ctx.fillRect(0, 0, 256, 256)
-  // Deterministic fine wool weave; no image downloads or external textures.
-  let seed = 4472
-  for (let y = 0; y < 256; y += 2) {
-    for (let x = 0; x < 256; x += 2) {
-      seed = (seed * 1664525 + 1013904223) >>> 0
-      ctx.fillStyle = `rgba(${seed % 2 ? '184,219,189' : '6,47,38'},${0.025 + (seed % 9) / 250})`
-      ctx.fillRect(x, y, 1, 2)
-    }
-  }
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-  texture.repeat.set(8, 4)
-  texture.colorSpace = THREE.SRGBColorSpace
-  texture.anisotropy = 8
-  return texture
-}
-
-function makeWoodTexture() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 512
-  canvas.height = 128
-  const ctx = canvas.getContext('2d')!
-  ctx.fillStyle = '#302b24'
-  ctx.fillRect(0, 0, 512, 128)
-  for (let i = 0; i < 100; i++) {
-    const y = (i * 19.7) % 128
-    ctx.strokeStyle = i % 3 === 0 ? 'rgba(116,94,69,.13)' : 'rgba(5,8,7,.17)'
-    ctx.lineWidth = 0.4 + (i % 3) * 0.4
-    ctx.beginPath()
-    ctx.moveTo(0, y)
-    ctx.bezierCurveTo(130, y + Math.sin(i) * 5, 330, y - Math.cos(i) * 4, 512, y + Math.sin(i) * 2)
-    ctx.stroke()
-  }
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-  texture.colorSpace = THREE.SRGBColorSpace
-  return texture
-}
-
 function makeNumberTexture(id: number) {
   const canvas = document.createElement('canvas')
   canvas.width = canvas.height = 128
@@ -102,14 +55,44 @@ function makeNumberTexture(id: number) {
   ctx.beginPath()
   ctx.arc(64, 64, 58, 0, Math.PI * 2)
   ctx.fill()
-  ctx.fillStyle = '#242b26'
-  ctx.font = '600 76px Arial, sans-serif'
+  ctx.fillStyle = '#111510'
+  ctx.font = '700 80px Arial, sans-serif'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText(String(id), 64, 68)
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   return texture
+}
+
+/** Curved resin inlay: its normals and reflections follow the ball surface. */
+function makeNumberCap() {
+  const geometry = new THREE.PlaneGeometry(RADIUS * 1.12, RADIUS * 1.12, 24, 24)
+  const positions = geometry.getAttribute('position')
+  const normals = geometry.getAttribute('normal')
+  const radius = RADIUS + 0.000035
+  for (let i = 0; i < positions.count; i++) {
+    const x = positions.getX(i), y = positions.getY(i)
+    const z = Math.sqrt(radius * radius - x * x - y * y)
+    positions.setZ(i, z)
+    normals.setXYZ(i, x / radius, y / radius, z / radius)
+  }
+  geometry.computeBoundingSphere()
+  return geometry
+}
+
+function makeContactTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 64
+  const ctx = canvas.getContext('2d')!
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32)
+  gradient.addColorStop(0, 'rgba(0,0,0,.48)')
+  gradient.addColorStop(0.28, 'rgba(0,0,0,.26)')
+  gradient.addColorStop(0.6, 'rgba(0,0,0,.08)')
+  gradient.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, 64, 64)
+  return new THREE.CanvasTexture(canvas)
 }
 
 function makeStripeTexture(id: number) {
@@ -130,95 +113,13 @@ function CameraRig({ view }: Pick<PoolTableProps, 'view'>) {
   const { camera, size } = useThree()
   useEffect(() => {
     const cam = camera as THREE.OrthographicCamera
-    cam.position.set(0, view === 'top' ? 6 : 5, view === 'top' ? 0.001 : 2.5)
+    cam.position.set(0, view === 'top' ? 6 : 4.8, view === 'top' ? 0.001 : 3.1)
     cam.up.set(0, 1, 0)
     cam.lookAt(0, 0, 0)
     cam.zoom = Math.min(size.width / 3.23, size.height / (view === 'top' ? 1.9 : 1.75))
     cam.updateProjectionMatrix()
   }, [camera, size.width, size.height, view])
   return null
-}
-
-function Cushion({ start, end, side }: { start: number; end: number; side: 'top' | 'bottom' | 'left' | 'right' }) {
-  const geometry = useMemo(() => {
-    const sideSign = side === 'top' || side === 'left' ? -1 : 1
-    const horizontal = side === 'top' || side === 'bottom'
-    const edge = horizontal ? DEPTH / 2 : WIDTH / 2
-    const points = [
-      [start, (edge + 0.003) * sideSign, CLOTH_Y + 0.035],
-      [end, (edge + 0.003) * sideSign, CLOTH_Y + 0.035],
-      [end + 0.042, (edge + 0.069) * sideSign, CLOTH_Y + 0.051],
-      [start - 0.042, (edge + 0.069) * sideSign, CLOTH_Y + 0.051],
-      [start, (edge + 0.003) * sideSign, CLOTH_Y],
-      [end, (edge + 0.003) * sideSign, CLOTH_Y],
-      [end + 0.042, (edge + 0.069) * sideSign, CLOTH_Y],
-      [start - 0.042, (edge + 0.069) * sideSign, CLOTH_Y],
-    ]
-    const vertices = points.flatMap(([a, b, height]) => horizontal ? [a, height, b] : [b, height, a])
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
-    geo.setIndex([0, 2, 1, 0, 3, 2, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7])
-    geo.computeVertexNormals()
-    return geo
-  }, [start, end, side])
-  useEffect(() => () => geometry.dispose(), [geometry])
-  return <mesh geometry={geometry} castShadow receiveShadow><meshStandardMaterial color="#286e5b" roughness={0.94} side={THREE.DoubleSide} /></mesh>
-}
-
-function TableBed() {
-  const cloth = useMemo(makeClothTexture, [])
-  const wood = useMemo(makeWoodTexture, [])
-  useEffect(() => () => { cloth.dispose(); wood.dispose() }, [cloth, wood])
-  return <group>
-    <RoundedBox args={[2.985, 0.19, 1.715]} radius={0.065} smoothness={4} position={[0, -0.065, 0]} castShadow receiveShadow>
-      <meshStandardMaterial color="#141b19" roughness={0.52} metalness={0.12} />
-    </RoundedBox>
-    <RoundedBox args={[2.955, 0.066, 1.685]} radius={0.015} smoothness={4} position={[0, 0.022, 0]} receiveShadow>
-      <meshStandardMaterial map={wood} roughness={0.55} metalness={0.08} />
-    </RoundedBox>
-    {[-1, 1].map(sign => <RoundedBox key={`long-rail-${sign}`} args={[2.945, 0.052, 0.14]} radius={0.018} smoothness={3} position={[0, 0.08, sign * 0.765]} receiveShadow castShadow>
-      <meshStandardMaterial map={wood} roughness={0.52} metalness={0.06} />
-    </RoundedBox>)}
-    {[-1, 1].map(sign => <RoundedBox key={`short-rail-${sign}`} args={[0.14, 0.052, 1.41]} radius={0.014} smoothness={3} position={[sign * 1.402, 0.079, 0]} receiveShadow castShadow>
-      <meshStandardMaterial map={wood} roughness={0.52} metalness={0.06} />
-    </RoundedBox>)}
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, CLOTH_Y, 0]} receiveShadow>
-      <planeGeometry args={[WIDTH + 0.035, DEPTH + 0.035]} />
-      <meshStandardMaterial map={cloth} roughness={1} />
-    </mesh>
-    {(['top', 'bottom'] as const).flatMap(side => [
-      <Cushion key={`${side}-a`} side={side} start={-WIDTH / 2 + CORNER_GAP} end={-SIDE_GAP} />,
-      <Cushion key={`${side}-b`} side={side} start={SIDE_GAP} end={WIDTH / 2 - CORNER_GAP} />,
-    ])}
-    <Cushion side="left" start={-DEPTH / 2 + CORNER_GAP} end={DEPTH / 2 - CORNER_GAP} />
-    <Cushion side="right" start={-DEPTH / 2 + CORNER_GAP} end={DEPTH / 2 - CORNER_GAP} />
-    {POCKET_POSITIONS.map(([x, z, side], i) => <group key={i} position={[x, CLOTH_Y + 0.002, z]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.006, 0]}>
-        <circleGeometry args={[side ? 0.075 : 0.079, 48]} />
-        <meshStandardMaterial color="#070d0a" roughness={0.8} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.007, 0]}>
-        <ringGeometry args={[side ? 0.067 : 0.071, side ? 0.075 : 0.079, 48]} />
-        <meshStandardMaterial color="#48413a" roughness={0.8} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]}>
-        <circleGeometry args={[side ? 0.064 : 0.068, 48]} />
-        <meshBasicMaterial color="#070c09" />
-      </mesh>
-    </group>)}
-    {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x) => [-1, 1].map(sign =>
-      <mesh key={`${x}-${sign}`} position={[x, 0.107, sign * 0.772]} rotation={[-Math.PI / 2, 0, Math.PI / 4]}>
-        <planeGeometry args={[0.012, 0.012]} /><meshStandardMaterial color="#d1cbbb" roughness={0.4} metalness={0.2} />
-      </mesh>))}
-    {[-0.3175, 0, 0.3175].flatMap((z) => [-1, 1].map(sign =>
-      <mesh key={`${z}-${sign}`} position={[sign * 1.407, 0.106, z]} rotation={[-Math.PI / 2, 0, Math.PI / 4]}>
-        <planeGeometry args={[0.012, 0.012]} /><meshStandardMaterial color="#d1cbbb" roughness={0.4} metalness={0.2} />
-      </mesh>))}
-    {/* Foot and head spots are physically placed at quarter-table distances. */}
-    {[WIDTH / 4, WIDTH * 3 / 4].map(x => <mesh key={x} position={[x - WIDTH / 2, CLOTH_Y + 0.0008, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[0.002, 0.004, 24]} /><meshBasicMaterial color="#a6bbaa" transparent opacity={0.42} depthWrite={false} />
-    </mesh>)}
-  </group>
 }
 
 function PlaybackDriver({ scenario, analysis, playing, playbackKey, onPlaybackEnd, runtime }: Pick<PoolTableProps, 'scenario' | 'analysis' | 'playing' | 'playbackKey' | 'onPlaybackEnd'> & { runtime: Runtime }) {
@@ -274,25 +175,28 @@ function PlaybackDriver({ scenario, analysis, playing, playbackKey, onPlaybackEn
 function PoolBall({ id, position, selected, interactive, onSelect, runtime }: { id: number; position: Vec2; selected: boolean; interactive: boolean; onSelect: (id: number) => void; runtime: Runtime }) {
   const group = useRef<THREE.Group>(null)
   const label = useRef<THREE.Mesh>(null)
+  const drop = useRef(0)
   const { camera } = useThree()
   const texture = useMemo(() => id ? makeNumberTexture(id) : null, [id])
   const stripe = useMemo(() => id > 8 ? makeStripeTexture(id) : null, [id])
+  const cap = useMemo(makeNumberCap, [])
+  const contact = useMemo(makeContactTexture, [])
   const [hovered, setHovered] = useState(false)
-  const direction = useMemo(() => new THREE.Vector3(), [])
-  useEffect(() => () => { texture?.dispose(); stripe?.dispose() }, [texture, stripe])
+  useEffect(() => () => { texture?.dispose(); stripe?.dispose(); cap.dispose(); contact.dispose() }, [texture, stripe, cap, contact])
   useEffect(() => {
     if (hovered && interactive) document.body.style.cursor = 'pointer'
     return () => { document.body.style.cursor = '' }
   }, [hovered, interactive])
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!group.current) return
     const state = runtime.balls.get(id)
     const p = state?.position || position
-    group.current.position.set(p.x - WIDTH / 2, BALL_Y, p.y - DEPTH / 2)
-    group.current.visible = !state?.pocketed
+    // The solver decides when a ball drops; this short visual fall only eases
+    // its disappearance into the pocket and never changes the shot outcome.
+    drop.current = state?.pocketed ? Math.min(1, drop.current + delta / 0.19) : 0
+    group.current.position.set(p.x - WIDTH / 2, BALL_Y - 0.15 * drop.current ** 2, p.y - DEPTH / 2)
+    group.current.visible = drop.current < 1
     if (label.current) {
-      camera.getWorldDirection(direction).negate()
-      label.current.position.copy(direction).multiplyScalar(RADIUS * 1.004)
       label.current.quaternion.copy(camera.quaternion)
     }
   })
@@ -302,13 +206,16 @@ function PoolBall({ id, position, selected, interactive, onSelect, runtime }: { 
   }
   return <group ref={group} position={toWorld(position, BALL_Y)}>
     <mesh castShadow onClick={onClick} onPointerDown={e => e.stopPropagation()} onPointerOver={e => { e.stopPropagation(); if (id) setHovered(true) }} onPointerOut={() => setHovered(false)}>
-      <sphereGeometry args={[RADIUS, 40, 28]} />
-      <meshPhysicalMaterial color={stripe ? '#ffffff' : COLORS[id] || '#f4ead5'} map={stripe} roughness={0.19} metalness={0} clearcoat={0.6} clearcoatRoughness={0.12} />
+      <sphereGeometry args={[RADIUS, 64, 40]} />
+      <meshPhysicalMaterial color={stripe ? '#ffffff' : COLORS[id] || '#f4ead5'} map={stripe} roughness={0.15} metalness={0} clearcoat={1} clearcoatRoughness={0.075} ior={1.57} envMapIntensity={1.2} />
     </mesh>
-    {texture && <mesh ref={label} raycast={() => null}>
-      <planeGeometry args={[RADIUS * 1.12, RADIUS * 1.12]} />
-      <meshBasicMaterial map={texture} transparent depthWrite={false} polygonOffset polygonOffsetFactor={-1} />
+    {texture && <mesh ref={label} geometry={cap} raycast={() => null}>
+      <meshPhysicalMaterial map={texture} transparent alphaTest={0.03} roughness={0.19} clearcoat={0.7} clearcoatRoughness={0.11} ior={1.57} envMapIntensity={0.9} depthWrite={false} polygonOffset polygonOffsetFactor={-1} />
     </mesh>}
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -RADIUS + 0.0006, 0]} raycast={() => null}>
+      <planeGeometry args={[RADIUS * 3.1, RADIUS * 3.1]} />
+      <meshBasicMaterial map={contact} transparent opacity={0.65} depthWrite={false} toneMapped={false} />
+    </mesh>
     {id !== 0 && interactive && <mesh visible={false} onClick={onClick} onPointerDown={e => e.stopPropagation()} onPointerOver={e => { e.stopPropagation(); setHovered(true) }} onPointerOut={() => setHovered(false)}>
       <sphereGeometry args={[RADIUS * 1.65, 12, 12]} /><meshBasicMaterial />
     </mesh>}
@@ -491,14 +398,8 @@ function Scene(props: PoolTableProps) {
   const missedObjectPaths = useMemo(() => analysis?.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map(trial => trial.path) ?? [], [analysis])
   return <>
     <CameraRig view={props.view} />
-    <ambientLight intensity={1.2} color="#dce6d9" />
-    <hemisphereLight args={['#eaf1e5', '#333c30', 1.25]} />
-    <directionalLight position={[-1.8, 4, -1.5]} intensity={2.3} color="#fff6dc" castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} shadow-normalBias={0.002} shadow-camera-left={-2} shadow-camera-right={2} shadow-camera-top={1.5} shadow-camera-bottom={-1.5} shadow-camera-near={0.1} shadow-camera-far={10} />
-    <directionalLight position={[2, 2, 2]} intensity={0.55} color="#d2e5e1" />
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.165, 0]} receiveShadow>
-      <planeGeometry args={[3.5, 2.25]} /><shadowMaterial transparent opacity={0.22} />
-    </mesh>
-    <TableBed />
+    <TableLighting />
+    <TableFurniture />
     <PlaybackDriver {...props} runtime={runtime} />
     {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} interactive={interactive && !playing && props.selectableBallIds.includes(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
     {selected && cue && !analysis && !playing && <PathLines paths={aimPath} color="#e1e9cd" opacity={0.38} dashed height={BALL_Y} />}
@@ -561,15 +462,37 @@ function FlatTable(props: PoolTableProps) {
   const badgePositions = separateBadges(props.finishOptions.map(option => ({ x: option.plan.target.x * 100, y: option.plan.target.y * 100 })), 42 / svgScale, { left: -22 + 19 / svgScale, right: 276 - 19 / svgScale, top: -24 + 19 / svgScale, bottom: 151 - 19 / svgScale })
   return <svg ref={svgRef} viewBox="-22 -24 298 175" width="100%" height="100%" role="group" aria-label="Interactive pool table, top view" style={{ display: 'block' }}>
     <defs>
-      <linearGradient id="table-cloth" x2="0.9" y2="1"><stop stopColor="#337b68" /><stop offset="1" stopColor="#256b59" /></linearGradient>
-      <radialGradient id="ball-shine" cx=".3" cy=".2" r=".8"><stop stopColor="white" stopOpacity=".65" /><stop offset=".45" stopColor="white" stopOpacity="0" /><stop offset="1" stopColor="black" stopOpacity=".3" /></radialGradient>
-      <filter id="ball-shadow" x="-1" y="-1" width="3" height="3"><feDropShadow dx=".3" dy=".8" stdDeviation=".7" floodOpacity=".45" /></filter>
+      <radialGradient id="table-cloth" cx=".45" cy=".38" r=".75"><stop stopColor="#248873" /><stop offset=".7" stopColor="#197763" /><stop offset="1" stopColor="#115a4d" /></radialGradient>
+      <linearGradient id="table-walnut" x2=".25" y2="1"><stop stopColor="#7e5034" /><stop offset=".16" stopColor="#54321f" /><stop offset=".48" stopColor="#71472b" /><stop offset=".9" stopColor="#452a1c" /><stop offset="1" stopColor="#9b7050" /></linearGradient>
+      <linearGradient id="cushion-fabric" x2=".3" y2="1"><stop stopColor="#45947a" /><stop offset=".28" stopColor="#277a61" /><stop offset="1" stopColor="#1a5946" /></linearGradient>
+      <filter id="wood-grain" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency=".025 .8" numOctaves="2" seed="8" /><feColorMatrix type="saturate" values="0" /><feBlend in="SourceGraphic" mode="soft-light" /></filter>
+      <filter id="cloth-weave" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="2.5" numOctaves="1" seed="3" /><feColorMatrix type="matrix" values="0 0 0 0 .3 0 0 0 0 .4 0 0 0 0 .35 0 0 0 .1 0" /><feBlend in="SourceGraphic" mode="soft-light" /></filter>
+      <radialGradient id="pocket-well" cx=".5" cy=".3"><stop stopColor="#070a08" /><stop offset=".72" stopColor="#080b09" /><stop offset="1" stopColor="#3d3024" /></radialGradient>
+      <radialGradient id="ball-shine" cx=".32" cy=".2" r=".8"><stop stopColor="white" stopOpacity=".85" /><stop offset=".16" stopColor="white" stopOpacity=".1" /><stop offset=".48" stopColor="white" stopOpacity="0" /><stop offset="1" stopColor="black" stopOpacity=".48" /></radialGradient>
+      <filter id="ball-shadow" x="-1" y="-1" width="3" height="3"><feDropShadow dx=".2" dy=".4" stdDeviation=".45" floodOpacity=".5" /></filter>
     </defs>
     <rect x="-19" y="-16" width="292" height="164" rx="7" fill="#121b17" />
-    <rect x="-18" y="-18" width="290" height="163" rx="6" fill="#322e26" stroke="#50483a" strokeWidth=".5" />
+    <rect x="-18" y="-18" width="290" height="163" rx="6" fill="url(#table-walnut)" stroke="#a9865c" strokeWidth=".35" filter="url(#wood-grain)" />
     <rect x="-4" y="-4" width="262" height="135" rx="2" fill="#235443" />
-    <rect width="254" height="127" fill="url(#table-cloth)" />
-    {POCKET_POSITIONS.map(([x, y, side], i) => <circle key={i} cx={(x + WIDTH / 2) * 100} cy={(y + DEPTH / 2) * 100} r={side ? 7 : 7.6} fill="#080e0b" stroke="#4a4339" strokeWidth="1.2" />)}
+    <rect width="254" height="127" fill="url(#table-cloth)" filter="url(#cloth-weave)" />
+    <g fill="url(#cushion-fabric)" stroke="#1b5342" strokeWidth=".25" pointerEvents="none">
+      {[-1, 1].flatMap(sign => {
+        const corner = TABLE.cornerMouth / Math.SQRT2 * 100
+        const halfSide = TABLE.sideMouth * 50
+        const edge = sign < 0 ? 0 : 127
+        const outer = edge + sign * 6.9
+        return [[corner, 127 - halfSide], [127 + halfSide, 254 - corner]].map(([a, b], i) =>
+          <polygon key={`long-${sign}-${i}`} points={`${a},${edge} ${b},${edge} ${b + 4.2},${outer} ${a - 4.2},${outer}`} />)
+      })}
+      {[-1, 1].map(sign => {
+        const corner = TABLE.cornerMouth / Math.SQRT2 * 100
+        const edge = sign < 0 ? 0 : 254
+        const outer = edge + sign * 6.9
+        return <polygon key={`short-${sign}`} points={`${edge},${corner} ${edge},${127 - corner} ${outer},${131.2 - corner} ${outer},${corner - 4.2}`} />
+      })}
+    </g>
+    <g pointerEvents="none" fill="none"><rect x="-16.8" y="-16.8" width="287.6" height="160.6" rx="5.2" stroke="#c09c68" strokeOpacity=".4" strokeWidth=".25" /><rect x="-3" y="-3" width="260" height="133" rx="1" stroke="#41917b" strokeWidth=".7" /><rect x=".3" y=".3" width="253.4" height="126.4" stroke="#0a3a2d" strokeOpacity=".4" strokeWidth=".65" /></g>
+    {POCKET_POSITIONS.map(([x, y, side], i) => <circle key={i} cx={(x + WIDTH / 2) * 100} cy={(y + DEPTH / 2) * 100} r={side ? 7 : 7.6} fill="url(#pocket-well)" stroke="#473425" strokeWidth="1.5" />)}
     {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x, i) => [-1, 1].map(sign => <rect key={`${i}-${sign}`} x={(x + WIDTH / 2) * 100 - .6} y={(sign * .772 + DEPTH / 2) * 100 - .6} width="1.2" height="1.2" fill="#bfb9a7" transform={`rotate(45 ${(x + WIDTH / 2) * 100} ${(sign * .772 + DEPTH / 2) * 100})`} />))}
     {showEnsemble && analysis && <g data-testid="ensemble-paths" fill="none" pointerEvents="none">
       {analysis.samplePaths.map((path, i) => <polyline key={`cue-${i}`} data-testid="cue-ensemble-path" points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".14" />)}
@@ -616,7 +539,7 @@ export default function PoolTable(props: PoolTableProps) {
   const fallback = <FlatTable {...props} />
   return <div className="pool-table-scene" style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
     {available ? <CanvasBoundary fallback={fallback}>
-      <Canvas orthographic camera={{ position: [0, 5, 2.5], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFSoftShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.05 }} style={{ touchAction: 'none' }}>
+      <Canvas orthographic camera={{ position: [0, 4.8, 3.1], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08 }} style={{ touchAction: 'none' }}>
         <Suspense fallback={null}><Scene {...props} /></Suspense>
       </Canvas>
     </CanvasBoundary> : fallback}
