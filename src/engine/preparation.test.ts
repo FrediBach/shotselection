@@ -48,7 +48,7 @@ describe('three feasible fixed finishes', () => {
     verifyPrepared(prepared);
   });
 
-  it.each([[1, 72350], [2, 118], [5, 9921], [8, 78220], [12, 123]])('offers stopped legal distinct finishes at level %s, seed %s', (level, seed) => {
+  it.each([[1, 72350], [10, 118], [20, 9921], [30, 78220], [40, 123], [50, 273], [60, 912]])('offers stopped legal distinct finishes at level %s, seed %s', (level, seed) => {
     verifyPrepared(prepareRound(generateScenario(level, seed)));
   }, 30000);
 

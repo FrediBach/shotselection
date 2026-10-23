@@ -1,6 +1,6 @@
 # Shot Selection
 
-A browser game about choosing a repeatable pool shot, taught through an 18-level course. Progress from one-ball training drills to open-table choices, position play, patterns, traffic, and tournament situations. Select an object ball and one of three stroke options, then compare small variations in aim, pace, and spin to see which plan holds up best. Position lessons ask you to predict the cue-ball finish from the stroke before revealing its outcome.
+A browser game about choosing a repeatable pool shot, taught through a 60-level course. Progress from one-ball training drills to open-table choices, position play, patterns, traffic, and tournament situations. Select an object ball and one of three stroke options, then compare small variations in aim, pace, and spin to see which plan holds up best. Position lessons ask you to predict the cue-ball finish from the stroke before revealing its outcome.
 
 Built with Vite, React, TypeScript, three.js / React Three Fiber, cannon-es, and shadcn-style Radix UI components.
 
@@ -47,22 +47,22 @@ The sidebar shows one step at a time so its controls fit without scrolling at no
 
 Each round awards 0–100 points in steps of 10. Up to 70 points reflect how close your shot's ensemble quality is to the best offered plan, and up to 30 reflect its rank among all offered choices. The Result step shows both contributions and their sum; each comparison card also shows its rank and round score. Both potting the chosen ball and controlling the cue-ball finish matter.
 
-Score and progress are saved in this browser's local storage. Existing totals from the old 0 / 0.5 / 1 scoring system are converted once to the new scale by multiplying by 100, preserving completed rounds, perfect choices, level, and layout sequence. Completing a round saves the next unplayed level, so reloading after a verdict advances rather than scoring the same round twice. Restarting the session clears that progress and starts a new course. Older endless sessions map completed levels into the 18-level course, capped at completion, while preserving earned points, rounds, perfect choices, and the seed.
+Score and progress are saved in this browser's local storage. Existing totals from the old 0 / 0.5 / 1 scoring system are converted once to the new scale by multiplying by 100, preserving completed rounds, perfect choices, level, and layout sequence. Completing a round saves the next unplayed level, so reloading after a verdict advances rather than scoring the same round twice. Restarting the session clears that progress and starts a new course. Older endless sessions map completed levels into the 60-level course, capped at completion, while preserving earned points, rounds, perfect choices, and the seed. Saved progress from the earlier 18-level course keeps its completed count and earned statistics; a finished 18-level course continues at level 19 without crediting or scoring unplayed levels.
 
 ## Course progression and position lessons
 
-The course contains six scenarios, each with three numbered levels:
+The course contains six scenarios, each with ten numbered levels:
 
 | Levels | Scenario | Learning focus |
 | --- | --- | --- |
-| 1–3 | First strokes | One-ball pots, contact lines, and cue-ball movement |
-| 4–6 | Everyday pool | Comparing open pots, distance, angle, and stroke choice |
-| 7–9 | Play for position | Landing in a useful zone for a defined next ball |
-| 10–12 | Build a pattern | Reading the whole table and planning backward |
-| 13–15 | Navigate traffic | Clear corridors and reliable position among blockers |
-| 16–18 | Tournament table | Combining longer pots, smaller zones, and stricter next-ball angles |
+| 1–10 | First strokes | One-ball pots, contact lines, and cue-ball movement |
+| 11–20 | Everyday pool | Comparing open pots, distance, angle, and stroke choice |
+| 21–30 | Play for position | Landing in a useful zone for a defined next ball |
+| 31–40 | Build a pattern | Reading the whole table and planning backward |
+| 41–50 | Navigate traffic | Clear corridors and reliable position among blockers |
+| 51–60 | Tournament table | Combining longer pots, smaller zones, and stricter next-ball angles |
 
-Each level has an authored layout, an objective, a short lesson, a specific teaching tip, and a result takeaway. Within each scenario, the briefing progresses from **New scenario** to **Build your skill** to **Put it together**: introduce the task, develop the earlier skill, then apply it with another constraint. Seeded reflections vary table orientation while retaining the teaching problem. The header shows completed levels, course percentage, and progress within each scenario. Completion measures lessons played; the existing 0–100 round score measures decision quality. A low score still advances the course so the result can serve as a lesson. Completing level 18 saves a completed course; reloading opens its summary without awarding points again. Starting a new course resets the session.
+Each level has an authored layout, an objective, a short lesson, a specific teaching tip, and a result takeaway. Within each scenario, level 1 uses **New scenario** to introduce the task, levels 2–6 use **Build your skill** to develop it, and levels 7–10 use **Put it together** to apply the earlier skills with more demanding constraints. Later levels increase the demands on potting, cue-ball control, and table reading; position lessons progressively narrow the landing zone and allowed next-ball angle. Seeded reflections vary table orientation while retaining the teaching problem. The header shows completed levels, course percentage, and progress within each scenario. Completion measures lessons played; the existing 0–100 round score measures decision quality. A low score still advances the course so the result can serve as a lesson. Completing level 60 saves a completed course; reloading opens its summary without awarding points again. Starting a new course resets the session.
 
 Position lessons define the first object ball and reserve a second ball for the next shot. A cyan zone marks the required cue-ball destination, and a ring highlights the reserved ball; the legend identifies both without text covering the cloth. Choose A/B/C from the sidebar's stroke profiles using the pocket, cue-ball speed, and backspin or topspin. Infer the likely route and stopping point from those settings and the table geometry. No candidate endpoint, path, or finish preview appears before commitment. After locking in the choice, inspect the simulated outcomes and compare them with your prediction. All three nominal strokes can pot the first ball; only outcomes satisfying the complete assignment count as successes.
 
@@ -98,7 +98,7 @@ The game evaluates each candidate with 64 seeded Monte Carlo runs. (The engine's
 | Draw/follow spin | 0.085 of natural rolling spin |
 | Side spin | 3 radians/second |
 
-Candidates use the same random draws to make their comparison less noisy. For ordinary lessons, the target zone starts with a 19 cm radius and shrinks by 6% per level to an 8 cm minimum: `max(0.08, 0.19 × 0.94^(level - 1))` metres. A successful run must contact the selected ball first, pot it, avoid a scratch, and finish the cue ball inside that zone. Position lessons instead use their shared objective zone and also require the next-ball route described above. The visible ring uses this same acceptance radius.
+Candidates use the same random draws to make their comparison less noisy. For ordinary lessons, the target radius decreases gradually across all 60 course levels, from 19 cm at level 1 to 8 cm at level 60: `0.19 × (0.08 / 0.19)^((level - 1) / 59)` metres, with the level clamped to the course range. A successful run must contact the selected ball first, pot it, avoid a scratch, and finish the cue ball inside that zone. Position lessons instead use their shared objective zone and also require the next-ball route described above. The visible ring uses this same acceptance radius.
 
 Preparation and analysis run in Web Workers to keep the interface responsive. The WebGL table and SVG fallback show the selected object ball's trajectories from all 64 scored trials, plus the first 24 cue-ball paths. Cyan object paths represent pots after correct first contact; coral paths represent misses or pots after incorrect first contact. Pale gold paths show the cue ball. Object paths include the actual simulated drop position instead of stopping at the last animation frame before the pocket.
 

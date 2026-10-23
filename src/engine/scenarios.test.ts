@@ -1,59 +1,81 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeShot } from './analysis';
-import { TABLE } from './constants';
+import { TABLE, positionToleranceForLevel } from './constants';
 import { distance } from './math';
 import { evaluateShotObjective } from './objectives';
 import { simulateShot } from './physics';
 import { prepareRound } from './preparation';
-import { COURSE_CHAPTERS, generateScenario, getCourseProgress, TOTAL_LEVELS } from './scenarios';
+import { COURSE_CHAPTERS, generateScenario, getCourseProgress, LEVELS_PER_CHAPTER, TOTAL_LEVELS } from './scenarios';
 
 describe('authored pool curriculum', () => {
-  it('covers every level once with six distinct three-lesson chapters', () => {
+  it('covers every level once with six distinct ten-lesson chapters', () => {
     expect(COURSE_CHAPTERS).toHaveLength(6);
+    expect(LEVELS_PER_CHAPTER).toBe(10);
+    expect(TOTAL_LEVELS).toBe(60);
     expect(COURSE_CHAPTERS.flatMap(chapter => Array.from({ length: chapter.lastLevel - chapter.firstLevel + 1 }, (_, index) => chapter.firstLevel + index)))
       .toEqual(Array.from({ length: TOTAL_LEVELS }, (_, index) => index + 1));
-    const scenarios = Array.from({ length: TOTAL_LEVELS }, (_, index) => generateScenario(index + 1));
+    const scenarios = Array.from({ length: TOTAL_LEVELS }, (_, index) => generateScenario(index + 1, 0));
     expect(new Set(scenarios.map(scenario => scenario.title)).size).toBe(TOTAL_LEVELS);
+    expect(new Set(scenarios.map(scenario => JSON.stringify([scenario.balls, scenario.objective]))).size).toBe(TOTAL_LEVELS);
     expect(new Set(scenarios.map(scenario => scenario.curriculum!.lesson)).size).toBe(TOTAL_LEVELS);
     expect(new Set(scenarios.map(scenario => scenario.curriculum!.takeaway)).size).toBe(TOTAL_LEVELS);
     expect(new Set(scenarios.map(scenario => scenario.curriculum!.briefing?.focus)).size).toBe(TOTAL_LEVELS);
     expect(new Set(scenarios.map(scenario => scenario.curriculum!.briefing?.gotcha)).size).toBe(TOTAL_LEVELS);
     for (const chapter of COURSE_CHAPTERS) {
       const lessons = scenarios.slice(chapter.firstLevel - 1, chapter.lastLevel);
-      expect(lessons.map(scenario => scenario.curriculum!.briefing?.stage)).toEqual(['introduce', 'develop', 'apply']);
+      expect(lessons).toHaveLength(LEVELS_PER_CHAPTER);
+      expect(lessons.map(scenario => scenario.curriculum!.briefing?.stage)).toEqual(['introduce', ...Array(5).fill('develop'), ...Array(4).fill('apply')]);
       for (const scenario of lessons) {
         const briefing = scenario.curriculum!.briefing!;
         expect(briefing.focus.trim().length).toBeGreaterThan(0);
         expect(briefing.gotcha.trim().length).toBeGreaterThan(0);
       }
     }
-    expect(scenarios.slice(0, 3).every(scenario => scenario.balls.length === 2 && !scenario.objective)).toBe(true);
-    expect(scenarios.filter(scenario => scenario.objective)).toHaveLength(10);
-    expect(scenarios.at(-1)!.objective!.radius).toBeLessThan(scenarios[6].objective!.radius);
-    expect(scenarios.at(-1)!.objective!.maxCutAngle).toBeLessThan(scenarios[6].objective!.maxCutAngle);
+    expect(scenarios.slice(0, 10).every(scenario => scenario.balls.length === 2 && !scenario.objective)).toBe(true);
+    expect(scenarios.slice(10, 20).every(scenario => scenario.balls.length >= 3 && !scenario.objective)).toBe(true);
+    expect(scenarios.slice(20, 30).every(scenario => scenario.objective)).toBe(true);
+  });
+
+  it('tightens finishing precision throughout each scenario and next-shot requirements across position lessons', () => {
+    for (const chapter of COURSE_CHAPTERS) {
+      for (let level = chapter.firstLevel + 1; level <= chapter.lastLevel; level++) {
+        expect(positionToleranceForLevel(level)).toBeLessThan(positionToleranceForLevel(level - 1));
+      }
+    }
+    expect(positionToleranceForLevel(1)).toBe(0.19);
+    expect(positionToleranceForLevel(TOTAL_LEVELS)).toBeCloseTo(0.08, 12);
+    const objectives = Array.from({ length: TOTAL_LEVELS }, (_, index) => generateScenario(index + 1).objective).filter(objective => objective !== undefined);
+    expect(objectives).toHaveLength(38);
+    expect(objectives[0]).toMatchObject({ radius: 0.20, maxCutAngle: 65 });
+    expect(objectives.at(-1)).toMatchObject({ radius: 0.12, maxCutAngle: 40 });
+    for (let index = 1; index < objectives.length; index++) {
+      expect(objectives[index].radius).toBeLessThan(objectives[index - 1].radius);
+      expect(objectives[index].maxCutAngle).toBeLessThanOrEqual(objectives[index - 1].maxCutAngle);
+    }
   });
 
   it('keeps numbered lessons, chapter position and completion percentage aligned', () => {
-    expect(getCourseProgress(0)).toMatchObject({ completedLevels: 0, totalLevels: 18, percentage: 0, complete: false, chapterIndex: 0, lessonIndex: 0 });
-    expect(getCourseProgress(3)).toMatchObject({ percentage: 17, chapterIndex: 1, lessonIndex: 0 });
-    expect(getCourseProgress(9)).toMatchObject({ percentage: 50, chapterIndex: 3, lessonIndex: 0 });
-    expect(getCourseProgress(17)).toMatchObject({ percentage: 94, complete: false, chapterIndex: 5, lessonIndex: 2 });
-    expect(getCourseProgress(18)).toMatchObject({ percentage: 100, complete: true, completedLevels: 18 });
-    expect(getCourseProgress(99)).toEqual(getCourseProgress(18));
+    expect(getCourseProgress(0)).toMatchObject({ completedLevels: 0, totalLevels: 60, percentage: 0, complete: false, chapterIndex: 0, lessonIndex: 0, lessonCount: 10 });
+    expect(getCourseProgress(9)).toMatchObject({ percentage: 15, chapterIndex: 0, lessonIndex: 9 });
+    expect(getCourseProgress(10)).toMatchObject({ percentage: 17, chapterIndex: 1, lessonIndex: 0 });
+    expect(getCourseProgress(30)).toMatchObject({ percentage: 50, chapterIndex: 3, lessonIndex: 0 });
+    expect(getCourseProgress(59)).toMatchObject({ percentage: 98, complete: false, chapterIndex: 5, lessonIndex: 9 });
+    expect(getCourseProgress(60)).toMatchObject({ percentage: 100, complete: true, completedLevels: 60 });
+    expect(getCourseProgress(99)).toEqual(getCourseProgress(60));
     expect(getCourseProgress(-10)).toEqual(getCourseProgress(0));
     expect(getCourseProgress(Number.NaN)).toEqual(getCourseProgress(0));
     expect(generateScenario(-1).level).toBe(1);
     expect(generateScenario(Number.NaN).level).toBe(1);
     expect(generateScenario(Number.POSITIVE_INFINITY).seed).toBe(72350);
-    expect(generateScenario(99).level).toBe(18);
+    expect(generateScenario(99).level).toBe(60);
   });
 
   // These seeds cover all four reflected orientations of every authored table.
   it.each(Array.from({ length: TOTAL_LEVELS }, (_, index) => [0, 1, 5, 8].map(seed => [index + 1, seed])).flat())('prepares authored level %i, seed %i without discarding its layout or learning objective', (level, seed) => {
     const scenario = generateScenario(level, seed);
     expect(generateScenario(level, seed)).toEqual(scenario);
-    const chapter = COURSE_CHAPTERS[Math.floor((level - 1) / 3)];
-    expect(scenario.curriculum).toMatchObject({ chapterId: chapter.id, chapterTitle: chapter.title, chapterIndex: Math.floor((level - 1) / 3), lessonIndex: (level - 1) % 3, lessonCount: 3 });
+    const chapter = COURSE_CHAPTERS[Math.floor((level - 1) / LEVELS_PER_CHAPTER)];
+    expect(scenario.curriculum).toMatchObject({ chapterId: chapter.id, chapterTitle: chapter.title, chapterIndex: Math.floor((level - 1) / LEVELS_PER_CHAPTER), lessonIndex: (level - 1) % LEVELS_PER_CHAPTER, lessonCount: LEVELS_PER_CHAPTER });
     for (const ball of scenario.balls) {
       expect(ball.position.x).toBeGreaterThan(TABLE.ballRadius);
       expect(ball.position.x).toBeLessThan(TABLE.length - TABLE.ballRadius);
@@ -67,7 +89,7 @@ describe('authored pool curriculum', () => {
     expect(prepared.scenario.curriculum).toEqual(scenario.curriculum);
     expect(prepared.balls.length).toBeGreaterThan(0);
     expect(prepared.balls.flatMap(ball => ball.options).some(option => analyzeShot(prepared.scenario, option.plan, 32).successRate > 0)).toBe(true);
-    if (level <= 6) expect(prepared.balls.map(ball => ball.ballId)).toEqual(scenario.balls.filter(ball => ball.id !== 0).map(ball => ball.id));
+    if (level <= 20) expect(prepared.balls.map(ball => ball.ballId)).toEqual(scenario.balls.filter(ball => ball.id !== 0).map(ball => ball.id));
     if (!scenario.objective) return;
     expect(prepared.scenario.objective).toMatchObject(scenario.objective);
     expect(prepared.scenario.objective!.target).toBeDefined();

@@ -1,4 +1,4 @@
-import { TOTAL_LEVELS } from '../engine/scenarios'
+import { TOTAL_LEVELS } from '../engine/course'
 
 export type Session = {
   scoringVersion: 2
@@ -44,7 +44,8 @@ export function loadSession(): Session {
       return freshSession()
     }
     if (!nonnegativeInteger(points) || points % 10 !== 0 || points > rounds * 100) return freshSession()
-    // Old levels map to the course while keeping earned points and the layout seed.
+    // Keep completed counts when the course expands; do not credit unplayed lessons.
+    // Older endless sessions are capped to the current course length.
     const completed = completedLessons === undefined ? Math.min(level - 1, rounds, TOTAL_LEVELS) : completedLessons
     if (!nonnegativeInteger(completed) || completed > TOTAL_LEVELS || completed > rounds) return freshSession()
     if (completedLessons !== undefined && level !== completed + 1) return freshSession()

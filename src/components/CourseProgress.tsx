@@ -17,7 +17,7 @@ export default function CourseProgress({ completed, scenario }: { completed: num
       const count = Math.max(0, Math.min(chapter.lastLevel - chapter.firstLevel + 1, completed - chapter.firstLevel + 1))
       return <li key={chapter.id} className={done ? 'chapter-done' : current ? 'chapter-current' : ''} aria-current={current ? 'step' : undefined}>
         <span className="chapter-number">{done ? <Check size={13} /> : index === COURSE_CHAPTERS.length - 1 ? <Flag size={13} /> : String(index + 1).padStart(2, '0')}</span>
-        <span><strong>{chapter.title}</strong><small>Levels {chapter.firstLevel}–{chapter.lastLevel}<span> · {count}/3</span></small></span>
+        <span><strong>{chapter.title}</strong><small>Levels {chapter.firstLevel}–{chapter.lastLevel}<span> · {count}/{chapter.lastLevel - chapter.firstLevel + 1}</span></small></span>
       </li>
     })}</ol>
   </section>
@@ -27,7 +27,7 @@ export function CourseCompletion({ score, perfect, rounds, onRestart, headingRef
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }) }, [headingRef])
   return <section className="course-finished" aria-label="Course complete">
     <div className="completion-emblem"><Trophy size={36} /></div>
-    <span className="eyebrow">18 LESSONS. A STRONGER TABLE SENSE.</span>
+    <span className="eyebrow">{TOTAL_LEVELS} LESSONS. A STRONGER TABLE SENSE.</span>
     <h2 ref={headingRef} tabIndex={-1}>From your first pot to the final frame.</h2>
     <p>You’ve completed the course: reading pots, controlling the cue ball, planning the next shot, and choosing a route through tournament traffic.</p>
     <div className="completion-stats"><div><strong>100%</strong><span>Course complete</span></div><div><strong>{score}</strong><span>Session points</span></div><div><strong>{rounds ? Math.round(score / (rounds * 100) * 100) : 0}%</strong><span>Selection accuracy</span></div><div><strong>{perfect}</strong><span>Perfect choices</span></div></div>

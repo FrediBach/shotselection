@@ -1,4 +1,5 @@
 import type { Pocket } from './types';
+import { TOTAL_LEVELS } from './course';
 
 export const TABLE = {
   length: 2.54,
@@ -32,8 +33,11 @@ export const POCKETS: Pocket[] = [
   { id: 5, name: 'bottom left', position: { x: 0, y: 1.27 }, kind: 'corner' },
 ];
 
-/** Higher levels ask for a tighter finish as traffic and shot angles increase. */
-export const positionToleranceForLevel = (level: number) => Math.max(0.08, TABLE.positionTolerance * 0.94 ** Math.max(0, level - 1));
+/** Tighten the finish throughout the course, reaching 8 cm at its final level. */
+export const positionToleranceForLevel = (level: number) => {
+  const progress = Number.isFinite(level) ? Math.max(0, Math.min(1, (level - 1) / (TOTAL_LEVELS - 1))) : 0;
+  return TABLE.positionTolerance * (0.08 / TABLE.positionTolerance) ** progress;
+};
 
 export const PHYSICS_NOTES = {
   model: 'Cannon-es sphere collisions at 240 Hz; sliding-to-rolling cloth friction, draw/follow, side spin, finite cushion jaws and six pocket openings.',

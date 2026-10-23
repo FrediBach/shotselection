@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeShot } from './analysis';
-import { POCKETS } from './constants';
+import { POCKETS, TABLE } from './constants';
 import { distance, normalRandom, seededRandom } from './math';
 import { simulateShot } from './physics';
 import { prepareRound } from './preparation';
@@ -16,7 +16,11 @@ const stroke: ShotPlan = { id: 'straight', ballId: 1, pocketId: 1, target: { x: 
 
 describe('object-ball ensemble trajectories', () => {
   it('exports every exact trial and makes the pot count agree with potRate', () => {
-    const prepared = prepareRound(generateScenario(6, 72350));
+    // Keep the mix of pots and misses independent of curriculum layout changes.
+    const prepared = prepareRound({
+      level: 6, seed: 72350, title: 'Three-ball trajectories', description: 'Trajectory fixture',
+      balls: [[0.73, 0.83], [1.16, 0.33], [1.84, 0.39], [1.88, 0.95]].map(([x, y], id) => ({ id, position: { x: TABLE.length - x, y } })),
+    });
     const option = prepared.balls.find(ball => ball.ballId === 3)!.options[0];
     const result = analyzeShot(prepared.scenario, option.plan, 64);
     expect(result.sampleObjectPaths).toHaveLength(64);

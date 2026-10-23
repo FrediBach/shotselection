@@ -3,7 +3,7 @@ import { analyzeRound, analyzeShot, pointsFor } from './analysis';
 import { TABLE, positionToleranceForLevel } from './constants';
 import { distance } from './math';
 import { simulateShot } from './physics';
-import { generateScenario } from './scenarios';
+import { generateScenario, TOTAL_LEVELS } from './scenarios';
 import { prepareRound } from './preparation';
 import type { Scenario, ShotPlan } from './types';
 
@@ -22,7 +22,7 @@ describe('physical simulation', () => {
     expect(TABLE.width).toBe(1.27);
     expect(TABLE.ballDiameter).toBe(0.05715);
     expect(generateScenario(4, 101)).toEqual(generateScenario(4, 101));
-    for (let level = 1; level <= 12; level++) {
+    for (let level = 1; level <= TOTAL_LEVELS; level++) {
       const scenario = generateScenario(level);
       for (const ball of scenario.balls) {
         expect(ball.position.x).toBeGreaterThan(TABLE.ballRadius);
@@ -107,6 +107,7 @@ describe('shot-selection scoring', () => {
   it('tightens position precision as levels advance without becoming impossible', () => {
     expect(positionToleranceForLevel(1)).toBe(0.19);
     expect(positionToleranceForLevel(8)).toBeLessThan(positionToleranceForLevel(4));
+    expect(positionToleranceForLevel(TOTAL_LEVELS)).toBeLessThan(positionToleranceForLevel(TOTAL_LEVELS - 1));
     expect(positionToleranceForLevel(100)).toBe(0.08);
   });
   it('scores only the offered plans and preserves the exact chosen stroke', () => {

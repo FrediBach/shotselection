@@ -2,7 +2,7 @@ import type { Ref } from 'react'
 import { ArrowRight, Focus, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DialogDescription, DialogTitle } from '@/components/ui/dialog'
-import { TOTAL_LEVELS } from '@/engine/scenarios'
+import { LEVELS_PER_CHAPTER, TOTAL_LEVELS } from '@/engine/scenarios'
 import type { Scenario } from '@/engine/types'
 
 const stageLabels = {
@@ -20,7 +20,7 @@ export default function LevelBriefing({ scenario, headingRef, onStart, reviewing
   const { curriculum, objective } = scenario
   const briefing = curriculum?.briefing
   const lessonIndex = curriculum?.lessonIndex ?? 0
-  const lessonCount = curriculum?.lessonCount ?? 3
+  const lessonCount = curriculum?.lessonCount ?? LEVELS_PER_CHAPTER
 
   return <>
     <div className="briefing-meta">

@@ -91,9 +91,9 @@ describe('one position objective across scoring and tolerance', () => {
 
 describe('preparing a position lesson', () => {
   const layout: Scenario = {
-    level: 7, seed: 273, title: 'Make the next shot', description: 'Choose a useful leave.',
+    level: 21, seed: 273, title: 'Make the next shot', description: 'Choose a useful leave.',
     objective: { kind: 'position', ballId: 1, nextBallId: 2, radius: 0.16, maxCutAngle: 60 },
-    curriculum: { chapterId: 'position', chapterTitle: 'Position play', chapterIndex: 2, lessonIndex: 1, lessonCount: 3, lesson: 'Leave a clear angle.', takeaway: 'Plan the second shot first.' },
+    curriculum: { chapterId: 'position', chapterTitle: 'Position play', chapterIndex: 2, lessonIndex: 0, lessonCount: 10, lesson: 'Leave a clear angle.', takeaway: 'Plan the second shot first.' },
     balls: [
       { id: 0, position: { x: 0.73, y: 0.83 } },
       { id: 1, position: { x: 1.16, y: 0.33 } },
