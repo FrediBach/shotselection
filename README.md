@@ -190,4 +190,10 @@ For further physical validation, [Mathavan, Jackson, and Parkin's cushion-impact
 
 ## Deployment
 
-The intended public address is **shotselection.app**. This repository does not register the domain, configure DNS or TLS, or publish the site. A production deployment can serve the contents of `dist/` on a static host, with the domain connected separately.
+The production address is **https://shotselection.app/**. Import the repository into Vercel; `vercel.json` selects Vite, installs with `npm ci`, builds with `npm run build`, and serves `dist/`. It also sets basic response security headers and immutable caching for Vite's hashed assets. The app uses one root URL, so no catch-all route rewrite is needed.
+
+Add `shotselection.app` in the Vercel project's Domains settings and apply the DNS records Vercel provides. If adding `www.shotselection.app`, configure it to redirect to the apex domain. Domain registration, DNS changes, and deployment are separate from these repository settings. See [Vercel's configuration reference](https://vercel.com/docs/project-configuration/vercel-json).
+
+`index.html` contains the canonical URL, Open Graph metadata, and Twitter card metadata so crawlers can read them without JavaScript. `public/` includes landscape and square social images, the web app manifest and app icons, `robots.txt`, and a single-page sitemap. The manifest supports standalone display; it does not provide offline play.
+
+The social images use the app's green-and-gold palette, and the app icons derive from `public/favicon.svg`. To regenerate these checked-in PNG files, run `npm run assets:brand` with Playwright's Chromium installed (`npx playwright install chromium`), or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to a compatible Chrome executable. On macOS the generator also detects the standard Google Chrome installation. Asset generation is not required during deployment.

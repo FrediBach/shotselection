@@ -147,6 +147,7 @@ svg { flex-shrink: 0; }
 .site-footer > span:first-child { font-size: 0.75rem; letter-spacing: 1.6px; }
 .site-footer > button { min-height: 28px; text-align: left; background: none; border: 0; font-size: 0.75rem; display: flex; align-items: center; gap: 7px; color: var(--muted); }
 .site-footer .live-dot { height: 4px; width: 4px; background: #829973; }
+.site-footer > a:hover { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
 .simulation-overlay { padding: 20px; text-align: center; position: absolute; inset: 0; background: #141c15c9; backdrop-filter: blur(3px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--gold); z-index: 4; }
 .simulation-overlay strong { color: #eee9de; font-size: 1rem; font-weight: 450; }
 .simulation-overlay span { color: #a7b39b; font-size: 0.875rem; }

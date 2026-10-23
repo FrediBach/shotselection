@@ -269,7 +269,7 @@ export default function App() {
       {result && inspected && <ShotTolerancePanel key={`${scenario.level}-${scenario.seed}`} scenario={scenario} shot={inspected} best={result.best} shotLabel={`${shotLabel(inspected.plan)} · ${finishLabel(inspected.plan.id)}`} bestLabel={`${shotLabel(result.best.plan)} · ${finishLabel(result.best.plan.id)}`} isSelection={inspected.plan.id === result.selected.plan.id} />}
       </>}
       </>}
-      <footer className="site-footer"><span>PLAY THE PERCENTAGES.</span><button aria-haspopup="dialog" onClick={event => openModal('physics', event.currentTarget)}><span className="live-dot" /> Regulation dimensions. Simulated outcomes. <ArrowRight size={12} /></button><span>shotselection.app</span></footer>
+      <footer className="site-footer"><span>PLAY THE PERCENTAGES.</span><button aria-haspopup="dialog" onClick={event => openModal('physics', event.currentTarget)}><span className="live-dot" /> Regulation dimensions. Simulated outcomes. <ArrowRight size={12} /></button><a href="https://fredibach.com">© 2026 Fredi Bach</a></footer>
     </main>
 
     <Dialog open={modal !== null} onOpenChange={open => { if (!open) closeModal() }}><DialogContent
