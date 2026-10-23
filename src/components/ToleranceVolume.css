@@ -1,0 +1,75 @@
+.tolerance-volume { min-width: 0; border: 1px solid #a4b98c26; border-radius: 9px; background: #182019; overflow: hidden; }
+.tolerance-volume-heading { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 22px 22px 16px; }
+.tolerance-volume-eyebrow { color: #8c9d7f; font-size: 8px; font-weight: 500; letter-spacing: 1.5px; }
+.tolerance-volume-heading h3 { margin: 7px 0 0; color: #dfe5d6; font-size: 17px; font-weight: 450; letter-spacing: -.35px; }
+.tolerance-volume-heading .tolerance-volume-shot-label { margin: 6px 0 0; color: #a5b496; font-size: 10px; line-height: 1.4; }
+.tolerance-volume-share { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.tolerance-volume-share strong { color: #bed5a7; font-size: 29px; font-weight: 400; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -1px; }
+.tolerance-volume-share strong > span { font-size: 16px; padding-left: 1px; }
+.tolerance-volume-share > span { font-size: 8px; color: #8b9b80; white-space: nowrap; }
+.tolerance-volume-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 0 22px 15px; }
+.tolerance-volume-modes { display: flex; padding: 3px; gap: 3px; border: 1px solid #9bac811c; border-radius: 5px; background: #10180f66; }
+.tolerance-volume-modes button { border: 0; border-radius: 3px; padding: 7px 10px; background: transparent; color: #8d9c80; font-size: 10px; }
+.tolerance-volume-modes button[aria-pressed='true'] { background: #b2c09418; color: #d8e2c9; box-shadow: 0 1px 2px #0002; }
+.tolerance-volume-modes button:hover { color: #e6eddd; }
+.tolerance-volume-toggle { display: inline-flex; align-items: center; gap: 7px; color: #9baa90; font-size: 9px; cursor: pointer; }
+.tolerance-volume-toggle input { margin: 0; width: 13px; height: 13px; accent-color: #b7ca9f; }
+.tolerance-volume-stage { position: relative; border-block: 1px solid #a4b98c13; background: radial-gradient(ellipse at 50% 48%, #a3bb7a0a, transparent 67%), #141b15; }
+.tolerance-volume-plot { display: block; width: 100%; height: auto; max-height: 420px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.tolerance-volume-plot:active { cursor: grabbing; }
+.tolerance-volume-plot:focus-visible { outline: 2px solid #e6ba7a; outline-offset: -4px; }
+.tolerance-volume-cube line { stroke: #a8b9952e; stroke-width: 1; }
+.tolerance-volume-axis { stroke: currentColor; stroke-width: 1; stroke-opacity: .45; stroke-dasharray: 4 5; }
+.tolerance-axis-angle { color: #dbc293; fill: #dbc293; }
+.tolerance-axis-sideSpin { color: #98bfbb; fill: #98bfbb; }
+.tolerance-axis-speed { color: #b7add0; fill: #b7add0; }
+.tolerance-volume-axis-label { font-size: 12px; font-weight: 500; paint-order: stroke; stroke: #141b15; stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+.tolerance-volume-axis-value { fill: #a3af98; font-size: 11px; font-weight: 400; }
+.tolerance-volume-point-success { fill: #c0dda5; stroke: #d8edc8; stroke-width: .6; }
+.tolerance-volume-point-pot { fill: #c4a574; opacity: .5; }
+.tolerance-volume-point-miss { fill: #9aa88e; opacity: .25; }
+.tolerance-volume-point-unavailable { fill: none; stroke: #879286; stroke-width: .8; opacity: .65; }
+.tolerance-volume-origin { stroke: #efbf79; fill: #172018; stroke-width: 1.6; pointer-events: none; }
+.tolerance-volume-origin circle:last-child { fill: #efbf79; stroke: none; }
+.tolerance-volume-slice-plane { fill: #b4a6d10a; stroke: #b4a6d14d; stroke-width: 1; }
+.tolerance-volume-empty { position: absolute; inset: 12px 12px auto; text-align: center; font-size: 10px; color: #bbc5b0; padding: 8px; pointer-events: none; }
+.tolerance-volume-controls { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 0 16px 14px; }
+.tolerance-volume-controls > span { color: #7e9072; font-size: 9px; }
+.tolerance-volume-controls > div { display: flex; gap: 4px; }
+.tolerance-volume-controls button { display: grid; place-items: center; min-width: 31px; min-height: 29px; padding: 5px; border: 1px solid #a5b78e22; border-radius: 4px; background: #28332266; color: #adbe9b; }
+.tolerance-volume-controls button:last-child { margin-left: 5px; }
+.tolerance-volume-controls button:hover { background: #a5b78e22; color: #e0eacb; }
+.tolerance-volume-slice-control { padding: 16px 22px 12px; border-bottom: 1px solid #a4b98c13; }
+.tolerance-volume-slice-control label { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 10px; color: #8d9f7e; }
+.tolerance-volume-slice-control strong { font-size: 10px; font-weight: 500; color: #c6bdd8; font-variant-numeric: tabular-nums; }
+.tolerance-volume-slice-control input { display: block; width: 100%; accent-color: #b7add0; margin: 13px 0 7px; cursor: pointer; }
+.tolerance-volume-slice-control > div { display: flex; justify-content: space-between; color: #87997a; font-size: 8px; }
+.tolerance-volume-legend { display: flex; flex-wrap: wrap; gap: 9px 17px; padding: 16px 22px 0; }
+.tolerance-volume-legend > span { display: inline-flex; align-items: center; gap: 6px; color: #a9b79b; font-size: 9px; }
+.tolerance-volume-legend i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.tolerance-volume-key-success { background: #c0dda5; }
+.tolerance-volume-legend .tolerance-volume-key-origin { width: 8px; height: 8px; background: transparent; border: 1px solid #efbf79; border-radius: 50%; position: relative; }
+.tolerance-volume-key-origin::after { content: ''; position: absolute; width: 12px; height: 1px; top: 3px; left: -3px; background: #efbf79; }
+.tolerance-volume-key-pot { background: #c4a574; }
+.tolerance-volume-key-miss { background: #9aa88e77; }
+.tolerance-volume-key-unavailable { background: transparent; border: 1px solid #879286; }
+.tolerance-volume .tolerance-volume-count { color: #bdcbb0; font-size: 11px; line-height: 1.6; margin: 13px 22px 5px; font-variant-numeric: tabular-nums; }
+.tolerance-volume .tolerance-volume-note { font-size: 9px; color: #889b7d; line-height: 1.8; margin: 0 22px 20px; }
+@media (max-width: 720px) {
+  .tolerance-volume-heading { padding: 18px 16px 15px; gap: 10px; }
+  .tolerance-volume-heading h3 { font-size: 16px; }
+  .tolerance-volume-eyebrow { font-size: 7px; letter-spacing: 1px; }
+  .tolerance-volume-share strong { font-size: 25px; }
+  .tolerance-volume-toolbar { padding: 0 16px 14px; gap: 12px; }
+  .tolerance-volume-modes button { min-height: 34px; }
+  .tolerance-volume-toggle { min-height: 28px; }
+  .tolerance-volume-plot { min-height: 270px; }
+  .tolerance-volume-axis-label { font-size: 18px; }
+  .tolerance-volume-axis-value { font-size: 16px; }
+  .tolerance-volume-controls { gap: 10px; padding: 0 12px 13px; }
+  .tolerance-volume-controls button { width: 36px; height: 36px; }
+  .tolerance-volume-legend { padding-inline: 16px; gap: 9px 13px; }
+  .tolerance-volume .tolerance-volume-count { margin-inline: 16px; }
+  .tolerance-volume .tolerance-volume-note { margin-inline: 16px; }
+  .tolerance-volume-slice-control { padding-inline: 16px; }
+}

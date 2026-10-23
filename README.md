@@ -40,7 +40,7 @@ The table opens directly below the header. First-time visitors see the instructi
 1. In **Ball**, choose an available object ball on the table or in the sidebar, then press **Choose a finish**.
 2. In **Finish**, choose one of its three marked cue-ball finishes: A, B, or C. Each comes from a simulated successful stroke; the options differ in how forgiving they are.
 3. Press **Lock in your shot** to reach **Result** and reveal the ensemble comparison.
-4. Inspect the candidate paths, potting and position rates, and cue-ball spread.
+4. Inspect the candidate paths, potting and position rates, cue-ball spread, and stroke tolerance comparison. Rotate the 3D sample volume to see which combinations of aim, English, and strength still work.
 5. Play the best shot, then advance to a harder layout.
 
 The sidebar shows one step at a time so its controls fit without scrolling at normal text size, while the table and action buttons keep their position. **Back to balls** preserves the finish for the same ball; selecting a different ball clears it. In Finish, selecting another ball directly on the table keeps you on that step and shows its three options. Table finish markers appear only during Finish.
@@ -97,6 +97,24 @@ round points   = quality points + rank points
 The quality component measures how much of the best available ensemble quality your choice retains. The rank component rewards placing ahead of other offered ball-and-finish pairs. A sole candidate receives the full 30 rank points. Both components are zero if the selected shot has no successful pot-and-safe-finish samples or the best utility is zero. Choosing a top-utility plan with at least one successful trial earns 100 even on a difficult layout: this measures shot selection relative to the available choices, not an absolute success probability.
 
 To soften sampling noise, sort candidates by utility and group shots within 0.045 of each group's strongest member. Each group shares its first position in the ordering (for example, 1, 1, 3); anchoring to the strongest member prevents a chain of small differences from tying very different plans. These are game design choices, not a statistical significance test. Quality points still use each shot's own utility, so members of a shared rank can earn different totals. Session statistics track accumulated points, 100-point choices, and the percentage of available points earned.
+
+## Stroke tolerance and success volume
+
+After a round, **How much room does this shot give you?** compares the inspected candidate with the best offered shot from the ensemble ranking. The best shot is the same option used for the round verdict; this view does not optimize a new stroke or change the score. Selecting another comparison card updates the inspected margins and volume.
+
+The six directional margins vary one input at a time around each candidate's planned stroke:
+
+| Input | Displayed deviation | Search range |
+| --- | --- | --- |
+| Aim | Degrees left/right relative to the shot direction | ±2° |
+| English | Added left/right side spin in radians/second | ±30 rad/s |
+| Strength | Percentage change in initial cue-ball speed | ±30% |
+
+**Pot + target** requires correct first contact, potting the selected ball, no scratch, all balls settled, and the cue-ball endpoint inside that candidate's target zone. **Legal pot** uses the same conditions without requiring the target finish. Follow/draw and all other stroke settings stay fixed. The table reports the first sampled failure in each direction, scanning at 0.05° / 1 rad/s / 1% and refining the adjacent passing/failing bracket six times. It displays the passing side, rounded down. Later successful islands do not widen the reported margin. A ≥ value means the shot still passes at the search or physical speed limit; the failure boundary has not been found. Finite sampling can miss narrow gaps, so these are estimated local margins.
+
+The rotatable **Sampled success volume** maps 441 combinations on a fixed 9 × 7 × 7 grid spanning the same ranges for every candidate, including the exact planned stroke. Grid spacing is 0.5°, 10 rad/s, and 10 percentage points of speed. A successful sample always requires both a legal pot and the target finish, independently of the margin table's condition switch. Follow/draw remains fixed for that candidate. The graph can show failed samples or a single strength slice. It uses individual points without a filled hull: neighboring passing points do not prove that every stroke between them passes. The sample share describes this uniform grid, not the player's success probability or an exact continuous volume. The engine's supported initial speed range is 0.05–4 m/s; points outside that range are marked unavailable and remain in the full-grid denominator. They are not simulated or silently clamped into duplicate strokes.
+
+Tolerance calculations run in separate Web Workers after scoring, without replay-frame recording. Results are cached for the current round. Changing the inspected shot or advancing cancels pending work, and failures can be retried. The SVG 3D projection works without WebGL and supports dragging, keyboard rotation, and reset controls. Like the ensemble, these margins describe the model rather than calibrated real-table tolerances; in particular the simulation does not model cue deflection.
 
 ## Physical scale and accuracy
 

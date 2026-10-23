@@ -1,4 +1,4 @@
-import type { AnalyzeOptions, PreparedRound, RoundAnalysis, Scenario, Selection } from './types';
+import type { AnalyzeOptions, PreparedRound, RoundAnalysis, Scenario, Selection, ShotPlan, ShotTolerance } from './types';
 
 function runWorker<Result>(request: object, signal?: AbortSignal): Promise<Result> {
   return new Promise((resolve, reject) => {
@@ -23,4 +23,9 @@ export function prepareRoundAsync(scenario: Scenario, options: { signal?: AbortS
 
 export function analyzeRoundAsync(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions & { signal?: AbortSignal } = {}): Promise<RoundAnalysis> {
   return runWorker({ method: 'analyze', prepared, selection, options: { samples: options.samples } }, options.signal);
+}
+
+/** A separate worker keeps sensitivity calculations independent of round scores. */
+export function analyzeShotToleranceAsync(scenario: Scenario, plan: ShotPlan, options: { signal?: AbortSignal } = {}): Promise<ShotTolerance> {
+  return runWorker({ method: 'tolerance', scenario, plan }, options.signal);
 }

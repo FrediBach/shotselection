@@ -97,6 +97,46 @@ export interface RoundAnalysis {
   positionTolerance: number;
 }
 export interface AnalyzeOptions { samples?: number }
+/** Deltas from the fixed nominal stroke: degrees, rad/s, and percent of speed. */
+export type ToleranceAxis = 'angle' | 'sideSpin' | 'speed';
+export interface ToleranceBound {
+  /** Nonnegative size of a one-sided deviation, in the axis's public units. */
+  value: number;
+  /** Still passes at the search limit (or physical speed limit). */
+  limited: boolean;
+}
+export interface ToleranceRange { negative: ToleranceBound; positive: ToleranceBound }
+export interface AxisTolerance { pot: ToleranceRange; success: ToleranceRange }
+export interface TolerancePoint {
+  /** Degrees: negative is left, positive is right, relative to the cue direction. */
+  angle: number;
+  /** Radians/second: positive adds left english, negative adds right english. */
+  sideSpin: number;
+  /** Percentage change from nominal cue speed. */
+  speed: number;
+  /** False when requested cue speed is outside the simulator's physical range. */
+  available: boolean;
+  success: boolean;
+  /** A settled pot with correct first contact and no scratch. */
+  pot: boolean;
+}
+export interface ShotTolerance {
+  planId: string;
+  nominalPot: boolean;
+  nominalSuccess: boolean;
+  positionTolerance: number;
+  axes: Record<ToleranceAxis, AxisTolerance>;
+  volume: {
+    /** Uniform samples, including zero; physically unavailable speeds fail. */
+    points: TolerancePoint[];
+    /** Symmetric sampled half-widths, identical for every plan. */
+    limits: Record<ToleranceAxis, number>;
+    /** Grid spacing, in degrees, rad/s and percentage points respectively. */
+    steps: Record<ToleranceAxis, number>;
+    successCount: number;
+    potCount: number;
+  };
+}
 export interface SimulateOptions {
   /** Record full replay frames, paths and sound events. Defaults to true. */
   record?: boolean;
