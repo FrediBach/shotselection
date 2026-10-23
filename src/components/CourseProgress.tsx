@@ -7,7 +7,7 @@ export default function CourseProgress({ completed, scenario, carriedTournamentL
   const percentage = Math.round(completed / TOTAL_LEVELS * 100)
   return <section className="course-progress" aria-label="Course progression">
     <div className="course-progress-heading">
-      <div><span className="eyebrow">FROM FIRST POT TO FINAL FRAME</span><h2>{completed === TOTAL_LEVELS ? 'Every lesson completed.' : 'Your road to tournament play.'}</h2></div>
+      <h2>{completed === TOTAL_LEVELS ? 'Every lesson completed.' : 'Your road to tournament play.'}</h2>
       <div className="course-completion"><strong>{percentage}%</strong><span>{completed} of {TOTAL_LEVELS} levels complete</span></div>
     </div>
     <div className="course-track" role="progressbar" aria-label="Game completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage} aria-valuetext={`${completed} of ${TOTAL_LEVELS} levels complete`}><span style={{ width: `${percentage}%` }} /></div>
