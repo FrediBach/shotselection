@@ -355,3 +355,8 @@ svg { flex-shrink: 0; }
   .course-finished { padding: 35px 20px; }
   .course-finished .eyebrow { font-size: .625rem; }
 }
+
+.sandbox-session-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 0 20px; }
+.sandbox-session-actions > span { margin-right: auto; color: var(--muted); font-size: .75rem; }
+.sandbox-badge { color: var(--gold); }
+@media (max-width: 480px) { .sandbox-session-actions > span { flex-basis: 100%; } .sandbox-session-actions { gap: 6px; } }

@@ -11,11 +11,12 @@ const stageLabels = {
   apply: 'Put it together',
 }
 
-export default function LevelBriefing({ scenario, headingRef, onStart, reviewing }: {
+export default function LevelBriefing({ scenario, headingRef, onStart, reviewing, sandbox = false }: {
   scenario: Scenario
   headingRef: Ref<HTMLHeadingElement>
   onStart: () => void
   reviewing: boolean
+  sandbox?: boolean
 }) {
   const { curriculum, objective, bank, plant } = scenario
   const briefing = curriculum?.briefing
@@ -24,13 +25,13 @@ export default function LevelBriefing({ scenario, headingRef, onStart, reviewing
 
   return <>
     <div className="briefing-meta">
-      <span className="eyebrow">LEVEL {String(scenario.level).padStart(2, '0')} / {TOTAL_LEVELS}</span>
-      <span>LESSON {lessonIndex + 1} OF {lessonCount}</span>
+      <span className="eyebrow">{sandbox ? 'SANDBOX SCENARIO' : `LEVEL ${String(scenario.level).padStart(2, '0')} / ${TOTAL_LEVELS}`}</span>
+      {!sandbox && <span>LESSON {lessonIndex + 1} OF {lessonCount}</span>}
     </div>
     <div className="briefing-scenario">
-      <span className="briefing-stage">{briefing ? stageLabels[briefing.stage] : 'Your next lesson'}</span>
+      <span className="briefing-stage">{sandbox ? 'Free practice' : briefing ? stageLabels[briefing.stage] : 'Your next lesson'}</span>
       <span>{curriculum?.chapterTitle}</span>
-      <span className="briefing-steps" aria-hidden="true">{Array.from({ length: lessonCount }, (_, index) => <i key={index} className={index <= lessonIndex ? 'step-reached' : ''} />)}</span>
+      {!sandbox && <span className="briefing-steps" aria-hidden="true">{Array.from({ length: lessonCount }, (_, index) => <i key={index} className={index <= lessonIndex ? 'step-reached' : ''} />)}</span>}
     </div>
     <DialogTitle ref={headingRef} tabIndex={-1}>{scenario.title}</DialogTitle>
     <DialogDescription>{scenario.description}</DialogDescription>
@@ -46,6 +47,6 @@ export default function LevelBriefing({ scenario, headingRef, onStart, reviewing
       <Lightbulb size={19} aria-hidden="true" />
       <div><h3>Watch for this</h3><p>{briefing.gotcha}</p></div>
     </aside>}
-    <Button className="full-width briefing-start" onClick={onStart}>{reviewing ? 'Back to the table' : `Start level ${scenario.level}`}<ArrowRight size={16} /></Button>
+    <Button className="full-width briefing-start" onClick={onStart}>{reviewing ? 'Back to the table' : sandbox ? 'Start sandbox round' : `Start level ${scenario.level}`}<ArrowRight size={16} /></Button>
   </>
 }

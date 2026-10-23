@@ -5,7 +5,7 @@ import type { PlayerCharacter } from '../engine/types'
 import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY } from './session'
 
 const legacySession = { level: 8, score: 4.5, rounds: 7, perfect: 3, seed: 91822 }
-const currentSession = { ...legacySession, scoringVersion: 2, courseVersion: 3, completedLessons: 7, score: 450, character: DEFAULT_CHARACTER }
+const currentSession = { ...legacySession, scoringVersion: 2, courseVersion: 3, mode: 'course', completedLessons: 7, score: 450, character: DEFAULT_CHARACTER }
 const customCharacter: PlayerCharacter = {
   id: 'custom', name: 'Custom player',
   talents: { anglePrecision: 100, englishPrecision: 35, strengthPrecision: 0, spinPrecision: 80 },
@@ -19,12 +19,63 @@ function storedSession(value: unknown) {
 
 function expectFresh() {
   expect(loadSession()).toEqual({
-    scoringVersion: 2, courseVersion: 3, completedLessons: 0, level: 1, score: 0, rounds: 0, perfect: 0,
+    scoringVersion: 2, courseVersion: 3, mode: 'course', completedLessons: 0, level: 1, score: 0, rounds: 0, perfect: 0,
     seed: expect.any(Number), character: null,
   })
 }
 
 afterEach(() => { vi.unstubAllGlobals() })
+
+describe('game modes', () => {
+  it('starts in course mode and preserves legacy playthroughs without a mode', () => {
+    expect(freshSession().mode).toBe('course')
+    const { mode: _mode, ...saved } = currentSession
+    storedSession(saved)
+    expect(loadSession()).toEqual(currentSession)
+  })
+
+  it('restores a sandbox with its character and seed without course progress', () => {
+    const session = freshSession(customCharacter, 'sandbox')
+    expect(session).toMatchObject({ mode: 'sandbox', character: customCharacter, completedLessons: 0,
+      level: 1, rounds: 0, perfect: 0, score: 0 })
+    storedSession(session)
+    expect(loadSession()).toEqual(session)
+  })
+
+  it('never awards course points or progress for sandbox rounds', () => {
+    const session = freshSession(customCharacter, 'sandbox')
+    for (const points of [0, 50, 80, 100]) {
+      expect(completeLesson(session, 1, points)).toBe(session)
+    }
+    expect(session).toMatchObject({ level: 1, completedLessons: 0, rounds: 0, perfect: 0, score: 0 })
+    storedSession(session)
+    expect(loadSession()).toEqual(session)
+  })
+
+  it.each([
+    ['missing character', { character: null }],
+    ['invalid character', { character: { ...customCharacter, talents: {} } }],
+    ['course progress', { completedLessons: 1, level: 2, rounds: 1, score: 100, perfect: 1 }],
+    ['score', { score: 10 }],
+    ['round count', { rounds: 1 }],
+    ['perfect count', { perfect: 1 }],
+    ['advanced level', { level: 2 }],
+    ['completed lesson', { completedLessons: 1 }],
+    ['tournament carry', { carriedTournamentLessons: 1 }],
+    ['empty tournament carry', { carriedTournamentLessons: 0 }],
+    ['invalid seed', { seed: -1 }],
+    ['legacy scoring', { scoringVersion: undefined }],
+    ['legacy course', { courseVersion: 2 }],
+  ])('rejects sandbox persistence with %s', (_label, invalid) => {
+    storedSession({ ...freshSession(customCharacter, 'sandbox'), ...invalid })
+    expectFresh()
+  })
+
+  it.each([null, 'practice', false, 1])('rejects unsupported mode %s', mode => {
+    storedSession({ ...currentSession, mode })
+    expectFresh()
+  })
+})
 
 describe('playthrough characters', () => {
   it.each(PREMADE_CHARACTERS)('keeps the $name preset after reloading', character => {
@@ -226,24 +277,24 @@ describe('course progression', () => {
     const saved = { scoringVersion: 2, completedLessons: 18, level: 19, rounds: 18, score: 1260, perfect: 4, seed: 100 }
     storedSession(saved)
     const resumed = loadSession()
-    expect(resumed).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER })
+    expect(resumed).toEqual({ ...saved, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER })
     expect(completeLesson(resumed, 18, 100)).toBe(resumed)
     const next = completeLesson(resumed, 19, 80)
-    expect(next).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 19, level: 20, rounds: 19, score: 1340 })
+    expect(next).toEqual({ ...saved, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER, completedLessons: 19, level: 20, rounds: 19, score: 1340 })
     storedSession(next)
     expect(loadSession()).toEqual(next)
   })
 
   it('resumes legacy endless sessions at the new banks while keeping tournament credit and earned scores', () => {
     storedSession({ scoringVersion: 2, level: 91, rounds: 90, score: 6300, perfect: 12, seed: 100 })
-    expect(loadSession()).toEqual({ scoringVersion: 2, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 50, level: 51, carriedTournamentLessons: 10, score: 6300, rounds: 90, perfect: 12, seed: 100 })
+    expect(loadSession()).toEqual({ scoringVersion: 2, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER, completedLessons: 50, level: 51, carriedTournamentLessons: 10, score: 6300, rounds: 90, perfect: 12, seed: 100 })
   })
 
   it.each([50, 54, 60])('inserts banks and plants after %s original completed levels without losing tournament credit', completedLessons => {
     const saved = { scoringVersion: 2, completedLessons, level: completedLessons + 1, rounds: completedLessons, score: completedLessons * 80, perfect: 4, seed: 100 }
     storedSession(saved)
     let session = loadSession()
-    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 50, level: 51,
+    expect(session).toEqual({ ...saved, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER, completedLessons: 50, level: 51,
       ...(completedLessons > 50 ? { carriedTournamentLessons: completedLessons - 50 } : {}) })
     storedSession(session)
     expect(loadSession()).toEqual(session)
@@ -258,7 +309,7 @@ describe('course progression', () => {
     session = loadSession()
     expect(session).toMatchObject({ completedLessons: 69, level: 70, rounds: completedLessons + 19 })
     session = completeLesson(session, 70, 100)
-    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: completedLessons + 20,
+    expect(session).toEqual({ ...saved, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER, completedLessons: completedLessons + 20,
       level: completedLessons + 21, rounds: completedLessons + 20, score: saved.score + 1640, perfect: 6 })
     expect(completeLesson(session, 70, 100)).toBe(session)
     storedSession(session)
@@ -270,7 +321,7 @@ describe('course progression', () => {
       rounds: completedLessons, score: completedLessons * 80, perfect: 4, seed: 100 }
     storedSession(saved)
     let session = loadSession()
-    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 60, level: 61,
+    expect(session).toEqual({ ...saved, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER, completedLessons: 60, level: 61,
       ...(completedLessons > 60 ? { carriedTournamentLessons: completedLessons - 60 } : {}) })
     storedSession(session)
     expect(loadSession()).toEqual(session)
@@ -279,7 +330,7 @@ describe('course progression', () => {
     session = loadSession()
     expect(session).toMatchObject({ completedLessons: 69, level: 70, rounds: completedLessons + 9 })
     session = completeLesson(session, 70, 100)
-    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: completedLessons + 10,
+    expect(session).toEqual({ ...saved, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER, completedLessons: completedLessons + 10,
       level: completedLessons + 11, rounds: completedLessons + 10, score: saved.score + 820, perfect: 5 })
     storedSession(session)
     expect(loadSession()).toEqual(session)
@@ -291,13 +342,13 @@ describe('course progression', () => {
       carriedTournamentLessons: 4, rounds: 60, score: 4800, perfect: 4, seed: 100 }
     storedSession(saved)
     let session = loadSession()
-    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER })
+    expect(session).toEqual({ ...saved, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER })
     for (let level = 57; level <= 60; level++) session = completeLesson(session, level, 80)
     expect(session).toMatchObject({ completedLessons: 60, level: 61, carriedTournamentLessons: 4, rounds: 64 })
     storedSession(session)
     expect(loadSession()).toEqual(session)
     for (let level = 61; level <= 70; level++) session = completeLesson(session, level, 80)
-    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 74, level: 75,
+    expect(session).toEqual({ ...saved, courseVersion: 3, mode: 'course', character: DEFAULT_CHARACTER, completedLessons: 74, level: 75,
       carriedTournamentLessons: undefined, rounds: 74, score: 5920 })
     storedSession(session)
     expect(loadSession()).toEqual(session)

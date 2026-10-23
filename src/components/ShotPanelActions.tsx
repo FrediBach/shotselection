@@ -1,15 +1,16 @@
 import { ArrowLeft, ArrowRight, LoaderCircle, Play } from 'lucide-react'
 import { Button } from './ui/button'
 
-export function ResultActions({ playing, lastLesson, onReplay, onNext }: {
+export function ResultActions({ playing, lastLesson, sandbox = false, onReplay, onNext }: {
   playing: boolean
   lastLesson: boolean
+  sandbox?: boolean
   onReplay: () => void
   onNext: () => void
 }) {
   return <>
     <Button className="full-width" onClick={onReplay} disabled={playing}><Play size={16} fill="currentColor" /> {playing ? 'Shot in motion…' : 'Play the best shot'}</Button>
-    <Button className="full-width next-level" variant="outline" onClick={onNext}>{lastLesson ? "View course summary" : "Next level"} <ArrowRight size={16} /></Button>
+    <Button className="full-width next-level" variant="outline" onClick={onNext}>{sandbox ? "New sandbox round" : lastLesson ? "View course summary" : "Next level"} <ArrowRight size={16} /></Button>
   </>
 }
 

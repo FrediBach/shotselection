@@ -4,6 +4,15 @@
 .character-intro h1 { margin: 15px 0; font-size: clamp(2rem, 4vw, 3rem); font-weight: 450; letter-spacing: -1.7px; line-height: 1.15; }
 .character-intro h1:focus { outline: none; }
 .character-intro p { color: var(--muted); font-size: 1rem; line-height: 1.8; margin: 0; max-width: 570px; }
+.character-mode-choice { margin-bottom: 32px; }
+.character-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.character-mode-card { display: flex; align-items: flex-start; gap: 14px; padding: 21px; border: 1px solid #73806966; border-radius: 10px; background: #1b211b; text-align: left; min-width: 0; transition: border-color .15s, background .15s; }
+.character-mode-card:hover { background: #252e23; border-color: #a9b89b; }
+.character-mode-card > svg { color: var(--gold); flex-shrink: 0; margin-top: 2px; }
+.character-mode-card > span:first-of-type { min-width: 0; }
+.character-mode-card strong { display: block; font-size: .9375rem; font-weight: 550; }
+.character-mode-card > span > span { display: block; margin-top: 8px; font-size: .8125rem; line-height: 1.65; color: var(--muted); }
+.character-mode-card .character-selected-mark { position: static; }
 .character-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(310px, 1fr); gap: 28px; align-items: start; }
 .character-section-label { font-size: .6875rem; font-weight: 550; letter-spacing: 1.2px; color: var(--muted); display: flex; gap: 9px; align-items: center; margin-bottom: 18px; }
 .character-section-label > span { color: var(--gold); }
@@ -78,4 +87,5 @@
 .player-detail-name { color: var(--gold) !important; font-size: 1.25rem !important; overflow-wrap: anywhere; }
 @media (max-width: 1050px) { .character-layout { gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(290px, .8fr); } .character-card { padding: 18px 14px; } .character-emblem { width: 35px; height: 35px; } .character-card-top { gap: 8px; } .character-card-name strong { font-size: .8125rem; } .character-build { padding: 23px; } }
 @media (max-width: 800px) { .character-layout { grid-template-columns: 1fr; gap: 26px; } .character-intro { margin-bottom: 28px; } .character-card { padding: 21px; } .character-card-name strong { font-size: .9375rem; } .character-build { padding: 26px; } .character-selection { max-width: 640px; } }
+@media (max-width: 600px) { .character-modes { grid-template-columns: 1fr; gap: 10px; } .character-mode-card { padding: 18px; } }
 @media (max-width: 480px) { .character-selection { margin-top: 12px; } .character-intro h1 { letter-spacing: -1px; } .character-intro p { font-size: .875rem; } .character-presets { gap: 10px; } .character-card { padding: 15px 12px; } .character-card-top { flex-wrap: wrap; gap: 9px; position: relative; } .character-card-name { width: 100%; } .character-card-name strong { font-size: .875rem; } .character-card-name > span { font-size: .6875rem; } .character-selected-mark { position: absolute; top: 0; right: 0; } .character-card-description { font-size: .75rem; min-height: 60px; margin: 12px 0 16px; } .character-mini-talents { column-gap: 10px; } .character-mini-talents > span { font-size: .625rem; } .character-build { padding: 22px; } .character-custom-choice { padding: 17px; gap: 12px; } .playthrough-player { flex-wrap: wrap; } }

@@ -199,8 +199,9 @@ function prepareLayout(scenario: Scenario): PreparedRound {
  * tries 21 strokes on the fixed pair line, retaining physically simulated misses.
  * Bank search tries 12 routes, nine speeds and five spins with angle calibration.
  * Authored lessons can try three replacement layouts of the same lesson;
- * fixed objectives never fall back to an unrelated easier layout. */
-export function prepareRound(scenario: Scenario): PreparedRound {
+ * fixed objectives never fall back to an unrelated easier layout. Passing
+ * regenerate: false searches only the supplied table, as required for sandbox. */
+export function prepareRound(scenario: Scenario, options: { regenerate?: boolean } = {}): PreparedRound {
   if (!scenario.balls.some(ball => ball.id === 0)) throw new Error('The table needs a cue ball.');
   const objective = scenario.objective;
   const bank = scenario.bank;
@@ -230,7 +231,7 @@ export function prepareRound(scenario: Scenario): PreparedRound {
   if (objective && (!scenario.balls.some(ball => ball.id === objective.ballId) || !scenario.balls.some(ball => ball.id === objective.nextBallId))) {
     throw new Error('The position lesson needs both its first object ball and its reserved next ball on the table.');
   }
-  const attempts = (objective || bank || plant) && !scenario.curriculum ? 1 : 4;
+  const attempts = options.regenerate === false || ((objective || bank || plant) && !scenario.curriculum) ? 1 : 4;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const generated = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
     // Regeneration keeps the lesson and its objective; a plant's pocket follows
@@ -240,7 +241,7 @@ export function prepareRound(scenario: Scenario): PreparedRound {
     const prepared = prepareLayout(layout);
     if (prepared.balls.length) return prepared;
   }
-  if (scenario.curriculum || objective || bank || plant) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
+  if (options.regenerate === false || scenario.curriculum || objective || bank || plant) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
   const openLayout: Scenario = { ...scenario, seed: 72350, balls: generateScenario(1, 72350).balls };
   const prepared = prepareLayout(openLayout);
   if (!prepared.balls.length) throw new Error('No feasible three-finish layout could be prepared.');

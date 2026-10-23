@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDownRight, ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Crosshair, Flag, Focus, Layers3, LoaderCircle, MousePointer2, RotateCcw, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDownRight, ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Crosshair, Flag, FlaskConical, Focus, Layers3, LoaderCircle, MousePointer2, RotateCcw, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import BallIcon from '@/components/BallIcon'
@@ -15,11 +15,12 @@ import ShotTolerancePanel from '@/components/ShotTolerancePanel'
 import CourseProgress, { CourseCompletion } from '@/components/CourseProgress'
 import GameDialogBody, { type Modal } from '@/components/GameDialogBody'
 import CharacterSelection from '@/components/CharacterSelection'
+import SandboxSetup from '@/components/SandboxSetup'
 import type { PlayerCharacter } from '@/engine/characters'
 import { TOTAL_LEVELS } from '@/engine/scenarios'
 import { analyzeRoundAsync, generateScenario, prepareRoundAsync } from '@/engine'
 import type { PreparedRound, RoundAnalysis, ShotAnalysis, ShotPlan } from '@/engine/types'
-import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY, type Session } from '@/lib/session'
+import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY, type GameMode, type Session } from '@/lib/session'
 import { createGameAudio } from '@/lib/sound'
 
 const HELP_DISMISSED_KEY = 'shot-selection-help-dismissed'
@@ -34,7 +35,10 @@ function initialModal(courseComplete: boolean): Modal {
 }
 export default function App() {
   const [session, setSession] = useState<Session>(loadSession)
-  const [showCourseSummary, setShowCourseSummary] = useState(() => session.completedLessons === TOTAL_LEVELS)
+  const sandbox = session.mode === 'sandbox'
+  const [sandboxPlacement, setSandboxPlacement] = useState<'random' | 'manual'>('random')
+  const [showSandboxSetup, setShowSandboxSetup] = useState(() => session.mode === 'sandbox')
+  const [showCourseSummary, setShowCourseSummary] = useState(() => session.mode !== 'sandbox' && session.completedLessons === TOTAL_LEVELS)
   const [requestedScenario, setScenario] = useState(() => generateScenario(session.level, session.seed + session.level * 919))
   const [prepared, setPrepared] = useState<PreparedRound | null>(null)
   const [preparing, setPreparing] = useState(true)
@@ -50,7 +54,7 @@ export default function App() {
   const [showFinishes, setShowFinishes] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [playbackKey, setPlaybackKey] = useState(0)
-  const [modal, setModal] = useState<Modal>(() => session.character ? initialModal(showCourseSummary) : null)
+  const [modal, setModal] = useState<Modal>(() => session.character && !sandbox ? initialModal(showCourseSummary) : null)
   const [lessonStarted, setLessonStarted] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(loadSoundEnabled)
   const [celebrating, setCelebrating] = useState(false)
@@ -87,7 +91,7 @@ export default function App() {
   useEffect(() => { try { localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session)) } catch { /* Browser storage can be unavailable. */ } }, [session])
   useEffect(() => {
     const controller = new AbortController()
-    if (showCourseSummary || !session.character) { setPreparing(false); return () => controller.abort() }
+    if (session.mode === 'sandbox' || showCourseSummary || !session.character) { setPreparing(false); return () => controller.abort() }
     setPreparing(true); setPrepared(null); setError('')
     prepareRoundAsync(requestedScenario, { signal: controller.signal })
       .then(round => { if (!controller.signal.aborted) setPrepared(round) })
@@ -96,7 +100,7 @@ export default function App() {
       })
       .finally(() => { if (!controller.signal.aborted) setPreparing(false) })
     return () => controller.abort()
-  }, [requestedScenario, prepareAttempt, showCourseSummary, session.character])
+  }, [requestedScenario, prepareAttempt, showCourseSummary, session.character, session.mode])
   const scenario = prepared?.scenario ?? requestedScenario
   const objectBalls = scenario.balls.filter(ball => ball.id > 0)
   const selectableBallIds = prepared?.balls.map(ball => ball.ballId) ?? []
@@ -110,7 +114,7 @@ export default function App() {
   const plant = scenario.plant
   const ballChoiceLabel = (ballId: number) => plant ? ballId === plant.ballId ? `Plant ${ballId} → ${plant.targetBallId}` : ballId === plant.targetBallId ? `Target ${ballId}` : `Free ball ${ballId}` : `Ball ${ballId}`
   const shotLabel = (plan: ShotPlan) => plan.potBallId !== undefined && plan.potBallId !== plan.ballId ? `Plant ${plan.ballId} → ${plan.potBallId}` : plant ? `Free ball ${plan.ballId}` : `Ball ${plan.ballId}`
-  const lastLesson = scenario.level === TOTAL_LEVELS || Boolean(result && session.completedLessons === TOTAL_LEVELS)
+  const lastLesson = !sandbox && (scenario.level === TOTAL_LEVELS || Boolean(result && session.completedLessons === TOTAL_LEVELS))
   const showPlannedFinish = Boolean(result && objective && inspected?.nominal.stopped && !inspected.nominal.scratch && !playing)
   const step = result ? 3 : selectionStep === 'ball' ? 1 : 2
   useEffect(() => {
@@ -132,24 +136,51 @@ export default function App() {
       setSelectedOptionId(id); setError('')
     }
   }
-  function clearRound(next: Session) {
+  function resetRoundState() {
     audio.current?.stop()
     setCelebrating(false)
     setShowCourseSummary(false)
     request.current += 1
     analysisController.current?.abort()
-    setSession(next); setScenario(generateScenario(next.level, next.seed + next.level * 919)); setSelectedBall(null); setSelectedOptionId(null)
+    setSelectedBall(null); setSelectedOptionId(null)
     setPrepared(null); setPreparing(true)
     setSelectionStep('ball')
     setResult(null); setInspected(null); setBusy(false); setPlaying(false); setError('')
     dialogOpener.current = null
     setLessonStarted(false)
-    setModal(next.character ? 'lesson' : null)
+    setModal(null)
+  }
+  function clearRound(next: Session) {
+    resetRoundState()
+    setSession(next)
+    setScenario(generateScenario(next.level, next.seed + next.level * 919))
+    setShowSandboxSetup(next.mode === 'sandbox')
+    setSandboxPlacement('random')
+    setModal(next.character && next.mode !== 'sandbox' ? 'lesson' : null)
     if (!next.character) window.scrollTo(0, 0)
   }
-  function startPlaythrough(character: PlayerCharacter) {
-    setSession(previous => ({ ...previous, character }))
-    setModal(initialModal(false))
+  function startPlaythrough(character: PlayerCharacter, mode: GameMode) {
+    setSession(previous => ({ ...previous, character, mode }))
+    setShowSandboxSetup(mode === 'sandbox')
+    setSandboxPlacement('random')
+    setModal(mode === 'sandbox' ? null : initialModal(false))
+    window.scrollTo(0, 0)
+  }
+  function startSandboxRound(round: PreparedRound) {
+    resetRoundState()
+    setScenario(round.scenario)
+    setPrepared(round)
+    setPreparing(false)
+    setShowSandboxSetup(false)
+    setModal('lesson')
+    window.scrollTo(0, 0)
+  }
+  function configureSandbox(placement: 'random' | 'manual' = 'random') {
+    setSandboxPlacement(placement)
+    setScenario(scenario)
+    resetRoundState()
+    setPreparing(false)
+    setShowSandboxSetup(true)
     window.scrollTo(0, 0)
   }
   async function submit() {
@@ -166,7 +197,7 @@ export default function App() {
       setCelebrating(analysis.points === 100)
       if (!document.hidden) audio.current?.play(analysis.points === 100 ? 'perfect' : 'result')
       // Persist the next unplayed level, so reloading cannot score this round twice.
-      setSession(previous => completeLesson(previous, scenario.level, analysis.points))
+      if (!sandbox) setSession(previous => completeLesson(previous, scenario.level, analysis.points))
     } catch (cause) {
       if (id === request.current) setError(cause instanceof Error ? cause.message : 'The simulation could not finish. Please try again.')
     } finally { if (id === request.current) setBusy(false) }
@@ -180,7 +211,7 @@ export default function App() {
       try { localStorage.setItem(HELP_DISMISSED_KEY, 'true') }
       catch { /* Help remains usable when browser storage is unavailable. */ }
     }
-    if (session.character && modal !== 'lesson' && !lessonStarted && !showCourseSummary) {
+    if (!sandbox && session.character && modal !== 'lesson' && !lessonStarted && !showCourseSummary) {
       dialogOpener.current = null
       setModal('lesson')
       return
@@ -195,6 +226,7 @@ export default function App() {
     if (enabled) { audio.current?.unlock(); audio.current?.play('select') }
   }
   function advanceRound() {
+    if (sandbox) { configureSandbox(); return }
     if (!lastLesson) { clearRound(session); return }
     audio.current?.stop()
     setPlaying(false); setCelebrating(false); setShowCourseSummary(true)
@@ -215,18 +247,19 @@ export default function App() {
     <header className="site-header">
       <a className="brand" href="/" aria-label="Shot Selection home"><span className="brand-mark"><span /></span><span>shot<span className="brand-light">selection</span><span className="brand-period">.</span></span></a>
       <nav className="main-nav" aria-label="Main navigation"><button className="nav-active" onClick={() => closeModal()}>The game</button><button className="nav-help" aria-label="How to play" aria-haspopup="dialog" onClick={event => openModal('help', event.currentTarget)}><CircleHelp className="nav-help-icon" size={18} /><span className="nav-help-label">How to play</span><ArrowDownRight className="nav-help-arrow" size={13} /></button><button aria-haspopup="dialog" onClick={event => openModal('physics', event.currentTarget)}>Behind the physics</button></nav>
-      <button className="session-score" onClick={event => openModal('stats', event.currentTarget)} aria-haspopup="dialog" aria-label={`View session stats, ${session.score} points`}><Trophy size={15} /><span>{session.score} <span className="muted">pts</span></span><span className="score-divider" /><span className="session-label">This session</span><ChevronRight size={14} /></button>
+      {sandbox ? <span className="session-score sandbox-badge"><FlaskConical size={16} /> Sandbox</span> : <button className="session-score" onClick={event => openModal('stats', event.currentTarget)} aria-haspopup="dialog" aria-label={`View session stats, ${session.score} points`}><Trophy size={15} /><span>{session.score} <span className="muted">pts</span></span><span className="score-divider" /><span className="session-label">This session</span><ChevronRight size={14} /></button>}
     </header>
 
     <main id="main-content" tabIndex={-1}>
       {!session.character ? <CharacterSelection onStart={startPlaythrough} /> : <>
-      <h1 className="sr-only">Shot Selection</h1>
-      <CourseProgress completed={session.completedLessons} scenario={scenario} carriedTournamentLessons={session.carriedTournamentLessons} />
+      {!(sandbox && showSandboxSetup) && <h1 className="sr-only">Shot Selection</h1>}
+      {!sandbox && <CourseProgress completed={session.completedLessons} scenario={scenario} carriedTournamentLessons={session.carriedTournamentLessons} />}
       <div className="playthrough-player"><Crosshair size={15} /><span>Playing as <strong>{session.character.name}</strong></span><button aria-label="View player talents" aria-haspopup="dialog" onClick={event => openModal('character', event.currentTarget)}>Player talents <ChevronRight size={13} /></button></div>
-      {showCourseSummary ? <CourseCompletion score={session.score} perfect={session.perfect} rounds={session.rounds} headingRef={completionHeading} onRestart={() => clearRound(freshSession())} /> : <>
+      {sandbox && <div className="sandbox-session-actions"><span>Round scores only · No progression</span>{!showSandboxSetup && <Button variant="outline" size="sm" onClick={() => configureSandbox('manual')}>Change setup</Button>}<Button variant="ghost" size="sm" onClick={event => openModal('reset', event.currentTarget)}>Change player or mode</Button></div>}
+      {sandbox && showSandboxSetup ? <SandboxSetup initialPlacement={sandboxPlacement} initialScenario={requestedScenario} onStart={startSandboxRound} /> : showCourseSummary ? <CourseCompletion score={session.score} perfect={session.perfect} rounds={session.rounds} headingRef={completionHeading} onRestart={() => clearRound(freshSession())} /> : <>
       <div className="game-layout">
         <section className={`table-panel${objective ? " table-panel-position" : ""}`} aria-label="Interactive pool table">
-          <div className="table-toolbar"><div className="level-label"><span className="level-number">{String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">LEVEL {String(scenario.level).padStart(2, '0')} OF {TOTAL_LEVELS} <span>·</span> {objectBalls.length} OBJECT BALL{objectBalls.length === 1 ? "" : "S"}</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" aria-label="Review level briefing" title="Review level briefing" aria-haspopup="dialog" onClick={event => openModal('lesson', event.currentTarget)}><BookOpen size={17} /></Button><Button variant="ghost" size="icon" className="sound-toggle" aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} onClick={toggleSound}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</Button><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" aria-haspopup="dialog" onClick={event => openModal('reset', event.currentTarget)} disabled={busy}><RotateCcw size={16} /></Button></div></div>
+          <div className="table-toolbar"><div className="level-label"><span className="level-number">{sandbox ? <FlaskConical size={21} /> : String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">{sandbox ? 'SANDBOX' : `LEVEL ${String(scenario.level).padStart(2, '0')} OF ${TOTAL_LEVELS}`} <span>·</span> {objectBalls.length} OBJECT BALL{objectBalls.length === 1 ? "" : "S"}</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" aria-label={sandbox ? "Review scenario briefing" : "Review level briefing"} title={sandbox ? "Review scenario briefing" : "Review level briefing"} aria-haspopup="dialog" onClick={event => openModal('lesson', event.currentTarget)}><BookOpen size={17} /></Button><Button variant="ghost" size="icon" className="sound-toggle" aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} onClick={toggleSound}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</Button><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" aria-haspopup="dialog" onClick={event => openModal('reset', event.currentTarget)} disabled={busy}><RotateCcw size={16} /></Button></div></div>
           <div className="table-stage">
             <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? objective ? 'Preparing stroke choices' : plant ? 'Preparing plant and free-ball choices' : 'Preparing playable finish options' : selectionStep === 'ball' ? (selectedBall === null ? plant ? 'Compare the plant with the free ball' : 'Start by selecting an object ball' : `${ballChoiceLabel(selectedBall)} selected. Choose a ${objective ? "stroke" : "finish"} next.`) : selectedOption === null ? objective ? 'Choose a stroke in the side panel' : 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
             <div className="pool-canvas"><PoolTable scenario={scenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : !objective && selectionStep === 'finish' ? target : null} onSelectBall={selectBall} finishOptions={objective || result || selectionStep !== 'finish' ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} showFinishes={Boolean(result) && showFinishes} playing={playing} playbackKey={playbackKey} onPlaybackSound={event => { if (!document.hidden) audio.current?.play(event.type === 'cue' ? 'shot' : event.type === 'ball' ? 'collision' : event.type, event.strength) }} onPlaybackEnd={() => { setPlaying(false); audio.current?.stop() }} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
@@ -258,15 +291,15 @@ export default function App() {
             {error && <div role="alert" className="error-message"><p>{error}</p>{!prepared && !preparing && <Button variant="outline" size="sm" onClick={() => setPrepareAttempt(attempt => attempt + 1)}>Retry preparation</Button>}</div>}
           </div>
           <div className="shot-panel-actions">
-            {result ? <ResultActions playing={playing} lastLesson={lastLesson} onReplay={() => playShot(result.best)} onNext={advanceRound} />
+            {result ? <ResultActions playing={playing} lastLesson={lastLesson} sandbox={sandbox} onReplay={() => playShot(result.best)} onNext={advanceRound} />
               : selectionStep === 'ball' ? <BallSelectionActions selectedBall={selectedBall} selectedBallLabel={selectedBall === null ? '' : ballChoiceLabel(selectedBall)} preparing={preparing} ready={Boolean(prepared)} positionLesson={Boolean(objective)} plantLesson={Boolean(plant)} onContinue={() => setSelectionStep('finish')} />
               : <FinishSelectionActions hasSelection={Boolean(selectedOption)} busy={busy} preparing={preparing} ready={Boolean(prepared)} onSubmit={submit} onBack={() => setSelectionStep('ball')} />}
           </div>
         </aside>
       </div>
 
-      {result && <section className="lesson-review" aria-label="Lesson takeaway"><span className="lesson-goal-label"><Check size={16} /> LESSON {scenario.level} COMPLETE</span><h2>{scenario.curriculum?.takeaway}</h2><p>{objective ? `A pot only starts the pattern. Compare the zone rate and next-shot rate below: success needs both, along with a legal pot.` : "Compare your selection with the best shot, then watch the replay to connect the lesson to the cue-ball path."}</p><span>{lastLesson ? `All ${TOTAL_LEVELS} lessons completed. Your course summary is ready.` : `Up next: ${generateScenario(session.level).title}`}</span></section>}
-      {result ? <EnsembleResults result={result} scenario={scenario} inspected={inspected} playerName={session.character.name} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} showPlannedFinish={showPlannedFinish} onShowEnsemble={setShowEnsemble} onShowFinishes={setShowFinishes} onInspect={inspectShot} onPlay={playShot} shotLabel={shotLabel} finishLabel={finishLabel} /> : <section className="game-principles" aria-label="How the game works"><div><span className="principle-icon"><Focus size={22} strokeWidth={1.4} /></span><div><h3>Read the possibilities</h3><p>A new layout. A few choices.<br />{' '}One shot with a little more room.</p></div><span className="principle-index">01</span></div><div><span className="principle-icon"><Layers3 size={22} strokeWidth={1.4} /></span><div><h3>Think in probabilities</h3><p>Small changes in aim, spin, and power.<br />{' '}See how every outcome unfolds.</p></div><span className="principle-index">02</span></div><div><span className="principle-icon"><Flag size={22} strokeWidth={1.4} /></span><div><h3>Build your instincts</h3><p>Earn points for the safer choice.<br />{' '}Take on a tougher table.</p></div><span className="principle-index">03</span></div></section>}
+      {result && <section className="lesson-review" aria-label="Lesson takeaway"><span className="lesson-goal-label"><Check size={16} /> {sandbox ? 'SANDBOX ROUND COMPLETE' : `LESSON ${scenario.level} COMPLETE`}</span><h2>{scenario.curriculum?.takeaway}</h2><p>{objective ? `A pot only starts the pattern. Compare the zone rate and next-shot rate below: success needs both, along with a legal pot.` : "Compare your selection with the best shot, then watch the replay to connect the lesson to the cue-ball path."}</p><span>{sandbox ? 'Try a new layout or change the scenario. Every round is a fresh experiment.' : lastLesson ? `All ${TOTAL_LEVELS} lessons completed. Your course summary is ready.` : `Up next: ${generateScenario(session.level).title}`}</span></section>}
+      {result ? <EnsembleResults result={result} scenario={scenario} inspected={inspected} playerName={session.character.name} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} showPlannedFinish={showPlannedFinish} onShowEnsemble={setShowEnsemble} onShowFinishes={setShowFinishes} onInspect={inspectShot} onPlay={playShot} shotLabel={shotLabel} finishLabel={finishLabel} /> : <section className="game-principles" aria-label="How the game works"><div><span className="principle-icon"><Focus size={22} strokeWidth={1.4} /></span><div><h3>Read the possibilities</h3><p>A new layout. A few choices.<br />{' '}One shot with a little more room.</p></div><span className="principle-index">01</span></div><div><span className="principle-icon"><Layers3 size={22} strokeWidth={1.4} /></span><div><h3>Think in probabilities</h3><p>Small changes in aim, spin, and power.<br />{' '}See how every outcome unfolds.</p></div><span className="principle-index">02</span></div><div><span className="principle-icon"><Flag size={22} strokeWidth={1.4} /></span><div><h3>Build your instincts</h3><p>Earn points for the safer choice.<br />{' '}{sandbox ? 'Try another layout.' : 'Take on a tougher table.'}</p></div><span className="principle-index">03</span></div></section>}
       {result && inspected && <ShotTolerancePanel key={`${scenario.level}-${scenario.seed}`} scenario={scenario} shot={inspected} best={result.best} shotLabel={`${shotLabel(inspected.plan)} · ${finishLabel(inspected.plan.id)}`} bestLabel={`${shotLabel(result.best.plan)} · ${finishLabel(result.best.plan.id)}`} isSelection={inspected.plan.id === result.selected.plan.id} />}
       </>}
       </>}
@@ -282,6 +315,7 @@ export default function App() {
         if (opener?.isConnected) opener.focus({ preventScroll: true })
         else if (showCourseSummary) completionHeading.current?.focus({ preventScroll: true })
         else if (!session.character) document.getElementById('character-heading')?.focus({ preventScroll: true })
+        else if (sandbox && showSandboxSetup) document.getElementById('sandbox-heading')?.focus({ preventScroll: true })
         else sidebarHeading.current?.focus({ preventScroll: true })
       }}
     >
