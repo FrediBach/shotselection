@@ -79,6 +79,23 @@ export function positionToleranceForScenario(scenario: Scenario): number {
   return scenario.objective?.radius ?? positionToleranceForLevel(scenario.level);
 }
 
+export function satisfiesTrick(scenario: Scenario, plan: ShotPlan, simulation: Simulation): boolean {
+  const trick = scenario.trick;
+  if (!trick) return true;
+  if (plan.ballId !== trick.ballId || (plan.potBallId ?? plan.ballId) !== trick.potBallId
+    || plan.pocketId !== trick.pocketId || !trick.requiredPots.every(id => simulation.potted.includes(id))
+    || (simulation.objectCushions ?? 0) < (trick.minObjectCushions ?? 0)) return false;
+  const pocket = POCKET_GEOMETRY.find(candidate => candidate.id === trick.pocketId);
+  const pottedBall = simulation.finalBalls.find(ball => ball.id === trick.potBallId);
+  if (!pocket || !pottedBall?.pocketed || distance(pottedBall.position, pocket.center) >= pocket.radius) return false;
+  let next = 0;
+  for (const [a, b] of simulation.ballContacts ?? []) {
+    const expected = trick.requiredContacts[next];
+    if (expected && ((a === expected[0] && b === expected[1]) || (a === expected[1] && b === expected[0]))) next++;
+  }
+  return next === trick.requiredContacts.length;
+}
+
 /** One predicate shared by scoring and sensitivity analysis. Individual option
  * markers remain nominal endpoints; position lessons use one common zone. */
 export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simulation: Simulation) {
@@ -94,7 +111,8 @@ export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simula
     ? potBallId === scenario.plant.targetBallId && plan.pocketId === scenario.plant.pocketId
     : plan.ballId !== scenario.plant.targetBallId && potBallId === plan.ballId);
   const legalPot = simulation.stopped && !simulation.scratch && simulation.firstContact === plan.ballId
-    && simulation.potted.includes(potBallId) && (!objective || plan.ballId === objective.ballId) && banksSatisfied && plantSatisfied;
+    && simulation.potted.includes(potBallId) && (!objective || plan.ballId === objective.ballId) && banksSatisfied && plantSatisfied
+    && satisfiesTrick(scenario, plan, simulation);
   const positioned = simulation.stopped && !simulation.scratch && error <= radius;
   const nextShotAvailable = !objective || directNextShotRoutes(scenario, simulation).length > 0;
   return { legalPot, positioned, nextShotAvailable, success: legalPot && positioned && nextShotAvailable, error, radius };

@@ -26,7 +26,7 @@ function roundVerdict(result: RoundAnalysis) {
 }
 
 export default function RoundResultStep({ result, scenario, headingRef, shotLabel, finishLabel, onExplain }: Props) {
-  const { objective, bank, plant } = scenario
+  const { objective, bank, plant, trick } = scenario
   return <>
     <h2 ref={headingRef} tabIndex={-1}>{roundVerdict(result)}</h2>
     <section className="score-breakdown" aria-label="How your score adds up">
@@ -39,16 +39,16 @@ export default function RoundResultStep({ result, scenario, headingRef, shotLabe
     <section className="result-comparison" aria-label="Shot success rates">
       <h3>Success rate</h3>
       <div className="result-comparison-grid">
-        <div><span>Your shot</span><strong>{percent(result.selected.successRate)}</strong><small><BallIcon id={result.selected.plan.potBallId ?? result.selected.plan.ballId} small />{plant ? `${shotLabel(result.selected.plan)} · ` : ''}{finishLabel(result.selected.plan.id)}</small></div>
-        <div><span>Best shot</span><strong>{percent(result.best.successRate)}</strong><small><BallIcon id={result.best.plan.potBallId ?? result.best.plan.ballId} small />{plant ? `${shotLabel(result.best.plan)} · ` : ''}{finishLabel(result.best.plan.id)}</small></div>
+        <div><span>Your shot</span><strong>{percent(result.selected.successRate)}</strong><small><BallIcon id={result.selected.plan.potBallId ?? result.selected.plan.ballId} small />{plant || trick ? `${shotLabel(result.selected.plan)} · ` : ''}{finishLabel(result.selected.plan.id)}</small></div>
+        <div><span>Best shot</span><strong>{percent(result.best.successRate)}</strong><small><BallIcon id={result.best.plan.potBallId ?? result.best.plan.ballId} small />{plant || trick ? `${shotLabel(result.best.plan)} · ` : ''}{finishLabel(result.best.plan.id)}</small></div>
       </div>
     </section>
     <Button variant="outline" size="sm" className="shot-feedback-trigger full-width" aria-haspopup="dialog" onClick={event => onExplain(event.currentTarget)}><MessageCircle size={15} /> Explain my shot</Button>
     <details className="result-details">
       <summary>Scoring details <ChevronDown size={15} aria-hidden="true" /></summary>
-      <p>{result.scoring.noSuccessfulTrials ? `No successful pot + finish in ${result.samples} trials, so both parts earn 0.` : 'Quality rewards pots, safe finishes and target accuracy. Rank rewards your place among all choices.'}</p>
+      <p>{result.scoring.noSuccessfulTrials ? `No successful ${trick ? 'trick' : 'pot'} + finish in ${result.samples} trials, so both parts earn 0.` : 'Quality rewards pots, safe finishes and target accuracy. Rank rewards your place among all choices.'}</p>
       <p>{result.scoring.qualityPoints} + {result.scoring.rankPoints} = {result.points}. Each part rounds to 10 points. Similar results share a rank.</p>
-      <p>Success rate: {objective ? `pot + zone + a clear next shot on ball ${objective.nextBallId}` : bank ? `${bank.minCushions} bank${bank.minCushions === 1 ? "" : "s"} + pot + safe finish` : "pot + safe finish"} in {result.samples} trials, within {Math.round(result.positionTolerance * 100)} cm of the target.</p>
+      <p>Success rate: {trick ? `complete trick + pots ${trick.requiredPots.join(' + ')} + safe finish` : objective ? `pot + zone + a clear next shot on ball ${objective.nextBallId}` : bank ? `${bank.minCushions} bank${bank.minCushions === 1 ? "" : "s"} + pot + safe finish` : "pot + safe finish"} in {result.samples} trials, within {Math.round(result.positionTolerance * 100)} cm of the target.</p>
     </details>
   </>
 }

@@ -2,7 +2,7 @@ import { TABLE } from './constants';
 import { POCKET_GEOMETRY } from './table-geometry';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
 import { simulateShot } from './physics';
-import { hasProvenNextShot } from './objectives';
+import { hasProvenNextShot, satisfiesTrick } from './objectives';
 import { bankPlanForStroke, bankRoutesFor } from './bank-routes';
 import { plantRoutesFor } from './plant-routes';
 import { generateScenario } from './scenarios';
@@ -36,7 +36,7 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
 
 function scenarioFingerprint(scenario: Scenario): string {
   let hash = 2166136261;
-  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant, scenario.curriculum?.englishPractice])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant, scenario.trick, scenario.curriculum?.englishPractice])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
 }
 
@@ -97,7 +97,25 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
   };
   let triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
   const isPlant = scenario.plant?.ballId === ballId;
+  const trick = scenario.trick;
   const english = scenario.curriculum?.englishPractice;
+  if (trick && !scenario.bank) {
+    const cue = scenario.balls.find(ball => ball.id === 0)!;
+    const angle = Math.atan2(trick.aim.y - cue.position.y, trick.aim.x - cue.position.x);
+    for (const speed of [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.25, 2.5, 2.8, 3.1, 3.4, 3.6]) {
+      for (const topSpin of [-1.8, -1.4, -1.0, -0.6, 0, 0.6, 1.05, 1.5, 2.0]) {
+        for (const sideSpin of english ? [0, -english, english] : [0]) {
+          const plan: ShotPlan = { id: '', ballId, potBallId: trick.potBallId, pocketId: trick.pocketId,
+            angle, speed, topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
+          const simulation = simulateShot(scenario, plan, { record: false });
+          if (!isSafeFinish(simulation, ballId) || !satisfiesTrick(scenario, plan, simulation)) continue;
+          plan.target = { ...simulation.cueEnd };
+          feasible.push({ plan, simulation });
+        }
+      }
+    }
+    triple = chooseTriple(feasible, qualifies, Boolean(english));
+  }
   if (isPlant) {
     const targetBallId = scenario.plant!.targetBallId;
     const targetStart = scenario.balls.find(ball => ball.id === targetBallId)!.position;
@@ -131,7 +149,8 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
           for (const correction of [0, -0.0005, 0.0005, -0.001, 0.001, -0.0015, 0.0015, -0.002, 0.002]) {
             const plan = { ...aimed, angle: aimed.angle + correction };
             const simulation = simulateShot(scenario, plan, { record: false });
-            if (!isFeasible(simulation, ballId) || (simulation.cueBanksBeforeContact ?? 0) < scenario.bank.minCushions) continue;
+            if (!isFeasible(simulation, ballId) || (simulation.cueBanksBeforeContact ?? 0) < scenario.bank.minCushions
+              || !satisfiesTrick(scenario, plan, simulation)) continue;
             plan.target = { ...simulation.cueEnd };
             feasible.push({ plan, simulation });
             break;
@@ -142,7 +161,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
       if (triple) break;
     }
   }
-  for (const route of scenario.bank || isPlant ? [] : routesFor(scenario, ballId)) {
+  for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId)) {
     for (const multiplier of [0.95, 1.2, 1.5, 1.85, 2.3]) {
       for (const topSpin of [-1.1, 0, 1.05]) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
@@ -167,7 +186,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     const label = (['A', 'B', 'C'] as const)[index];
     const id = `${fingerprint}-ball-${ballId}-${label}`;
     const stroke = entry.plan.topSpin < -0.1 ? 'draw' : entry.plan.topSpin > 0.1 ? 'follow' : 'center';
-    const shot = isPlant ? `Plant ${ballId} → ${entry.plan.potBallId}` : `Ball ${ballId}`;
+    const shot = trick ? `Trick shot ${ballId}` : isPlant ? `Plant ${ballId} → ${entry.plan.potBallId}` : `Ball ${ballId}`;
     // Record only the three offered routes, after feasibility has chosen them.
     const { cueApproachPath } = simulateShot(scenario, entry.plan, { record: false, recordPaths: true });
     return { id, label, cueApproachPath, plan: { ...entry.plan, id, label: `${shot} · ${label} · ${stroke}` } };
@@ -176,6 +195,10 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
 }
 
 function prepareLayout(scenario: Scenario): PreparedRound {
+  if (scenario.trick) {
+    const prepared = prepareBall(scenario, scenario.trick.ballId);
+    return { scenario, balls: prepared ? [prepared.ball] : [] };
+  }
   if (scenario.plant) {
     const plant = prepareBall(scenario, scenario.plant.ballId);
     const freeBalls = scenario.balls.filter(ball => ball.id !== 0 && ball.id !== scenario.plant!.ballId
@@ -204,6 +227,8 @@ function prepareLayout(scenario: Scenario): PreparedRound {
 /** Direct search tries at most 30 nominal strokes per object ball, or 90 when
  * an authored English lesson compares both side-spin directions with zero. Plant search
  * tries 21 strokes on the fixed pair line, retaining physically simulated misses.
+ * Trick search tries 117 strokes on its authored contact line (351 with English),
+ * retaining only complete, physically proven tricks before choosing three finishes.
  * Bank search tries 12 routes, nine speeds and five spins with angle calibration.
  * Authored lessons can try three replacement layouts of the same lesson;
  * fixed objectives never fall back to an unrelated easier layout. Passing
@@ -213,6 +238,20 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
   const objective = scenario.objective;
   const bank = scenario.bank;
   const plant = scenario.plant;
+  const trick = scenario.trick;
+  if (trick && (objective || plant)) throw new Error('A trick shot cannot also define a plant or position objective.');
+  if (trick && (!scenario.balls.some(ball => ball.id === trick.ballId && ball.id > 0)
+    || !scenario.balls.some(ball => ball.id === trick.potBallId && ball.id > 0)
+    || !POCKET_GEOMETRY.some(pocket => pocket.id === trick.pocketId)
+    || ![trick.aim.x, trick.aim.y].every(Number.isFinite)
+    || !trick.requiredPots.length || !trick.requiredPots.includes(trick.potBallId)
+    || trick.requiredPots.some(id => !scenario.balls.some(ball => ball.id === id && id > 0))
+    || !trick.requiredContacts.length
+    || trick.requiredContacts.some(pair => pair.length !== 2 || pair[0] === pair[1]
+      || pair.some(id => !scenario.balls.some(ball => ball.id === id)))
+    || (trick.minObjectCushions !== undefined && (!Number.isInteger(trick.minObjectCushions) || trick.minObjectCushions < 1)))) {
+    throw new Error('The trick shot needs its target balls, pocket, aim line and physical contact sequence.');
+  }
   if (bank && objective) throw new Error('A bank lesson cannot also define a position objective.');
   if (plant && (bank || objective)) throw new Error('A plant decision cannot also define a bank or position objective.');
   if (plant && (!Number.isInteger(plant.ballId) || !Number.isInteger(plant.targetBallId)
@@ -238,17 +277,18 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
   if (objective && (!scenario.balls.some(ball => ball.id === objective.ballId) || !scenario.balls.some(ball => ball.id === objective.nextBallId))) {
     throw new Error('The position lesson needs both its first object ball and its reserved next ball on the table.');
   }
-  const attempts = options.regenerate === false || ((objective || bank || plant) && !scenario.curriculum) ? 1 : 4;
+  const attempts = options.regenerate === false || ((objective || bank || plant || trick) && !scenario.curriculum) ? 1 : 4;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const generated = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
-    // Regeneration keeps the lesson and its objective; a plant's pocket follows
-    // the regenerated table reflection along with the paired balls.
+    // Regeneration keeps the lesson; plant pockets and trick aim lines follow
+    // the regenerated table reflection along with the balls.
     const layout = { ...scenario, seed: generated.seed, balls: generated.balls,
-      ...(plant ? { plant: { ...plant, pocketId: generated.plant?.pocketId ?? plant.pocketId } } : {}) };
+      ...(plant ? { plant: { ...plant, pocketId: generated.plant?.pocketId ?? plant.pocketId } } : {}),
+      ...(trick ? { trick: generated.trick ?? trick } : {}) };
     const prepared = prepareLayout(layout);
     if (prepared.balls.length) return prepared;
   }
-  if (options.regenerate === false || scenario.curriculum || objective || bank || plant) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
+  if (options.regenerate === false || scenario.curriculum || objective || bank || plant || trick) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
   const openLayout: Scenario = { ...scenario, seed: 72350, balls: generateScenario(1, 72350).balls };
   const prepared = prepareLayout(openLayout);
   if (!prepared.balls.length) throw new Error('No feasible three-finish layout could be prepared.');

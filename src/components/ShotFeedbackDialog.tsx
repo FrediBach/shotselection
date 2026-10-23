@@ -23,7 +23,7 @@ export default function ShotFeedbackDialog({ result, scenario, headingRef, shotL
   const sameShot = selected.plan.id === best.plan.id
   const rows = [
     { label: 'Full objective', yours: percent(selected.successRate), best: percent(best.successRate) },
-    { label: 'Legal pot', yours: percent(selected.legalPotRate), best: percent(best.legalPotRate) },
+    { label: scenario.trick ? 'Legal trick' : 'Legal pot', yours: percent(selected.legalPotRate), best: percent(best.legalPotRate) },
     { label: 'Scratch', yours: percent(selected.scratchRate), best: percent(best.scratchRate) },
     { label: scenario.objective ? 'In shared zone' : 'In intended finish', yours: percent(selected.positionRate), best: percent(best.positionRate) },
     ...(scenario.objective ? [{ label: `Next shot · ball ${scenario.objective.nextBallId}`, yours: percent(selected.nextShotRate ?? 0), best: percent(best.nextShotRate ?? 0) }] : []),

@@ -18,7 +18,7 @@ test.beforeEach(async ({ page }) => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     if (!localStorage.getItem('shot-selection-session')) localStorage.setItem('shot-selection-session', JSON.stringify({
-      scoringVersion: 2, courseVersion: 3, completedLessons: 0,
+      scoringVersion: 2, courseVersion: 4, completedLessons: 0,
       level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431,
     }))
     const originalContext = HTMLCanvasElement.prototype.getContext
@@ -178,8 +178,9 @@ test('all scenario categories and variations are available without completing an
   await openSandbox(page)
   await page.getByRole('button', { name: /^Place the balls myself/ }).click()
   const scenario = page.getByRole('combobox', { name: 'Scenario', exact: true })
-  await expect(scenario.locator('option')).toHaveCount(80)
+  await expect(scenario.locator('option')).toHaveCount(90)
   await expect(scenario.locator('optgroup')).toHaveCount(COURSE_CHAPTERS.length)
+  await expect(scenario.locator('optgroup[label="Trick shots"] option')).toHaveCount(10)
   expect(await scenario.locator('option:disabled').count()).toBe(0)
   for (const chapter of COURSE_CHAPTERS) {
     await scenario.selectOption(String(chapter.firstLevel))

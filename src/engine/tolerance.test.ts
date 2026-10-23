@@ -44,7 +44,7 @@ describe('sampled one-sided stroke tolerances', () => {
   it('requires the level-specific target radius in addition to a legal pot', () => {
     vi.spyOn(physics, 'simulateShot').mockReturnValue({ ...successful, cueEnd: { x: plan.target.x + 0.12, y: plan.target.y } });
     const easy = analyzeShotTolerance(scenario, plan);
-    const hard = analyzeShotTolerance({ ...scenario, level: 100 }, plan);
+    const hard = analyzeShotTolerance({ ...scenario, level: 80 }, plan);
     expect(easy.nominalSuccess).toBe(true);
     expect(hard.nominalPot).toBe(true);
     expect(hard.nominalSuccess).toBe(false);

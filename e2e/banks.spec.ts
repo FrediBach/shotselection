@@ -11,7 +11,7 @@ for (const [level, cushions] of [[51, 1], [57, 2], [60, 3]]) test(`bank lesson $
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     localStorage.setItem('shot-selection-session', JSON.stringify({
-      scoringVersion: 2, courseVersion: 3, completedLessons: level - 1,
+      scoringVersion: 2, courseVersion: 4, completedLessons: level - 1,
       level, score: 0, rounds: level - 1, perfect: 0, seed: 71431,
     }))
     const originalContext = HTMLCanvasElement.prototype.getContext
@@ -40,7 +40,8 @@ for (const [level, cushions] of [[51, 1], [57, 2], [60, 3]]) test(`bank lesson $
   expect(await blockers.evaluateAll(buttons => buttons.slice(1).every(button => (button as HTMLButtonElement).disabled))).toBe(true)
   await expect(page.locator('.unavailable-note')).toContainText('Dimmed balls are blockers')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  await expect(page.getByTestId('ideal-approach-path')).toHaveCount(0)
+  await expect(ball).toHaveAttribute('aria-pressed', 'true')
+  await expectIdealApproach(page, 'A')
   await ball.click()
   await expectIdealApproach(page, 'A')
   await expect(page.getByRole('button', { name: /^Table finish [ABC]$/ })).toHaveCount(0)

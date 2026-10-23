@@ -1,6 +1,6 @@
 import { TABLE } from './constants';
 import { COURSE_CHAPTERS, TOTAL_LEVELS } from './course';
-import { distance, seededRandom, segmentDistance } from './math';
+import { distance, normalize, seededRandom, segmentDistance, subtract } from './math';
 import { prepareRound } from './preparation';
 import { generateScenario } from './scenarios';
 import { isPocketed, RAILS } from './table-geometry';
@@ -89,18 +89,28 @@ export function prepareSandboxRound(request: SandboxRequest): PreparedRound {
   if (request.placement !== 'random') throw new Error('Choose random or manual ball placement.');
   const base = createSandboxScenario(request.scenario.level, request.scenario.seed);
   const random = seededRandom((base.seed ^ 0x6D2B79F5) >>> 0);
-  // Try a new full-table arrangement and a substantial shift first. Bank and
-  // plant routes depend on precise alignment, so bounded fallbacks narrow the
-  // search around a known teaching layout if those arrangements do not work.
+  // Set-up tricks depend on the authored object-ball alignment. Vary the cue's
+  // approach distance instead, preserving the line and complete trick contract.
+  // Cushion-first tricks use the bank search, which derives its own aim line.
+  const approach = base.trick && !base.bank
+    ? normalize(subtract(base.trick.aim, base.balls.find(ball => ball.id === 0)!.position)) : null;
+  // Other lessons try a full-table arrangement and a substantial shift first,
+  // narrowing around the teaching layout when precise bank/plant lines need it.
   const spread = base.bank ? 0.008 : base.plant ? 0.025 : 0.085;
-  const shifts = [null, base.bank ? 0.12 : 0.35, ...[1, 0.65, 0.35, 0.15, 0.05, 0.01].map(scale => spread * scale)];
+  const shifts = approach ? [0.12, 0.08, 0.04, 0.02, 0.005]
+    : [null, base.bank ? 0.12 : 0.35, ...[1, 0.65, 0.35, 0.15, 0.05, 0.01].map(scale => spread * scale)];
   for (const shift of shifts) {
     const margin = TABLE.ballDiameter * 1.5;
+    const cueShift = approach && shift !== null ? (random() < 0.5 ? -1 : 1) * shift * (0.5 + random() * 0.5) : 0;
     const scenario: Scenario = {
       ...base,
       balls: base.balls.map(ball => ({
         ...ball,
-        position: shift === null
+        position: approach
+          ? ball.id === 0
+            ? { x: ball.position.x + approach.x * cueShift, y: ball.position.y + approach.y * cueShift }
+            : { ...ball.position }
+          : shift === null
           ? { x: margin + random() * (TABLE.length - margin * 2), y: margin + random() * (TABLE.width - margin * 2) }
           : { x: ball.position.x + (random() * 2 - 1) * shift, y: ball.position.y + (random() * 2 - 1) * shift },
       })),

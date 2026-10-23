@@ -26,7 +26,7 @@ function ToleranceComparisonVolume({ scenario, shot, best, shotLabel, bestLabel,
 
   return <div className="tolerance-combinations">
     <div className="tolerance-card-heading"><h3>Change all three together</h3></div>
-    <p className="tolerance-condition">The 3D view always requires a legal pot <em>and</em> a cue-ball finish inside the target{scenario.objective ? ` with a clear next shot on ball ${scenario.objective.nextBallId}` : ""}. Follow/draw stays fixed for each shot.{scenario.plant && ` This view tracks ball ${graphShot.plan.potBallId ?? graphShot.plan.ballId} for the pot.`}</p>
+    <p className="tolerance-condition">The 3D view always requires {scenario.trick ? 'the complete trick' : 'a legal pot'} <em>and</em> a cue-ball finish inside the target{scenario.objective ? ` with a clear next shot on ball ${scenario.objective.nextBallId}` : ""}. Follow/draw stays fixed for each shot.{scenario.trick && ` ${scenario.trick.description} Every required pot, contact and cushion rebound must succeed together.`}{scenario.plant && ` This view tracks ball ${graphShot.plan.potBallId ?? graphShot.plan.ballId} for the pot.`}</p>
     {!sameShot && <div className="tolerance-segment volume-choice" role="group" aria-label="Shot shown in volume"><button aria-pressed={volumeChoice === 'inspected'} onClick={() => setVolumeChoice('inspected')}>Inspected volume</button><button aria-pressed={volumeChoice === 'best'} onClick={() => setVolumeChoice('best')}>Best volume</button></div>}
     {graph ? <ToleranceVolume key={graph.planId} tolerance={graph} label={graphLabel} /> : <div className="tolerance-graph-placeholder"><ArrowLeftRight size={28} /><p>Mapping angle, English, and strength…</p><span>Each point is a simulated stroke.</span></div>}
   </div>

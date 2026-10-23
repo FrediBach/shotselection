@@ -1,5 +1,5 @@
 import type { Pocket } from './types';
-import { TOTAL_LEVELS } from './course';
+import { COURSE_CHAPTERS, TOTAL_LEVELS } from './course';
 
 export const TABLE = {
   length: 2.54,
@@ -33,9 +33,17 @@ export const POCKETS: Pocket[] = [
   { id: 5, name: 'bottom left', position: { x: 0, y: 1.27 }, kind: 'corner' },
 ];
 
-/** Tighten the finish throughout the course, reaching 8 cm at its final level. */
+const TOURNAMENT_LAST_LEVEL = COURSE_CHAPTERS.find(chapter => chapter.id === 'tournament')!.lastLevel;
+
+/** Keep the original course's 19–8 cm progression. The trick-shot showcase
+ * starts with a more forgiving 16 cm finish, narrowing to 12 cm for its finale. */
 export const positionToleranceForLevel = (level: number) => {
-  const progress = Number.isFinite(level) ? Math.max(0, Math.min(1, (level - 1) / (TOTAL_LEVELS - 1))) : 0;
+  const safeLevel = Number.isFinite(level) ? Math.max(1, Math.min(TOTAL_LEVELS, level)) : 1;
+  if (safeLevel > TOURNAMENT_LAST_LEVEL) {
+    const progress = (safeLevel - TOURNAMENT_LAST_LEVEL - 1) / (TOTAL_LEVELS - TOURNAMENT_LAST_LEVEL - 1);
+    return 0.16 * (0.12 / 0.16) ** Math.max(0, progress);
+  }
+  const progress = (safeLevel - 1) / (TOURNAMENT_LAST_LEVEL - 1);
   return TABLE.positionTolerance * (0.08 / TABLE.positionTolerance) ** progress;
 };
 

@@ -2,14 +2,15 @@ import { expect, test, type Page } from '@playwright/test'
 import { startLevel, chooseDefaultCharacter } from './helpers'
 import { expectIdealApproach, observePreparedRound } from './ideal-approach'
 import { DEFAULT_CHARACTER } from '../src/engine/characters'
+import type { PreparedRound } from '../src/engine/types'
 
-async function seedLesson(page: Page, level: number, fallback = true, course: 'current' | 'banks' | 'legacy' = 'current') {
+async function seedLesson(page: Page, level: number, fallback = true, course: 'current' | 'plants' | 'banks' | 'legacy' = 'current') {
   await observePreparedRound(page)
   await page.addInitScript(({ level, fallback, course, character }) => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     if (!localStorage.getItem('shot-selection-session')) localStorage.setItem('shot-selection-session', JSON.stringify({
-      ...(level === 1 ? { character } : {}), scoringVersion: 2, ...(course === 'legacy' ? {} : { courseVersion: course === 'banks' ? 2 : 3 }), completedLessons: level - 1, level, score: (level - 1) * 50,
+      ...(level === 1 ? { character } : {}), scoringVersion: 2, ...(course === 'legacy' ? {} : { courseVersion: course === 'banks' ? 2 : course === 'plants' ? 3 : 4 }), completedLessons: level - 1, level, score: (level - 1) * 50,
       rounds: level - 1, perfect: 0, seed: 71431,
     }))
     if (fallback) {
@@ -26,7 +27,7 @@ async function chooseFirstOption(page: Page, mode: 'finish' | 'stroke' = 'finish
   const ball = page.getByRole('button', { name: 'Select ball 1', exact: true })
   await expect(ball).toBeEnabled({ timeout: 45_000 })
   await ball.click()
-  await page.getByRole('button', { name: `Choose a ${mode}`, exact: true }).click()
+  await page.getByRole('button', { name: /^Choose a (?:finish|stroke)$/, exact: true }).click()
   await expect(page.locator('.finish-option')).toHaveCount(3)
   await page.getByRole('button', { name: `Choose ${mode} A`, exact: true }).click()
 }
@@ -35,7 +36,7 @@ test('beginner training starts with one ball, a lesson and an empty course progr
   await seedLesson(page, 1)
   await page.goto('/')
   const briefing = page.getByRole('dialog', { name: 'Your first pot', exact: true })
-  await expect(briefing).toContainText('LEVEL 01 / 80')
+  await expect(briefing).toContainText('LEVEL 01 / 90')
   await expect(briefing).toContainText('LESSON 1 OF 10')
   await expect(briefing.locator('.briefing-steps i')).toHaveCount(10)
   await expect(briefing.locator('.briefing-steps .step-reached')).toHaveCount(1)
@@ -48,14 +49,15 @@ test('beginner training starts with one ball, a lesson and an empty course progr
   await startLevel(page, 1)
   const progress = page.getByRole('progressbar', { name: 'Game completion' })
   await expect(progress).toHaveAttribute('aria-valuenow', '0')
-  await expect(progress).toHaveAttribute('aria-valuetext', '0 of 80 levels complete')
+  await expect(progress).toHaveAttribute('aria-valuetext', '0 of 90 levels complete')
   const chapters = page.getByRole('list', { name: 'Learning scenarios' })
-  await expect(chapters.getByRole('listitem')).toHaveCount(8)
+  await expect(chapters.getByRole('listitem')).toHaveCount(9)
   await expect(chapters.locator('small')).toHaveText([
     'Levels 1–10 · 0/10', 'Levels 11–20 · 0/10', 'Levels 21–30 · 0/10',
-    'Levels 31–40 · 0/10', 'Levels 41–50 · 0/10', 'Levels 51–60 · 0/10', 'Levels 61–70 · 0/10', 'Levels 71–80 · 0/10',
+    'Levels 31–40 · 0/10', 'Levels 41–50 · 0/10', 'Levels 51–60 · 0/10', 'Levels 61–70 · 0/10', 'Levels 71–80 · 0/10', 'Levels 81–90 · 0/10',
   ])
   await expect(chapters.locator('[aria-current="step"]')).toContainText('First strokes')
+  expect(await chapters.getByRole('listitem').evaluateAll(items => items.every(item => item.scrollWidth <= item.clientWidth)), 'All nine chapter cards should fit on desktop').toBe(true)
   await expect(page.getByRole('region', { name: 'Current lesson', exact: true })).toHaveCount(0)
   await expect(page.locator('.lesson-brief')).toHaveCount(0)
   await chooseFirstOption(page)
@@ -95,7 +97,7 @@ test('position lesson hides stroke outcomes until commitment and keeps its label
   await page.screenshot({ path: briefingPath, fullPage: true })
   await testInfo.attach('Mobile position scenario introduction', { path: briefingPath, contentType: 'image/png' })
   await startLevel(page, 21)
-  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuenow', '25')
+  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuenow', '22')
   const chapters = page.getByRole('list', { name: 'Learning scenarios' })
   await expect(chapters.locator('[aria-current="step"]')).toContainText('Play for position')
   await expect(chapters.locator('.chapter-done')).toHaveCount(2)
@@ -166,7 +168,7 @@ test('position lesson hides stroke outcomes until commitment and keeps its label
   await expect(legend).toContainText('Planned finish')
   await expect(page.locator('.analysis-rate')).toHaveCount(3)
   await expect(page.getByTestId('ensemble-paths')).toBeVisible()
-  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuenow', '26')
+  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuenow', '23')
   await expect(chapters.locator('[aria-current="step"] small')).toHaveText('Levels 21–30 · 1/10')
   await expect(page.getByRole('region', { name: 'Lesson takeaway', exact: true })).toContainText('LESSON 21 COMPLETE')
   await expect(page.locator('.analysis-card')).toHaveCount(3)
@@ -201,7 +203,7 @@ test('position lesson hides stroke outcomes until commitment and keeps its label
   await page.reload()
   await expect(page.getByRole('dialog', { name: 'Control the length', exact: true })).toContainText('LEVEL 22')
   await startLevel(page, 22)
-  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuetext', '21 of 80 levels complete')
+  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuetext', '21 of 90 levels complete')
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toEqual(saved)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect(errors).toEqual([])
@@ -278,16 +280,16 @@ test('WebGL position table previews the approach without revealing stroke outcom
 test('a completed earlier course resumes at banks while retaining tournament credit', async ({ page }) => {
   await seedLesson(page, 61, true, 'legacy')
   await page.goto('/')
-  await expect(page.getByRole('dialog')).toContainText('LEVEL 51 / 80')
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 51 / 90')
   await expect(page.getByRole('dialog')).toContainText('Bank shots')
   await startLevel(page, 51)
   await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('[aria-current="step"]')).toContainText('Bank shots')
   await expect(page.getByRole('region', { name: 'Course progression' })).toContainText('Your 10 completed tournament lessons are saved')
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
-  expect(saved).toMatchObject({ courseVersion: 3, completedLessons: 50, level: 51,
+  expect(saved).toMatchObject({ courseVersion: 4, completedLessons: 50, level: 51,
     carriedTournamentLessons: 10, rounds: 60, score: 3000, perfect: 0, seed: 71431 })
   await page.reload()
-  await expect(page.getByRole('dialog')).toContainText('LEVEL 51 / 80')
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 51 / 90')
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toEqual(saved)
 })
 
@@ -295,40 +297,155 @@ test('a completed earlier course resumes at banks while retaining tournament cre
 test('a completed bank-era course resumes at plants and preserves earned tournament credit', async ({ page }) => {
   await seedLesson(page, 71, true, 'banks')
   await page.goto('/')
-  await expect(page.getByRole('dialog')).toContainText('LEVEL 61 / 80')
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 61 / 90')
   await expect(page.getByRole('dialog')).toContainText('Plants')
   await startLevel(page, 61)
   await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('[aria-current="step"]')).toContainText('Plants')
   await expect(page.getByRole('region', { name: 'Course progression' })).toContainText('Your 10 completed tournament lessons are saved')
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
-  expect(saved).toMatchObject({ courseVersion: 3, completedLessons: 60, level: 61,
+  expect(saved).toMatchObject({ courseVersion: 4, completedLessons: 60, level: 61,
     carriedTournamentLessons: 10, rounds: 70, score: 3500, perfect: 0, seed: 71431 })
   await page.reload()
-  await expect(page.getByRole('dialog')).toContainText('LEVEL 61 / 80')
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 61 / 90')
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toEqual(saved)
+})
+
+test('a completed eighty-lesson course resumes at Trick shots with its score and progress intact', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await seedLesson(page, 81, true, 'plants')
+  await page.goto('/')
+  const briefing = page.getByRole('dialog')
+  await expect(briefing).toContainText('LEVEL 81 / 90')
+  await expect(briefing).toContainText('Trick shots')
+  await expect(briefing).toContainText('LESSON 1 OF 10')
+  await expect(briefing).toContainText('New scenario')
+  await expect(briefing.getByRole('region', { name: 'Learning focus' })).toBeVisible()
+  await expect(briefing.getByRole('complementary', { name: 'Teaching tip' })).toBeVisible()
+  const path = '/tmp/shot-selection-trick-shots-briefing-mobile.png'
+  await page.screenshot({ path, fullPage: true })
+  await testInfo.attach('First trick-shot briefing on mobile', { path, contentType: 'image/png' })
+  await startLevel(page, 81)
+  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuetext', '80 of 90 levels complete')
+  const chapters = page.getByRole('list', { name: 'Learning scenarios' })
+  await expect(chapters.locator('.chapter-done')).toHaveCount(8)
+  await expect(chapters.locator('[aria-current="step"]')).toContainText('Trick shots')
+  await expect(chapters.locator('[aria-current="step"] small')).toHaveText('Levels 81–90 · 0/10')
+  expect(await chapters.getByRole('listitem').evaluateAll(items => items.every(item => {
+    const bounds = item.getBoundingClientRect()
+    return bounds.left >= 0 && bounds.right <= innerWidth && item.scrollWidth <= item.clientWidth
+  })), 'All nine chapter cards should fit on mobile').toBe(true)
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
+  expect(saved).toMatchObject({ courseVersion: 4, completedLessons: 80, level: 81,
+    rounds: 80, score: 4000, perfect: 0, seed: 71431, character: DEFAULT_CHARACTER })
+  await page.reload()
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 81 / 90')
+  await expect(page.getByRole('dialog')).toContainText('Trick shots')
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toEqual(saved)
+})
+
+test('finishing Tournament table advances into Trick shots instead of completing the course', async ({ page }, testInfo) => {
+  test.setTimeout(120_000)
+  await seedLesson(page, 80)
+  await page.goto('/')
+  await startLevel(page, 80)
+  await chooseFirstOption(page, 'stroke')
+  await page.getByRole('button', { name: 'Lock in your shot', exact: true }).click()
+  await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 45_000 })
+  const awarded = Number.parseInt((await page.locator('.points-awarded strong').textContent())!, 10)
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toMatchObject({
+    completedLessons: 80, rounds: 80, level: 81, score: 3950 + awarded,
+  })
+  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuenow', '89')
+  await expect(page.getByRole('button', { name: 'View course summary', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Next level', exact: true }).click()
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 81 / 90')
+  await expect(page.getByRole('dialog')).toContainText('Trick shots')
+  await startLevel(page, 81)
+  await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('[aria-current="step"]')).toContainText('Trick shots')
+  await expect(page.getByRole('region', { name: 'Course complete', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 45_000 })
+  await chooseFirstOption(page, 'stroke')
+  await expectIdealApproach(page, 'A')
+  await expect(page.getByRole('group', { name: 'Stroke options', exact: true }).getByRole('button')).toHaveCount(3)
+  await expect(page.getByRole('button', { name: /^Table finish [ABC]$/ })).toHaveCount(0)
+  await expect(page.getByTestId('nominal-cue-finish')).toHaveCount(0)
+  await expect(page.getByLabel('Table legend', { exact: true })).not.toContainText('Desired finish')
+  await expect(page.locator('.selected-ball-summary')).not.toContainText('Plant')
+  const choicesPath = '/tmp/shot-selection-first-trick-choices.png'
+  await page.screenshot({ path: choicesPath, fullPage: true })
+  await testInfo.attach('First trick-shot choices', { path: choicesPath, contentType: 'image/png' })
+  await page.getByRole('button', { name: 'Lock in your shot', exact: true }).click()
+  await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 45_000 })
+  await expect(page.locator('.analysis-card')).toHaveCount(3)
+  await expect(page.locator('.analysis-metrics').first()).toContainText('All pots')
+  await expect(page.locator('.analysis-metrics').first()).toContainText('Legal trick')
+  await expect(page.getByTestId('nominal-cue-finish')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Planned stroke outcome' })).toBeVisible()
+  await expect(page.locator('.ensemble-explanation')).toContainText('every required pot')
+  await expect(page.getByRole('button', { name: 'Legal trick', exact: true })).toBeVisible()
+  await expect(page.locator('.perfect-celebration')).toHaveCount(0, { timeout: 10_000 })
+  const resultPath = '/tmp/shot-selection-first-trick-result.png'
+  await page.screenshot({ path: resultPath, fullPage: true })
+  await testInfo.attach('First trick-shot result', { path: resultPath, contentType: 'image/png' })
+  await page.getByRole('button', { name: 'Play the best shot', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Shot in motion…', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Play the best shot', exact: true })).toBeEnabled({ timeout: 30_000 })
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('a multi-pot trick shows its full goal and keeps WebGL stroke finishes hidden until commitment', async ({ page }, testInfo) => {
+  test.setTimeout(120_000)
+  await seedLesson(page, 82, false)
+  await page.goto('/')
+  await expect(page.getByRole('dialog')).toContainText('Trick shots')
+  await startLevel(page, 82)
+  await chooseFirstOption(page, 'stroke')
+  const prepared = await page.evaluate(() => (window as Window & { idealApproachPrepared: PreparedRound }).idealApproachPrepared)
+  const trick = prepared.scenario.trick!
+  expect(trick.requiredPots.length).toBeGreaterThan(1)
+  await expect(page.locator('.selected-ball-summary')).toContainText(`Hit ${trick.ballId} first · Pot ${trick.requiredPots.join(' + ')}`)
+  await expect(page.locator('.pool-table-scene canvas')).toBeVisible()
+  await expect(page.locator('.pool-table-scene')).toHaveAccessibleName(`Pool table. ${trick.description}`)
+  await expect(page.getByRole('button', { name: /^Table finish [ABC]$/ })).toHaveCount(0)
+  await expect(page.getByLabel('Table legend', { exact: true })).not.toContainText('Planned finish')
+  await expect(page.getByLabel('Table legend', { exact: true })).not.toContainText('Position zone')
+  await expect(page.getByLabel('Table legend', { exact: true })).not.toContainText('Desired finish')
+  const path = '/tmp/shot-selection-trick-shot-webgl-stroke.png'
+  await page.screenshot({ path, fullPage: true })
+  await testInfo.attach('Multi-pot trick stroke choices in WebGL', { path, contentType: 'image/png' })
+  await page.getByRole('button', { name: 'Lock in your shot', exact: true }).click()
+  await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 45_000 })
+  await expect(page.getByLabel('Table legend', { exact: true })).toContainText('Planned finish')
+  await expect(page.locator('.analysis-metrics').first()).toContainText('All pots')
+  await expect(page.locator('.analysis-metrics').first()).toContainText('Legal trick')
+  await page.getByRole('button', { name: 'Explain my shot', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('table')).toContainText('Legal trick')
+  await expect(page.getByRole('dialog')).not.toContainText('Plant')
 })
 
 test('the final lesson reaches 100% and reloads its summary without scoring twice', async ({ page }, testInfo) => {
   test.setTimeout(120_000)
-  await seedLesson(page, 80)
+  await seedLesson(page, 90)
   await page.goto('/')
   await expect(page.getByRole('dialog')).toContainText('Put it together')
-  await startLevel(page, 80)
+  await expect(page.getByRole('dialog')).toContainText('LESSON 10 OF 10')
+  await startLevel(page, 90)
   await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuenow', '99')
-  await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('[aria-current="step"]')).toContainText('Tournament table')
+  await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('[aria-current="step"]')).toContainText('Trick shots')
   await chooseFirstOption(page, 'stroke')
   await page.getByRole('button', { name: 'Lock in your shot', exact: true }).click()
   await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 45_000 })
   const awarded = Number.parseInt((await page.locator('.points-awarded strong').textContent())!, 10)
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
-  expect(saved).toMatchObject({ completedLessons: 80, rounds: 80, level: 81, score: 3950 + awarded })
+  expect(saved).toMatchObject({ completedLessons: 90, rounds: 90, level: 91, score: 4450 + awarded })
   await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuenow', '100')
   await expect(page.getByRole('button', { name: 'Next level', exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: 'View course summary', exact: true }).click()
   const summary = page.getByRole('region', { name: 'Course complete', exact: true })
   await expect(summary).toBeVisible()
   await expect(summary).toContainText('100%')
-  await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('.chapter-done')).toHaveCount(8)
+  await expect(summary).toContainText('ten trick shots')
+  await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('.chapter-done')).toHaveCount(9)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(summary.getByRole('heading')).toBeFocused()
   const path = '/tmp/shot-selection-course-complete.png'
@@ -341,14 +458,14 @@ test('the final lesson reaches 100% and reloads its summary without scoring twic
     await expect(summary.getByRole('heading')).toBeFocused()
     await expect(page.locator('.simulation-overlay')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Lock in your shot', exact: true })).toHaveCount(0)
-    await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuetext', '80 of 80 levels complete')
+    await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuetext', '90 of 90 levels complete')
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toEqual(saved)
   }
   await page.getByRole('button', { name: 'Start a new course', exact: true }).click()
   await chooseDefaultCharacter(page)
   await expect(page.getByRole('dialog', { name: 'Your first pot', exact: true })).toContainText('New scenario')
   await startLevel(page, 1)
-  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuetext', '0 of 80 levels complete')
+  await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuetext', '0 of 90 levels complete')
 })
 
 test('reviewing a briefing preserves the selected ball and finish', async ({ page }) => {

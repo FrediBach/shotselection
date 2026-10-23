@@ -18,7 +18,7 @@ export default function LevelBriefing({ scenario, headingRef, onStart, reviewing
   reviewing: boolean
   sandbox?: boolean
 }) {
-  const { curriculum, objective, bank, plant } = scenario
+  const { curriculum, objective, bank, plant, trick } = scenario
   const briefing = curriculum?.briefing
   const lessonIndex = curriculum?.lessonIndex ?? 0
   const lessonCount = curriculum?.lessonCount ?? LEVELS_PER_CHAPTER
@@ -42,6 +42,7 @@ export default function LevelBriefing({ scenario, headingRef, onStart, reviewing
       {plant && <p className="briefing-objective">Plant {plant.ballId} → {plant.targetBallId}: hit ball {plant.ballId} first to pot ball {plant.targetBallId} · Or choose a difficult free ball · Compare the margin for error and cue-ball finish.</p>}
       {bank && <p className="briefing-objective">Reach ball {bank.ballId} after at least {bank.minCushions} cushion{bank.minCushions === 1 ? "" : "s"} · Pot the target ball · Control the cue-ball finish.</p>}
       {objective && <p className="briefing-objective">Pot ball {objective.ballId} · Hold the cyan zone · Leave ball {objective.nextBallId} a clear shot with a cut of {objective.maxCutAngle}° or less.</p>}
+      {trick && <p className="briefing-objective">{trick.description} Keep the cue ball on the table and control its finish.</p>}
     </section>
     {briefing && <aside className="briefing-gotcha" aria-label="Teaching tip">
       <Lightbulb size={19} aria-hidden="true" />

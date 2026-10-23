@@ -6,7 +6,7 @@ export type GameMode = 'course' | 'sandbox'
 
 export type Session = {
   scoringVersion: 2
-  courseVersion: 3
+  courseVersion: 4
   mode: GameMode
   character: PlayerCharacter | null
   completedLessons: number
@@ -22,7 +22,7 @@ export const SESSION_STORAGE_KEY = 'shot-selection-session'
 
 export const freshSession = (character: PlayerCharacter | null = null, mode: GameMode = 'course'): Session => ({
   scoringVersion: 2,
-  courseVersion: 3,
+  courseVersion: 4,
   mode,
   character: normalizePlayerCharacter(character),
   completedLessons: 0,
@@ -45,10 +45,10 @@ export function loadSession(): Session {
     if (mode !== undefined && mode !== 'course' && mode !== 'sandbox') return freshSession()
     if (mode === 'sandbox') {
       const player = normalizePlayerCharacter(character)
-      if (scoringVersion !== 2 || courseVersion !== 3 || !player || !nonnegativeInteger(seed) ||
+      if (scoringVersion !== 2 || (courseVersion !== 3 && courseVersion !== 4) || !player || !nonnegativeInteger(seed) ||
         level !== 1 || completedLessons !== 0 || score !== 0 || rounds !== 0 || perfect !== 0 ||
         carriedTournamentLessons !== undefined) return freshSession()
-      return { scoringVersion: 2, courseVersion: 3, mode, character: player, completedLessons: 0,
+      return { scoringVersion: 2, courseVersion: 4, mode, character: player, completedLessons: 0,
         level: 1, score: 0, rounds: 0, perfect: 0, seed }
     }
     if (!nonnegativeInteger(level) || level < 1 || level >= 10000 ||
@@ -64,25 +64,28 @@ export function loadSession(): Session {
       return freshSession()
     }
     if (!nonnegativeInteger(points) || points % 10 !== 0 || points > rounds * 100) return freshSession()
-    if (courseVersion !== undefined && courseVersion !== 2 && courseVersion !== 3) return freshSession()
-    const savedCourseLength = courseVersion === 3 ? TOTAL_LEVELS : courseVersion === 2 ? 70 : 60
+    if (courseVersion !== undefined && courseVersion !== 2 && courseVersion !== 3 && courseVersion !== 4) return freshSession()
+    // Trick shots extend the v3 course, so its completed saves keep all 80
+    // lessons and naturally resume at 81. Older formats retain their limits.
+    const savedCourseLength = courseVersion === 4 ? TOTAL_LEVELS : courseVersion === 3 ? 80 : courseVersion === 2 ? 70 : 60
     const completed = completedLessons === undefined ? Math.min(level - 1, rounds, savedCourseLength) : completedLessons
     if (!nonnegativeInteger(completed) || completed > savedCourseLength || completed > rounds) return freshSession()
     if (completedLessons !== undefined && level !== completed + 1) return freshSession()
     const savedCarry = carriedTournamentLessons === undefined ? 0 : carriedTournamentLessons
-    const carryBoundary = courseVersion === 3 ? 70 : 60
+    const includesPlants = courseVersion === 3 || courseVersion === 4
+    const carryBoundary = includesPlants ? 70 : 60
     if (!nonnegativeInteger(savedCarry) || savedCarry > 10 || completed + savedCarry > rounds ||
       (savedCarry > 0 && (courseVersion === undefined || completed < 50 || completed >= carryBoundary))) return freshSession()
     // Keep earned tournament credit behind every newly inserted chapter. A v2
     // player can already have earned bank credit, or still be working through
     // banks with tournament credit carried from the original 60-level course.
     const insertion = courseVersion === undefined ? 50 : 60
-    const prefix = courseVersion === 3 ? completed : Math.min(completed, insertion)
+    const prefix = includesPlants ? completed : Math.min(completed, insertion)
     const carry = savedCarry + completed - prefix
     // Existing playthroughs keep their original ensemble precision. Invalid
     // character data must not erase earned course progress or scores.
     const player = normalizePlayerCharacter(character) ?? (rounds > 0 ? normalizePlayerCharacter(DEFAULT_CHARACTER) : null)
-    return { scoringVersion: 2, courseVersion: 3, mode: 'course', completedLessons: prefix, level: prefix + 1,
+    return { scoringVersion: 2, courseVersion: 4, mode: 'course', completedLessons: prefix, level: prefix + 1,
       ...(carry > 0 ? { carriedTournamentLessons: carry } : {}), character: player, score: points, rounds, perfect, seed }
   } catch { /* Browser storage is optional, and invalid JSON starts a fresh session. */ }
   return freshSession()

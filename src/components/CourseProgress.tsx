@@ -7,7 +7,7 @@ export default function CourseProgress({ completed, scenario, carriedTournamentL
   const percentage = Math.round(completed / TOTAL_LEVELS * 100)
   return <section className="course-progress" aria-label="Course progression">
     <div className="course-progress-heading">
-      <h2>{completed === TOTAL_LEVELS ? 'Every lesson completed.' : 'Your road to tournament play.'}</h2>
+      <h2>{completed === TOTAL_LEVELS ? 'Every lesson completed.' : 'From first pots to trick shots.'}</h2>
       <div className="course-completion"><strong>{percentage}%</strong><span>{completed} of {TOTAL_LEVELS} levels complete</span></div>
     </div>
     <div className="course-track" role="progressbar" aria-label="Game completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage} aria-valuetext={`${completed} of ${TOTAL_LEVELS} levels complete`}><span style={{ width: `${percentage}%` }} /></div>
@@ -29,8 +29,8 @@ export function CourseCompletion({ score, perfect, rounds, onRestart, headingRef
   return <section className="course-finished" aria-label="Course complete">
     <div className="completion-emblem"><Trophy size={36} /></div>
     <span className="eyebrow">{TOTAL_LEVELS} LESSONS. A STRONGER TABLE SENSE.</span>
-    <h2 ref={headingRef} tabIndex={-1}>From your first pot to the final frame.</h2>
-    <p>You’ve completed the course: reading pots, controlling the cue ball, planning the next shot, banking around blockers, comparing plants with free balls, and choosing a route through tournament traffic.</p>
+    <h2 ref={headingRef} tabIndex={-1}>From your first pot to your final trick shot.</h2>
+    <p>You’ve completed the course: reading pots, controlling the cue ball, planning the next shot, banking around blockers, comparing plants with free balls, choosing a route through tournament traffic, and bringing those skills together in ten trick shots.</p>
     <div className="completion-stats"><div><strong>100%</strong><span>Course complete</span></div><div><strong>{score}</strong><span>Session points</span></div><div><strong>{rounds ? Math.round(score / (rounds * 100) * 100) : 0}%</strong><span>Selection accuracy</span></div><div><strong>{perfect}</strong><span>Perfect choices</span></div></div>
     <p className="completion-note">Completion tracks lessons played. Your points measure how well you selected the shot. Play again to improve your decisions.</p>
     <button className="ui-button button-primary" onClick={onRestart}>Start a new course</button>

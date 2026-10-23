@@ -42,12 +42,12 @@ export function shotFeedbackVerdict(result: RoundAnalysis): Pick<ShotFeedback, '
   }
 }
 
-const isPlant = (shot: ShotAnalysis) => (shot.plan.potBallId ?? shot.plan.ballId) !== shot.plan.ballId
+const isPlant = (scenario: Scenario, shot: ShotAnalysis) => !scenario.trick && (shot.plan.potBallId ?? shot.plan.ballId) !== shot.plan.ballId
 const stroke = (shot: ShotAnalysis) => `${strokeDescription(shot.plan).toLowerCase()} at ${shot.plan.speed.toFixed(2)} m/s`
 const cm = (value: number) => `${(value * 100).toFixed(1)} cm`
 
 function directCut(scenario: Scenario, shot: ShotAnalysis): number | null {
-  if (scenario.bank || isPlant(shot) || (shot.nominal.cueBanksBeforeContact ?? 0) > 0) return null
+  if (scenario.bank || scenario.trick || isPlant(scenario, shot) || (shot.nominal.cueBanksBeforeContact ?? 0) > 0) return null
   const ball = scenario.balls.find(ball => ball.id === shot.plan.ballId)
   const pocket = POCKET_GEOMETRY.find(pocket => pocket.id === shot.plan.pocketId)
   if (!ball || !pocket) return null
@@ -59,8 +59,9 @@ function directCut(scenario: Scenario, shot: ShotAnalysis): number | null {
 }
 
 function potContext(scenario: Scenario, selected: ShotAnalysis, best: ShotAnalysis): string {
-  if (isPlant(selected) && !isPlant(best)) return `Playing ball ${best.plan.ballId} directly removes the extra ball-to-ball transfer through ball ${selected.plan.ballId}.`
-  if (isPlant(best)) return `The alignment through ball ${best.plan.ballId} to ball ${best.plan.potBallId} holds up in this layout, even with the plant’s extra contact.`
+  if (scenario.trick) return `This stroke more often pots every required ball in the trick: ${scenario.trick.requiredPots.join(', ')}.`
+  if (isPlant(scenario, selected) && !isPlant(scenario, best)) return `Playing ball ${best.plan.ballId} directly removes the extra ball-to-ball transfer through ball ${selected.plan.ballId}.`
+  if (isPlant(scenario, best)) return `The alignment through ball ${best.plan.ballId} to ball ${best.plan.potBallId} holds up in this layout, even with the plant’s extra contact.`
   const chosenCut = directCut(scenario, selected)
   const bestCut = directCut(scenario, best)
   if (chosenCut !== null && bestCut !== null && chosenCut - bestCut >= 8) {
@@ -92,7 +93,7 @@ export function buildShotFeedback(scenario: Scenario, result: RoundAnalysis): Sh
   const verdict = shotFeedbackVerdict(result)
   if (selected.plan.id === best.plan.id) return {
     ...verdict,
-    reasons: [{ title: selected.successRate === 0 ? 'What the trials show' : 'Your plan fits this table', detail: `With ${stroke(selected)}, ${percent(selected.legalPotRate)} of trials make a legal pot and ${percent(selected.successRate)} complete the full objective.${scenario.objective ? ` That includes the landing zone and a clear next shot on ball ${scenario.objective.nextBallId}.` : ' The finish matters as well as dropping the object ball.'}` }],
+    reasons: [{ title: selected.successRate === 0 ? 'What the trials show' : 'Your plan fits this table', detail: `With ${stroke(selected)}, ${percent(selected.legalPotRate)} of trials ${scenario.trick ? 'complete the legal trick' : 'make a legal pot'} and ${percent(selected.successRate)} complete the full objective.${scenario.objective ? ` That includes the landing zone and a clear next shot on ball ${scenario.objective.nextBallId}.` : ' The finish matters as well as dropping the object ball.'}` }],
     takeaway: selected.successRate === 0 ? 'Compare the failed routes before trusting any option on this table.' : 'Keep judging the pot and the position you leave as one decision.',
   }
 
@@ -103,7 +104,7 @@ export function buildShotFeedback(scenario: Scenario, result: RoundAnalysis): Sh
     if (gain > rateThreshold) reasons.push({ title, detail, weight: gain, takeaway })
   }
   add(best.potRate - selected.potRate, 'A more repeatable pot',
-    `${potContext(scenario, selected, best)} The intended ball drops with correct first contact in ${percent(best.potRate)} of trials, compared with ${percent(selected.potRate)} for your choice.`,
+    `${potContext(scenario, selected, best)} ${scenario.trick ? 'All required balls drop' : 'The intended ball drops'} with correct first contact in ${percent(best.potRate)} of trials, compared with ${percent(selected.potRate)} for your choice.`,
     'Look for a pot that survives small contact errors, then choose the cue-ball finish you can repeat.')
   add(selected.scratchRate - best.scratchRate, 'Keep the cue ball on the table',
     `With ${stroke(best)}, the cue ball scratches in ${percent(best.scratchRate)} of trials, compared with ${percent(selected.scratchRate)} for your route. This stroke and finish expose you to fewer losing paths into a pocket; a pot is wasted if the cue ball follows it in.`,
@@ -120,7 +121,7 @@ export function buildShotFeedback(scenario: Scenario, result: RoundAnalysis): Sh
   }
   if (best.legalPotRate - selected.legalPotRate > rateThreshold && reasons.length === 0) {
     add(best.legalPotRate - selected.legalPotRate, 'Complete a legal pot',
-      `Legal pots rise from ${percent(selected.legalPotRate)} to ${percent(best.legalPotRate)}. These require the correct first contact, no scratch and all balls stopped${scenario.bank ? `, plus at least ${scenario.bank.minCushions} cue-ball cushion contacts before ball ${scenario.bank.ballId}` : ''}. Dropping the object ball alone does not meet those conditions.`,
+      `${scenario.trick ? 'Legal tricks' : 'Legal pots'} rise from ${percent(selected.legalPotRate)} to ${percent(best.legalPotRate)}. These require the correct first contact, no scratch and all balls stopped${scenario.bank ? `, plus at least ${scenario.bank.minCushions} cue-ball cushion contacts before ball ${scenario.bank.ballId}` : ''}${scenario.trick ? ', plus every required pot and contact in the trick' : ''}. Dropping the object ball alone does not meet those conditions.`,
       'Check the full route and a safe finish when comparing two apparent pots.')
   }
   if (!reasons.length && best.successRate - selected.successRate > rateThreshold) {

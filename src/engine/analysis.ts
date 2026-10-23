@@ -39,7 +39,9 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
     };
     const simulation = simulateShot(scenario, perturbed, { record: false, recordPaths: true });
     sampleBallEnds.push(simulation.finalBalls);
-    const dropped = simulation.potted.includes(plan.potBallId ?? plan.ballId);
+    const dropped = scenario.trick
+      ? scenario.trick.requiredPots.every(ballId => simulation.potted.includes(ballId))
+      : simulation.potted.includes(plan.potBallId ?? plan.ballId);
     const potted = dropped && simulation.firstContact === plan.ballId;
     sampleObjectPaths.push({ path: simulation.objectPath, outcome: potted ? 'pot' : dropped ? 'foul' : 'miss' });
     const { legalPot: legal, error, positioned, nextShotAvailable, success } = evaluateShotObjective(scenario, plan, simulation);
@@ -58,8 +60,16 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const successRate = successes / count;
   // Pot AND position dominates. A missed pot or scratch never earns utility.
   const score = (0.72 * successes + 0.2 * quality + 0.08 * legalPots) / count;
-  const isPlant = plan.potBallId !== undefined && plan.potBallId !== plan.ballId;
-  const explanation = isPlant
+  const isPlant = !scenario.trick && plan.potBallId !== undefined && plan.potBallId !== plan.ballId;
+  const explanation = scenario.trick
+    ? successRate >= 0.8
+      ? 'The complete trick repeats reliably: the required balls drop, the contact and cushion sequence holds, and the cue ball finishes under control.'
+      : pots / count < 0.55
+        ? 'Small stroke errors often leave a required ball on the table. Compare the complete sequence and the pace reaching each contact.'
+        : legalPots / count < pots / count
+          ? 'Potting the required balls is only part of this trick. The contact and cushion sequence must also match the briefing, with no scratch.'
+          : 'The trick can work, but speed and spin need care to hold the cue-ball finish. Compare complete success across the trials.'
+    : isPlant
     ? sampleObjectPaths.every(trial => trial.outcome === 'miss') && !nominal.potted.includes(plan.potBallId!)
       ? `The attempted plant does not pot ball ${plan.potBallId} in the nominal stroke or any sampled trial. Compare its line with the free ball.`
       : successRate >= 0.8

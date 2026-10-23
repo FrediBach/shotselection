@@ -1,7 +1,7 @@
 import { TABLE } from './constants';
 import { COURSE_CHAPTERS, TOTAL_LEVELS } from './course';
 import { seededRandom } from './math';
-import type { Ball, LessonBriefing, Scenario } from './types';
+import type { Ball, LessonBriefing, Scenario, TrickObjective } from './types';
 
 export { COURSE_CHAPTERS, LEVELS_PER_CHAPTER, TOTAL_LEVELS } from './course';
 export type { CourseChapter } from './course';
@@ -18,6 +18,7 @@ interface Lesson {
   position?: { radius: number; maxCutAngle: number };
   bank?: { ballId: number; minCushions: number };
   plant?: { ballId: number; targetBallId: number; pocketId: number };
+  trick?: TrickObjective;
 }
 
 /** Authored layouts keep the teaching problem intact. Seeded reflections vary
@@ -949,6 +950,103 @@ const LESSONS: readonly Lesson[] = [
     layout: [[0.54, 0.96], [1.12, 0.32], [1.92, 0.41], [1.51, 0.79], [0.35, 0.38], [2.14, 1.01], [0.92, 1.05]],
     position: { radius: 0.120, maxCutAngle: 40 },
   },
+  // Classic flat-table set-up shots: the real contact sequence is part of success.
+  // Teaching references: Dr. Dave's easy trick-shot diagrams and VEPS combo/carom lessons.
+  // https://drdavepoolinfo.com/resource_files/trick_shot_top_10.pdf
+  // https://drdavebilliards.com/documents/veps/disc_I_shots.pdf
+  {
+    title: 'The three-ball train',
+    description: 'Send a chain reaction through the 1 and 2 to pot the 3.',
+    lesson: 'The train is a classic combination trick: the 1 drives the 2, which drives the 3 into the side pocket. Read all three centers before choosing the stroke. The setup supplies the line; your job is to deliver enough pace and control the cue-ball finish.',
+    takeaway: 'A spectacular chain reaction starts with the same contact-line check as a simple plant.',
+    briefing: { focus: 'Read the whole train', gotcha: 'The 3 must fall after the 1–2–3 transfer. Potting another ball alone does not complete the trick.' },
+    layout: [[1, 0.95], [1.27, 0.45], [1.27, 0.37], [1.27, 0.29]],
+    trick: { ballId: 1, potBallId: 3, pocketId: 1, aim: { x: 1.27, y: 0.50715 }, requiredPots: [3], requiredContacts: [[0, 1], [1, 2], [2, 3]], description: 'Hit the 1 into the 2, then the 2 into the 3, and pot the 3.' },
+  },
+  {
+    title: 'The split shot',
+    description: 'Split the close pair and pocket both balls in one stroke.',
+    lesson: 'A split shot turns one incoming line into two outgoing lines. The 1 clips the 2 and carries on toward a different pocket. Use your cut-angle and combination reading together, then choose enough pace for both balls without losing the cue ball.',
+    takeaway: 'Read both outgoing paths: the transferred motion and the motion left in the first ball.',
+    briefing: { focus: 'Account for both pots', gotcha: 'One ball dropping is only half the trick. Both the 1 and 2 must be pocketed safely.' },
+    layout: [[1.91555357, 1.08], [1.91555357, 0.64222123], [1.87571777, 0.59849673]],
+    trick: { ballId: 1, potBallId: 2, pocketId: 1, aim: { x: 1.91555357, y: 0.64222123 }, requiredPots: [1, 2], requiredContacts: [[0, 1], [1, 2]], description: 'Hit the 1 into the 2 and pocket both object balls in the same stroke.' },
+  },
+  {
+    title: 'The kiss shot',
+    description: 'Use the 2 to redirect the 1 into a corner pocket.',
+    lesson: 'In this kiss shot the 1 glances off the 2 and changes direction into the pocket. The 2 acts like a movable cushion. Read the contact between the object balls and the line leaving it, then compare pace and cue-ball position.',
+    takeaway: 'A ball that blocks one line can create another when its contact angle is planned.',
+    briefing: { focus: 'Read the line after the kiss', gotcha: 'The 1 must contact the 2 before it drops. A direct pot would miss the purpose of this setup.' },
+    layout: [[0.6, 0.85], [0.6, 0.38], [0.619, 0.25]],
+    trick: { ballId: 1, potBallId: 1, pocketId: 0, aim: { x: 0.6, y: 0.38 }, requiredPots: [1], requiredContacts: [[0, 1], [1, 2]], description: 'Send the 1 off the 2 and into a pocket, keeping the cue ball safe.' },
+  },
+  {
+    title: 'The carom shot',
+    description: 'Glance the cue ball off the 1 to pocket the waiting 2.',
+    lesson: 'A carom uses the cue ball itself to make the second contact. It glances off the 1 and reaches the 2 near the side pocket. Reuse your tangent-line reading, then check how draw and follow bend the route after the first collision.',
+    takeaway: 'The cue-ball path after contact can be the scoring path, not just the finish.',
+    briefing: { focus: 'Connect two cue-ball contacts', gotcha: 'The cue ball must touch the 1 first and then the 2. Sending the 1 into the 2 is a different shot.' },
+    layout: [[1.15, 0.8], [1.0976, 0.31], [1.27, 0.055]],
+    trick: { ballId: 1, potBallId: 2, pocketId: 1, aim: { x: 1.15, y: 0.33 }, requiredPots: [2], requiredContacts: [[0, 1], [0, 2]], description: 'Carom the cue ball off the 1, then contact and pot the 2.' },
+  },
+  {
+    title: 'Follow the leader',
+    description: 'Pot the 2 with a combination, then follow through to pot the 1 too.',
+    lesson: 'Topspin lets the cue ball catch the 1 again after the combination sends the 2 ahead. Both object balls follow the same pocket route. Compare follow and pace together: the second contact needs enough energy, while the cue ball still needs a safe stopping place.',
+    takeaway: 'Follow can create a useful second contact when you plan the whole sequence.',
+    briefing: { focus: 'Plan the catch-up contact', gotcha: 'Both balls must fall, and the cue ball must catch the 1 again. Too much forward travel can turn the finish into a scratch.' },
+    layout: [[1.25, 0.7], [1.27, 0.24], [1.27, 0.16]],
+    trick: { ballId: 1, potBallId: 2, pocketId: 1, aim: { x: 1.27, y: 0.29715 }, requiredPots: [1, 2], requiredContacts: [[0, 1], [1, 2], [0, 1]], description: 'Pot the 2 through the 1, then follow into the 1 again and pot it too.' },
+  },
+  {
+    title: 'The draw-back double',
+    description: 'Pot the 1, then draw the cue ball back to pocket the 2.',
+    lesson: 'This classic double pot makes backspin visible: the cue ball hits the 1, reverses direction and reaches the 2 behind it. Compare the strength and draw in each stroke. Budget enough return speed for the second pot while protecting the final cue-ball position.',
+    takeaway: 'Draw is most useful when the return path has a specific job and a safe finish.',
+    briefing: { focus: 'Give the return journey a target', gotcha: 'Potting the 1 is only the opening. The cue ball must return to contact and pot the 2 without following it into the pocket.' },
+    layout: [[1.27, 0.65], [1.27, 0.32], [1.262, 1.0]],
+    trick: { ballId: 1, potBallId: 1, pocketId: 1, aim: { x: 1.27, y: 0.32 }, requiredPots: [1, 2], requiredContacts: [[0, 1], [0, 2]], description: 'Pot the 1 and draw back into the 2 to pot both balls in one stroke.' },
+  },
+  {
+    title: 'The cross-side bank',
+    description: 'Send the object ball off the opposite cushion into the side pocket.',
+    lesson: 'This time the object ball makes the bank. Read the 1 to the cushion and back toward the side pocket, then include the cue-ball finish in your choice. Rebound losses and running spin make pace part of the aiming problem.',
+    takeaway: 'An object-ball bank needs a complete rebound line and enough speed left after the cushion.',
+    briefing: { focus: 'Bank the object ball', gotcha: 'The required cushion belongs to the 1. A cue-ball rebound does not satisfy this trick.' },
+    layout: [[1.62, 0.26], [1.55, 0.75]],
+    trick: { ballId: 1, potBallId: 1, pocketId: 1, aim: { x: 1.55, y: 0.75 }, requiredPots: [1], requiredContacts: [[0, 1]], minObjectCushions: 1, description: 'Bank the 1 off a cushion and pocket it, leaving the cue ball safe.' },
+  },
+  {
+    title: 'The one-cushion escape',
+    description: 'Kick around the blocking ball and pot the 1.',
+    lesson: 'A cushion-first escape is an approachable trick with a practical use. Read the clear corridor around the 2, reflect the cue-ball line off the cushion and connect it to the potting contact on the 1. Finish the plan by checking where the cue ball stops.',
+    takeaway: 'The easiest escape is the one whose rebound, contact and finish all have room.',
+    briefing: { focus: 'Use the rail to get around traffic', gotcha: 'The cue ball must rebound before touching the 1. Hitting the blocking 2 first fails the trick.' },
+    layout: [[1.02, 0.80], [1.27, 0.28], [1.145, 0.53]],
+    bank: { ballId: 1, minCushions: 1 },
+    trick: { ballId: 1, potBallId: 1, pocketId: 1, aim: { x: 1.27, y: 0.28 }, requiredPots: [1], requiredContacts: [[0, 1]], description: 'Reach the 1 after at least one cue-ball cushion and pot it without a scratch.' },
+  },
+  {
+    title: 'Around the corner',
+    description: 'Connect two cushion rebounds before pocketing the 1.',
+    lesson: 'The two-cushion kick extends your escape route around the table. Work backward from the 1 to the second cushion, then to the first. Compare the complete strokes for the pace left at the final contact and a controlled finish.',
+    takeaway: 'Two rebounds are manageable when you read them as one connected route.',
+    briefing: { focus: 'Keep the two rebounds in order', gotcha: 'Both cue-ball rebounds must happen before contact with the 1. A later rail does not count toward the approach.' },
+    layout: [[0.65, 0.45], [1.27, 0.12]],
+    bank: { ballId: 1, minCushions: 2 },
+    trick: { ballId: 1, potBallId: 1, pocketId: 1, aim: { x: 1.27, y: 0.12 }, requiredPots: [1], requiredContacts: [[0, 1]], description: 'Take at least two cue-ball cushions before contacting and potting the 1.' },
+  },
+  {
+    englishPractice: 18,
+    title: 'The carom-combination finale',
+    description: 'Carom off the 1 into the 2, then send the 3 into the side pocket.',
+    lesson: 'Bring your contact-line, spin, combination and position skills together. The cue ball glances off the 1, reaches the 2 and starts the final 2–3 combination. Compare the English option with the two strokes without side spin and choose the complete sequence with a finish you can repeat.',
+    takeaway: 'A showpiece is a series of familiar contacts, linked by deliberate pace, spin and cue-ball control.',
+    briefing: { focus: 'Link familiar skills into one sequence', gotcha: 'The cue ball must contact the 1 then the 2, and the 2 must send the 3 into a pocket. A lucky pot without that sequence is incomplete.' },
+    layout: [[1.15, 0.8], [1.0976, 0.36], [1.27, 0.14], [1.27, 0.06]],
+    trick: { ballId: 1, potBallId: 3, pocketId: 1, aim: { x: 1.15, y: 0.4 }, requiredPots: [3], requiredContacts: [[0, 1], [0, 2], [2, 3]], description: 'Carom off the 1 into the 2, then send the 2 into the 3 to pot the 3.' },
+  },
 ];
 
 export function getCourseProgress(completedLevels: number) {
@@ -999,5 +1097,10 @@ export function generateScenario(level: number, seed = 71431 + level * 919): Sce
     ...(lesson.position ? { objective: { kind: 'position' as const, ballId: 1, nextBallId: 2, ...lesson.position } } : {}),
     ...(lesson.bank ? { bank: { ...lesson.bank } } : {}),
     ...(lesson.plant ? { plant: { ...lesson.plant, pocketId: reflectedPocket(lesson.plant.pocketId) } } : {}),
+    ...(lesson.trick ? { trick: { ...lesson.trick,
+      aim: { x: mirrorX ? TABLE.length - lesson.trick.aim.x : lesson.trick.aim.x, y: mirrorY ? TABLE.width - lesson.trick.aim.y : lesson.trick.aim.y },
+      pocketId: reflectedPocket(lesson.trick.pocketId), requiredPots: [...lesson.trick.requiredPots],
+      requiredContacts: lesson.trick.requiredContacts.map(([a, b]) => [a, b] as [number, number]),
+    } } : {}),
   };
 }

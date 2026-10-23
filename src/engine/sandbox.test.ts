@@ -7,11 +7,12 @@ import { SANDBOX_SCENARIOS, createSandboxScenario, prepareSandboxRound, validate
 
 describe('sandbox preparation', () => {
   it('opens every scenario and variation without requiring course progress', () => {
-    expect(SANDBOX_SCENARIOS).toHaveLength(8);
+    expect(SANDBOX_SCENARIOS).toHaveLength(9);
     expect(SANDBOX_SCENARIOS.flatMap(group => group.lessons.map(lesson => lesson.level)))
-      .toEqual(Array.from({ length: 80 }, (_, index) => index + 1));
+      .toEqual(Array.from({ length: 90 }, (_, index) => index + 1));
+    expect(SANDBOX_SCENARIOS.at(-1)).toMatchObject({ title: 'Trick shots' });
     expect(() => createSandboxScenario(0)).toThrow(/available/);
-    expect(() => createSandboxScenario(81)).toThrow(/available/);
+    expect(() => createSandboxScenario(91)).toThrow(/available/);
   });
 
   it('rejects off-table, nonfinite, duplicate and overlapping ball placements', () => {
@@ -77,6 +78,7 @@ describe('sandbox preparation', () => {
     expect(prepared.scenario.level).toBe(level);
     expect(prepared.scenario.bank).toEqual(scenario.bank);
     expect(prepared.scenario.plant).toEqual(scenario.plant);
+    expect(prepared.scenario.trick).toEqual(scenario.trick);
     expect(prepared.scenario.curriculum).toEqual(scenario.curriculum);
     expect(scenario).toEqual(original);
     expect(prepared.balls.flatMap(ball => ball.options).some(option => evaluateShotObjective(prepared.scenario, option.plan,
@@ -90,5 +92,38 @@ describe('sandbox preparation', () => {
     const other = prepareSandboxRound({ scenario: createSandboxScenario(1, 102), placement: 'random' });
     expect(other.scenario.balls).not.toEqual(first.scenario.balls);
     expect(first.scenario.balls.some(ball => distance(ball.position, request.scenario.balls.find(source => source.id === ball.id)!.position) > 0.25)).toBe(true);
+  });
+
+  it('varies a set-up trick along its cue approach while preserving the object-ball alignment', () => {
+    const source = createSandboxScenario(86, 12345);
+    const original = structuredClone(source);
+    const request = { scenario: source, placement: 'random' as const };
+    const prepared = prepareSandboxRound(request);
+    expect(prepareSandboxRound(request)).toEqual(prepared);
+    expect(prepared.scenario.trick).toEqual(source.trick);
+    expect(prepared.scenario.balls.filter(ball => ball.id !== 0)).toEqual(source.balls.filter(ball => ball.id !== 0));
+    const before = source.balls.find(ball => ball.id === 0)!.position;
+    const after = prepared.scenario.balls.find(ball => ball.id === 0)!.position;
+    const aim = source.trick!.aim;
+    expect(distance(before, after)).toBeGreaterThan(0.001);
+    expect((after.x - before.x) * (aim.y - before.y) - (after.y - before.y) * (aim.x - before.x)).toBeCloseTo(0, 10);
+    const other = prepareSandboxRound({ scenario: createSandboxScenario(86, 12346), placement: 'random' });
+    expect(other.scenario.balls).not.toEqual(prepared.scenario.balls);
+    expect(source).toEqual(original);
+  }, 30000);
+
+  it('keeps a manual trick contract and rejects a broken chain without replacing the table', () => {
+    const source = createSandboxScenario(81, 0);
+    const original = structuredClone(source);
+    const prepared = prepareSandboxRound({ scenario: source, placement: 'manual' });
+    expect(prepared.scenario.balls).toEqual(source.balls);
+    expect(prepared.scenario.trick).toEqual(source.trick);
+    expect(source).toEqual(original);
+    const broken = { ...source, balls: source.balls.map(ball => ball.id === 3
+      ? { ...ball, position: { x: 2, y: 0.7 } } : ball) };
+    const brokenOriginal = structuredClone(broken);
+    expect(validateSandboxLayout(broken)).toBeNull();
+    expect(() => prepareSandboxRound({ scenario: broken, placement: 'manual' })).toThrow(/could not find three playable finishes/);
+    expect(broken).toEqual(brokenOriginal);
   });
 });

@@ -113,9 +113,19 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       if (recordPaths) appendPathPoint(simulation.cueApproachPath, cue.body);
     }
   });
-  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, duration: 0, stopped: false };
+  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, ballContacts: [], objectCushions: 0, duration: 0, stopped: false };
   let lastCueBankTime = -Infinity;
+  let lastObjectBankTime = -Infinity;
   let soundTime = 0;
+  const lastContactTimes = new Map<string, number>();
+  for (const { id, body } of bodies) body.addEventListener('collide', (event: { body: Body; contact: ContactEquation }) => {
+    const other = bodyIds.get(event.body.id);
+    if (other === undefined || id > other || Math.abs(event.contact.getImpactVelocityAlongNormal()) < 0.02) return;
+    const key = `${id}:${other}`;
+    if (soundTime - (lastContactTimes.get(key) ?? -Infinity) < 0.045) return;
+    lastContactTimes.set(key, soundTime);
+    simulation.ballContacts!.push([id, other]);
+  });
   const lastSoundTimes = record ? new Map<string, number>() : null;
   const recordImpact = (type: 'ball' | 'cushion', key: string, impactSpeed: number) => {
     // Suppress tiny resting contacts and repeated chatter at a cushion jaw.
@@ -168,6 +178,10 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       if (ball.id === 0 && firstContact === null && cushionImpact > 0.035 && soundTime - lastCueBankTime >= 0.045) {
         simulation.cueBanksBeforeContact!++;
         lastCueBankTime = soundTime;
+      }
+      if (ball.id === potBallId && cushionImpact > 0.035 && soundTime - lastObjectBankTime >= 0.045) {
+        simulation.objectCushions!++;
+        lastObjectBankTime = soundTime;
       }
       if (record && cushionImpact > 0) recordImpact('cushion', `cushion:${ball.id}`, cushionImpact);
       if (isPocketed(ball.body.position)) {

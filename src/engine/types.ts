@@ -46,6 +46,21 @@ export interface PositionObjective {
   /** Assigned during preparation when the lesson does not specify a fixed zone. */
   target?: Vec2;
 }
+/** A set-up trick is judged by its actual collision sequence and complete pot. */
+export interface TrickObjective {
+  ballId: number;
+  /** Primary ball whose route is drawn in the outcome view. */
+  potBallId: number;
+  pocketId: number;
+  description: string;
+  /** Authored contact line; reflected with the complete table. */
+  aim: Vec2;
+  requiredPots: number[];
+  /** These physical contacts must occur in order; either pair orientation is valid. */
+  requiredContacts: [number, number][];
+  /** Object-ball cushions before the primary ball drops. */
+  minObjectCushions?: number;
+}
 export interface Scenario {
   level: number;
   seed: number;
@@ -58,6 +73,7 @@ export interface Scenario {
   bank?: { ballId: number; minCushions: number };
   /** Contact the first ball to send its paired target towards this pocket. */
   plant?: { ballId: number; targetBallId: number; pocketId: number };
+  trick?: TrickObjective;
 }
 export interface Selection { ballId: number; optionId: string }
 export interface ShotPlan {
@@ -119,6 +135,10 @@ export interface Simulation {
   firstContact: number | null;
   /** Actual cue-ball rebounds before its first object-ball contact. */
   cueBanksBeforeContact?: number;
+  /** Ordered distinct impacts, retained even when replay recording is disabled. */
+  ballContacts?: [number, number][];
+  /** Rebounds by the primary object ball before it is pocketed. */
+  objectCushions?: number;
   duration: number;
   /** True only when all unpocketed balls have settled before the time limit. */
   stopped: boolean;
