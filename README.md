@@ -17,11 +17,14 @@ Open the local URL printed by Vite. The app runs in the browser; no account, API
 
 ```sh
 npm run typecheck
+npm run doctor
 npm test
 npm run test:e2e
 npm run build
 npm run preview
 ```
+
+`npm run doctor` scans the full project for React issues. It runs locally with scoring, telemetry, and remote dependency checks disabled. Add `-- --verbose` for every finding and its location.
 
 `npm run build` generates the static production site in `dist/`. `npm run preview` serves that build locally.
 

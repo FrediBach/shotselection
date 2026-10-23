@@ -127,6 +127,7 @@ function PlaybackDriver({ scenario, analysis, playing, playbackKey, onPlaybackEn
   const callback = useRef(onPlaybackEnd)
   const soundCallback = useRef(onPlaybackSound)
   const sounds = useRef<PlaybackSoundCursor | null>(null)
+  const previousBalls = useMemo(() => new Map<number, SimulationBall>(), [])
   useEffect(() => { callback.current = onPlaybackEnd }, [onPlaybackEnd])
   useEffect(() => { soundCallback.current = onPlaybackSound }, [onPlaybackSound])
   useEffect(() => {
@@ -163,8 +164,10 @@ function PlaybackDriver({ scenario, analysis, playing, playbackKey, onPlaybackEn
     const b = frames[low]
     const a = frames[Math.max(0, low - 1)]
     const ratio = a === b ? 0 : clamp((current - a.time) / (b.time - a.time || 1), 0, 1)
+    previousBalls.clear()
+    for (const ball of a.balls) previousBalls.set(ball.id, ball)
     for (const next of b.balls) {
-      const prev = a.balls.find(ball => ball.id === next.id) || next
+      const prev = previousBalls.get(next.id) ?? next
       runtime.balls.set(next.id, {
         id: next.id,
         position: { x: THREE.MathUtils.lerp(prev.position.x, next.position.x, ratio), y: THREE.MathUtils.lerp(prev.position.y, next.position.y, ratio) },
@@ -438,6 +441,7 @@ function EnsembleFinishes({ trials }: { trials: SimulationBall[][] }) {
 
 function Scene(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, playing, interactive } = props
+  const selectableBalls = new Set(props.selectableBallIds)
   const objective = scenario.objective
   const runtime = useMemo<Runtime>(() => ({ balls: new Map(), elapsed: 0, active: false, complete: false }), [])
   const selected = scenario.balls.find(b => b.id === selectedBall)
@@ -453,7 +457,7 @@ function Scene(props: PoolTableProps) {
     <TableLighting />
     <TableFurniture />
     <PlaybackDriver {...props} runtime={runtime} />
-    {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} isNext={objective?.nextBallId === ball.id} interactive={interactive && !playing && props.selectableBallIds.includes(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
+    {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} isNext={objective?.nextBallId === ball.id} interactive={interactive && !playing && selectableBalls.has(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
     {selected && cue && !scenario.bank && !analysis && !playing && <PathLines paths={aimPath} color="#e1e9cd" opacity={0.38} dashed height={BALL_Y} />}
     {!objective && !analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
     {objective?.target && <PositionZone target={objective.target} radius={objective.radius} />}
@@ -479,6 +483,7 @@ class CanvasBoundary extends Component<{ children: ReactNode; fallback: ReactNod
 /** Fully interactive 2D fallback for browsers without WebGL. */
 function FlatTable(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, interactive, playing, playbackKey, onPlaybackEnd, onPlaybackSound } = props
+  const selectableBalls = new Set(props.selectableBallIds)
   const objective = scenario.objective
   const [frame, setFrame] = useState<SimulationBall[] | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -567,7 +572,7 @@ function FlatTable(props: PoolTableProps) {
       <circle data-testid="position-zone" cx={objective.target.x * 100} cy={objective.target.y * 100} r={objective.radius * 100} fill={POSITION_COLOR} fillOpacity=".13" stroke={POSITION_COLOR} strokeOpacity=".9" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
     </g>}
     {!objective && target && !playing && <g pointerEvents="none" stroke="#dce9b6" fill="none"><circle cx={target.x * 100} cy={target.y * 100} r={positionToleranceForLevel(scenario.level) * 100} strokeWidth=".3" opacity=".55" /><path d={`M${target.x * 100 - 2},${target.y * 100}h4M${target.x * 100},${target.y * 100 - 2}v4`} strokeWidth=".3" /></g>}
-    {balls.filter(b => !b.pocketed).map(ball => <g key={ball.id} transform={`translate(${ball.position.x * 100} ${ball.position.y * 100})`} role={ball.id ? 'button' : 'img'} aria-label={ball.id ? `Table ball ${ball.id}` : 'Cue ball'} aria-description={objective?.nextBallId === ball.id ? 'Next ball: leave the cue ball in the position zone to play this ball next.' : scenario.plant?.targetBallId === ball.id ? `Plant target: play ball ${scenario.plant.ballId} into this ball to pot it.` : scenario.plant?.ballId === ball.id ? `Plant first contact: play this ball into ball ${scenario.plant.targetBallId}.` : undefined} aria-disabled={ball.id ? !interactive || playing || !props.selectableBallIds.includes(ball.id) : undefined} tabIndex={interactive && !playing && props.selectableBallIds.includes(ball.id) ? 0 : -1} onPointerDown={e => e.stopPropagation()} onClick={() => { if (interactive && props.selectableBallIds.includes(ball.id) && !playing) props.onSelectBall(ball.id) }} onKeyDown={event => { if (interactive && !playing && props.selectableBallIds.includes(ball.id) && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); props.onSelectBall(ball.id) } }} style={{ cursor: interactive && props.selectableBallIds.includes(ball.id) ? 'pointer' : undefined }}>
+    {balls.filter(b => !b.pocketed).map(ball => <g key={ball.id} transform={`translate(${ball.position.x * 100} ${ball.position.y * 100})`} role={ball.id ? 'button' : 'img'} aria-label={ball.id ? `Table ball ${ball.id}` : 'Cue ball'} aria-description={objective?.nextBallId === ball.id ? 'Next ball: leave the cue ball in the position zone to play this ball next.' : scenario.plant?.targetBallId === ball.id ? `Plant target: play ball ${scenario.plant.ballId} into this ball to pot it.` : scenario.plant?.ballId === ball.id ? `Plant first contact: play this ball into ball ${scenario.plant.targetBallId}.` : undefined} aria-disabled={ball.id ? !interactive || playing || !selectableBalls.has(ball.id) : undefined} tabIndex={interactive && !playing && selectableBalls.has(ball.id) ? 0 : -1} onPointerDown={e => e.stopPropagation()} onClick={() => { if (interactive && selectableBalls.has(ball.id) && !playing) props.onSelectBall(ball.id) }} onKeyDown={event => { if (interactive && !playing && selectableBalls.has(ball.id) && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); props.onSelectBall(ball.id) } }} style={{ cursor: interactive && selectableBalls.has(ball.id) ? 'pointer' : undefined }}>
       {selectedBall === ball.id && !playing && <circle r="4.5" fill="none" stroke="#dbe9b5" strokeWidth=".4" />}
       {objective?.nextBallId === ball.id && <g data-testid="next-ball-marker" pointerEvents="none">
         <circle r={RADIUS * 197} fill="none" stroke={POSITION_COLOR} strokeWidth="1.2" vectorEffect="non-scaling-stroke" />

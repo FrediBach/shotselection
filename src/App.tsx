@@ -111,6 +111,7 @@ export default function App() {
   const scenario = prepared?.scenario ?? requestedScenario
   const objectBalls = scenario.balls.filter(ball => ball.id > 0)
   const selectableBallIds = prepared?.balls.map(ball => ball.ballId) ?? []
+  const selectableBalls = new Set(selectableBallIds)
   const finishOptions = prepared?.balls.find(ball => ball.ballId === selectedBall)?.options ?? []
   const selectedOption = finishOptions.find(option => option.id === selectedOptionId) ?? null
   const target = selectedOption?.plan.target ?? null
@@ -130,7 +131,7 @@ export default function App() {
     previousStep.current = step
   }, [step, modal])
   const selectBall = (id: number) => {
-    if (!busy && !preparing && !result && selectableBallIds.includes(id)) {
+    if (!busy && !preparing && !result && selectableBalls.has(id)) {
       audio.current?.unlock()
       if (id !== selectedBall) audio.current?.play('select')
       if (id !== selectedBall) setSelectedOptionId(null)
@@ -273,7 +274,7 @@ export default function App() {
             </> : selectionStep === 'ball' ? <>
               <h2 ref={sidebarHeading} tabIndex={-1}>Choose your ball.</h2>
               <p className="panel-description">{objective ? `Play ball ${objective.ballId} first. Keep ball ${objective.nextBallId} on the table for your next shot.` : bank ? `Reach ball ${bank.ballId} after at least ${bank.minCushions} cushion${bank.minCushions === 1 ? "" : "s"}, then pot it.` : plant ? `Play ball ${plant.ballId} into ball ${plant.targetBallId} for the plant, or attempt a difficult free ball. Read both contact lines before choosing.` : objectBalls.length === 1 ? "Start with this object ball, then compare three ways to control the cue-ball finish." : "Which ball gives you the most room for error?"}</p>
-              <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <button key={ball.id} className={`ball-choice ${selectedBall === ball.id ? 'selected' : ''}`} onClick={() => selectBall(ball.id)} disabled={preparing || !selectableBallIds.includes(ball.id)} title={prepared && !selectableBallIds.includes(ball.id) ? (objective ? ball.id === objective.nextBallId ? 'Reserved for your next shot' : 'Traffic: read the route around this ball' : bank ? 'Blocker: bank around this ball to reach the target' : plant ? `Plant target: pot this ball by playing ball ${plant.ballId} first` : 'No three playable finishes found for this ball') : `Choose ${ballChoiceLabel(ball.id).toLowerCase()}`} aria-pressed={selectedBall === ball.id} aria-label={plant ? ball.id === plant.ballId ? `Select plant ${ball.id} to ${plant.targetBallId}` : ball.id === plant.targetBallId ? `Plant target ball ${ball.id}` : `Select free ball ${ball.id}` : `Select ball ${ball.id}`}><BallIcon id={ball.id} /><span>{plant ? ballChoiceLabel(ball.id) : `${objective?.nextBallId === ball.id ? 'Next' : 'Ball'} ${ball.id}`}</span>{selectedBall === ball.id && <span className="ball-check"><Check size={10} /></span>}</button>)}</div>
+              <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <button key={ball.id} className={`ball-choice ${selectedBall === ball.id ? 'selected' : ''}`} onClick={() => selectBall(ball.id)} disabled={preparing || !selectableBalls.has(ball.id)} title={prepared && !selectableBalls.has(ball.id) ? (objective ? ball.id === objective.nextBallId ? 'Reserved for your next shot' : 'Traffic: read the route around this ball' : bank ? 'Blocker: bank around this ball to reach the target' : plant ? `Plant target: pot this ball by playing ball ${plant.ballId} first` : 'No three playable finishes found for this ball') : `Choose ${ballChoiceLabel(ball.id).toLowerCase()}`} aria-pressed={selectedBall === ball.id} aria-label={plant ? ball.id === plant.ballId ? `Select plant ${ball.id} to ${plant.targetBallId}` : ball.id === plant.targetBallId ? `Plant target ball ${ball.id}` : `Select free ball ${ball.id}` : `Select ball ${ball.id}`}><BallIcon id={ball.id} /><span>{plant ? ballChoiceLabel(ball.id) : `${objective?.nextBallId === ball.id ? 'Next' : 'Ball'} ${ball.id}`}</span>{selectedBall === ball.id && <span className="ball-check"><Check size={10} /></span>}</button>)}</div>
               {prepared && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">{objective ? "The next ball and traffic balls are reserved for this lesson." : bank ? "Dimmed balls are blockers. Ball 1 is the target for this lesson." : plant ? `Ball ${plant.targetBallId} is the plant target. Select ball ${plant.ballId} to attempt the plant.` : "Dimmed balls have no set of three playable finishes."}</p>}
               <div className="wizard-hint"><MousePointer2 size={17} /><p>{objective ? "Select the first ball, then compare the strokes that could leave position for the next." : plant ? "Select the plant or a free ball, then compare the stroke and finish options. The plant is an attempt; its pot is not guaranteed." : "Choose a ball here or directly on the table. Then move on to its finish positions."}</p></div>
             </> : <>
