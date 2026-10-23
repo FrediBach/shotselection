@@ -1,6 +1,6 @@
 # Shot Selection
 
-A browser game about choosing a repeatable pool shot. Select an object ball and one of three feasible cue-ball finishes, then compare small variations in aim, pace, and spin to see which plan holds up best.
+A browser game about choosing a repeatable pool shot, taught through an 18-level course. Progress from one-ball training drills to open-table choices, position play, patterns, traffic, and tournament situations. Select an object ball and one of three stroke options, then compare small variations in aim, pace, and spin to see which plan holds up best. Position lessons ask you to predict the cue-ball finish from the stroke before revealing its outcome.
 
 Built with Vite, React, TypeScript, three.js / React Three Fiber, cannon-es, and shadcn-style Radix UI components.
 
@@ -37,25 +37,53 @@ A local studio environment supplies overhead strip reflections, supported by sof
 
 The table opens directly below the header. First-time visitors see the instructions automatically; dismissing them saves that preference in this browser. Open **How to play** in the header to read them again. If browser storage is unavailable, the game still works, but the instructions can reappear on the next visit.
 
-1. In **Ball**, choose an available object ball on the table or in the sidebar, then press **Choose a finish**.
-2. In **Finish**, choose one of its three marked cue-ball finishes: A, B, or C. Each comes from a simulated successful stroke; the options differ in how forgiving they are.
+1. In **Ball**, choose an available object ball on the table or in the sidebar, then continue to the finish or stroke choice. Position lessons specify the first ball and reserve another for the next shot.
+2. In ordinary lessons, **Finish** offers three marked cue-ball endpoints: A, B, or C. In position lessons, **Stroke** offers three pocket, speed, and spin profiles in the sidebar. Read the cut angle, cushions, and traffic to predict which stroke will reach the marked zone. Candidate endpoints and paths stay hidden until you commit.
 3. Press **Lock in your shot** to reach **Result** and reveal the ensemble comparison.
 4. Inspect the candidate paths, potting and position rates, cue-ball spread, and stroke tolerance comparison. Rotate the 3D sample volume to see which combinations of aim, English, and strength still work.
-5. Play the best shot, then advance to a harder layout.
+5. Read the lesson takeaway, play the best shot, then advance to the next lesson. The final level opens a course summary.
 
-The sidebar shows one step at a time so its controls fit without scrolling at normal text size, while the table and action buttons keep their position. **Back to balls** preserves the finish for the same ball; selecting a different ball clears it. In Finish, selecting another ball directly on the table keeps you on that step and shows its three options. Table finish markers appear only during Finish.
+The sidebar shows one step at a time so its controls fit without scrolling at normal text size, while the table and action buttons keep their position. **Back to balls** preserves the choice for the same ball; selecting a different ball clears it. In ordinary lessons, selecting another ball directly on the table during Finish keeps you on that step and shows its three options. Those lessons retain their A/B/C endpoint markers during Finish. Position lessons show the destination zone and reserved-ball ring, identified in the table legend, while all candidate outcomes remain hidden before commitment.
 
 Each round awards 0–100 points in steps of 10. Up to 70 points reflect how close your shot's ensemble quality is to the best offered plan, and up to 30 reflect its rank among all offered choices. The Result step shows both contributions and their sum; each comparison card also shows its rank and round score. Both potting the chosen ball and controlling the cue-ball finish matter.
 
-Score and progress are saved in this browser's local storage. Existing totals from the old 0 / 0.5 / 1 scoring system are converted once to the new scale by multiplying by 100, preserving completed rounds, perfect choices, level, and layout sequence. Completing a round saves the next unplayed level, so reloading after a verdict advances rather than scoring the same round twice. Restarting the session clears that progress and generates a new layout sequence.
+Score and progress are saved in this browser's local storage. Existing totals from the old 0 / 0.5 / 1 scoring system are converted once to the new scale by multiplying by 100, preserving completed rounds, perfect choices, level, and layout sequence. Completing a round saves the next unplayed level, so reloading after a verdict advances rather than scoring the same round twice. Restarting the session clears that progress and starts a new course. Older endless sessions map completed levels into the 18-level course, capped at completion, while preserving earned points, rounds, perfect choices, and the seed.
+
+## Course progression and position lessons
+
+The course contains six scenarios, each with three numbered levels:
+
+| Levels | Scenario | Learning focus |
+| --- | --- | --- |
+| 1–3 | First strokes | One-ball pots, contact lines, and cue-ball movement |
+| 4–6 | Everyday pool | Comparing open pots, distance, angle, and stroke choice |
+| 7–9 | Play for position | Landing in a useful zone for a defined next ball |
+| 10–12 | Build a pattern | Reading the whole table and planning backward |
+| 13–15 | Navigate traffic | Clear corridors and reliable position among blockers |
+| 16–18 | Tournament table | Combining longer pots, smaller zones, and stricter next-ball angles |
+
+Each level has an authored layout, an objective, a short lesson, and a result takeaway. Seeded reflections vary table orientation while retaining the teaching problem. The header shows completed levels, course percentage, and progress within each scenario. Completion measures lessons played; the existing 0–100 round score measures decision quality. A low score still advances the course so the result can serve as a lesson. Completing level 18 saves a completed course; reloading opens its summary without awarding points again. Starting a new course resets the session.
+
+Position lessons define the first object ball and reserve a second ball for the next shot. A cyan zone marks the required cue-ball destination, and a ring highlights the reserved ball; the legend identifies both without text covering the cloth. Choose A/B/C from the sidebar's stroke profiles using the pocket, cue-ball speed, and backspin or topspin. Infer the likely route and stopping point from those settings and the table geometry. No candidate endpoint, path, or finish preview appears before commitment. After locking in the choice, inspect the simulated outcomes and compare them with your prediction. All three nominal strokes can pot the first ball; only outcomes satisfying the complete assignment count as successes.
+
+Preparation chooses the shared zone from a feasible first-shot endpoint with a simulated, legal next-ball pot. Zones narrow from 20 cm to 12 cm radius through the course, while allowed next-ball cuts tighten from 65° to 40°. The zone is fixed before the player chooses; it never moves when another stroke or analysis card is selected. An explicitly supplied objective target is honored.
+
+For every ensemble trial and tolerance sample, a full success requires:
+
+1. Correct first contact and potting the required first ball.
+2. No scratch, with all balls settled.
+3. The cue-ball center inside the shared landing zone.
+4. The reserved ball still on the table, with at least one clear direct route to a pocket within the lesson's cut-angle limit.
+
+The next-shot check uses the actual final positions, including moved blockers, the ghost-ball contact position, clearance for a full ball along both paths, and pocket jaws. It is a geometric route check for each trial, not a second Monte Carlo shot or a guarantee of potting the next ball. The initial zone additionally has a simulated next-pot proof. Banks, kicks, and combinations are not considered. Result cards show **In zone** and **Next shot** rates separately; overall success requires both plus the legal first pot. These diagnostic rates can include trials that fail another requirement. Tolerance comparisons use exactly the same full-objective predicate.
 
 ## Ensemble and scoring
 
-Before play, the planner searches up to two direct potting routes and 30 nominal stroke settings per object ball to find three feasible, distinct cue-ball finishes. A finish is offered only when its associated nominal stroke contacts that ball first, pots it without scratching, and comes to rest with the cue ball fully on the playing surface. The marker is the exact simulated endpoint, not an estimated or clamped preset. Time-limited simulations that have not stopped cannot create options.
+Before play, the planner searches up to two direct potting routes and 30 nominal stroke settings per object ball to find three feasible, distinct cue-ball finishes. An option is offered only when its nominal stroke contacts that ball first, pots it without scratching, and comes to rest with the cue ball fully on the playing surface. An endpoint marker, when shown, is the exact simulated endpoint, not an estimated or clamped preset. Position lessons keep that endpoint hidden until the player commits. Time-limited simulations that have not stopped cannot create options.
 
 Each pair of a ball's options differs by at least 12 cm in finish position, 0.12 m/s in launch speed, and 0.35 in longitudinal spin relative to natural rolling. A, B, and C are assigned in increasing launch-speed order, before calculating any ensemble scores. A nominally feasible finish can still be difficult to reproduce with imperfect execution.
 
-Balls without three qualifying finishes are unavailable for that layout. If none are available, preparation tries up to three other seeded layouts, then a known open layout whose options must pass the same simulation checks. The prepared layout is what the game displays and evaluates. Finish positions are fixed options; the player does not place arbitrary targets on the cloth.
+Balls without three qualifying finishes are unavailable for that layout. Preparation can try up to three other seeded orientations. Authored lessons retain their layout and teaching constraints; if no valid options can be found they report a preparation error with a retry action. Legacy custom layouts without lesson objectives can fall back to a known open layout whose options pass the same simulation checks. The prepared layout is what the game displays and evaluates. Finish positions are fixed options; the player does not place arbitrary targets on the cloth.
 
 The ensemble evaluates the exact strokes used to generate the offered options. The verdict ranks every offered ball-and-finish pair, so the winning choice is always one the player could select. It does not introduce a hidden alternative after the player commits. The search currently excludes bank shots, kicks, combinations, and deliberate side-spin optimization.
 
@@ -70,7 +98,7 @@ The game evaluates each candidate with 64 seeded Monte Carlo runs. (The engine's
 | Draw/follow spin | 0.085 of natural rolling spin |
 | Side spin | 3 radians/second |
 
-Candidates use the same random draws to make their comparison less noisy. The target zone starts with a 19 cm radius and shrinks by 6% per level to an 8 cm minimum: `max(0.08, 0.19 × 0.94^(level - 1))` metres. A successful run must contact the selected ball first, pot it, avoid a scratch, and finish the cue ball inside that zone. The visible ring uses this same acceptance radius.
+Candidates use the same random draws to make their comparison less noisy. For ordinary lessons, the target zone starts with a 19 cm radius and shrinks by 6% per level to an 8 cm minimum: `max(0.08, 0.19 × 0.94^(level - 1))` metres. A successful run must contact the selected ball first, pot it, avoid a scratch, and finish the cue ball inside that zone. Position lessons instead use their shared objective zone and also require the next-ball route described above. The visible ring uses this same acceptance radius.
 
 Preparation and analysis run in Web Workers to keep the interface responsive. The WebGL table and SVG fallback show the selected object ball's trajectories from all 64 scored trials, plus the first 24 cue-ball paths. Cyan object paths represent pots after correct first contact; coral paths represent misses or pots after incorrect first contact. Pale gold paths show the cue ball. Object paths include the actual simulated drop position instead of stopping at the last animation frame before the pocket.
 
@@ -84,7 +112,7 @@ The utility score is:
 + 0.08 × P(legal pot)
 ```
 
-Missing the pot, scratching, or reaching the simulation time limit before coming to rest gives zero utility for that run. The score prioritizes a repeatable, successful outcome; the displayed root-mean-square endpoint spread is an additional diagnostic, not the score itself. Pot rate reports observed pots after correct first contact, including pots followed by a scratch, while joint success requires a completed, scratch-free result. Position rate reports stopping inside the target without a scratch, whether or not the object ball was potted.
+Missing the pot, scratching, or reaching the simulation time limit before coming to rest gives zero utility for that run. In position lessons the 72% joint-success term additionally requires the next-ball route, and the 20% proximity term also requires that route; the 8% legal-pot term remains partial credit. Round points are zero if a chosen plan has no full-objective successes. The score prioritizes a repeatable, successful outcome; the displayed root-mean-square endpoint spread is an additional diagnostic, not the score itself. Pot rate reports observed pots after correct first contact, including pots followed by a scratch, while joint success requires a completed, scratch-free result. Position rate reports stopping inside the target without a scratch, whether or not the object ball was potted.
 
 Game points use that utility in two parts, each rounded to the nearest 10 points:
 
@@ -110,7 +138,7 @@ The six directional margins vary one input at a time around each candidate's pla
 | English | Added left/right side spin in radians/second | ±30 rad/s |
 | Strength | Percentage change in initial cue-ball speed | ±30% |
 
-**Pot + target** requires correct first contact, potting the selected ball, no scratch, all balls settled, and the cue-ball endpoint inside that candidate's target zone. **Legal pot** uses the same conditions without requiring the target finish. Follow/draw and all other stroke settings stay fixed. The table reports the first sampled failure in each direction, scanning at 0.05° / 1 rad/s / 1% and refining the adjacent passing/failing bracket six times. It displays the passing side, rounded down. Later successful islands do not widen the reported margin. A ≥ value means the shot still passes at the search or physical speed limit; the failure boundary has not been found. Finite sampling can miss narrow gaps, so these are estimated local margins.
+**Pot + target** (or **Full objective** in position lessons) requires correct first contact, potting the selected ball, no scratch, all balls settled, and the cue-ball endpoint inside the candidate's target zone (or the shared objective zone for a position lesson). Position lessons also require a clear next-ball route. **Legal pot** uses the same safety conditions without requiring the target finish or next-ball route. Follow/draw and all other stroke settings stay fixed. The table reports the first sampled failure in each direction, scanning at 0.05° / 1 rad/s / 1% and refining the adjacent passing/failing bracket six times. It displays the passing side, rounded down. Later successful islands do not widen the reported margin. A ≥ value means the shot still passes at the search or physical speed limit; the failure boundary has not been found. Finite sampling can miss narrow gaps, so these are estimated local margins.
 
 The rotatable **Sampled success volume** maps 441 combinations on a fixed 9 × 7 × 7 grid spanning the same ranges for every candidate, including the exact planned stroke. Grid spacing is 0.5°, 10 rad/s, and 10 percentage points of speed. A successful sample always requires both a legal pot and the target finish, independently of the margin table's condition switch. Follow/draw remains fixed for that candidate. The graph can show failed samples or a single strength slice. It uses individual points without a filled hull: neighboring passing points do not prove that every stroke between them passes. The sample share describes this uniform grid, not the player's success probability or an exact continuous volume. The engine's supported initial speed range is 0.05–4 m/s; points outside that range are marked unavailable and remain in the full-grid denominator. They are not simulated or silently clamped into duplicate strokes.
 

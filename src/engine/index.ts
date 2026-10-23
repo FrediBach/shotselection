@@ -9,3 +9,4 @@ export { scoreSelection } from './scoring';
 export type { RoundScore } from './scoring';
 export { prepareRound, MIN_FINISH_SEPARATION } from './preparation';
 export { analyzeRoundAsync, analyzeShotToleranceAsync, prepareRoundAsync } from './client';
+export { directNextShotRoutes, evaluateShotObjective, positionToleranceForScenario } from './objectives';

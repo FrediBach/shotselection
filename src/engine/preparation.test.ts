@@ -39,12 +39,12 @@ function verifyPrepared(prepared: PreparedRound) {
 }
 
 describe('three feasible fixed finishes', () => {
-  it.each([71431, 71431 + 919])('keeps all three opening balls playable for seed %s', seed => {
+  it.each([71431, 71431 + 919])('keeps the introductory pot playable for seed %s', seed => {
     // App advances the stored seed by level * 919 before preparing the layout.
     const scenario = generateScenario(1, seed);
     const prepared = prepareRound(scenario);
     expect(prepared.scenario).toEqual(scenario);
-    expect(prepared.balls.map(ball => ball.ballId)).toEqual([1, 2, 3]);
+    expect(prepared.balls.map(ball => ball.ballId)).toEqual([1]);
     verifyPrepared(prepared);
   });
 

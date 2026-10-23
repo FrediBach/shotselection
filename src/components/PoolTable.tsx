@@ -35,6 +35,8 @@ const RADIUS = TABLE.ballRadius
 const CLOTH_Y = 0.062
 const BALL_Y = CLOTH_Y + RADIUS
 const ENSEMBLE_COLORS = { cue: '#dbecb3', pot: '#78d9ec', miss: '#f49b85' } as const
+const POSITION_COLOR = '#8ce6df'
+const NOMINAL_FINISH_COLOR = '#f8dfb3'
 const COLORS: Record<number, string> = {
   0: '#f5f1df', 1: '#e7af12', 2: '#174593', 3: '#b6251d', 4: '#4c207d',
   5: '#e36a16', 6: '#076342', 7: '#681e27', 8: '#11161a', 9: '#e7af12',
@@ -178,7 +180,7 @@ function PlaybackDriver({ scenario, analysis, playing, playbackKey, onPlaybackEn
   return null
 }
 
-function PoolBall({ id, position, selected, interactive, onSelect, runtime }: { id: number; position: Vec2; selected: boolean; interactive: boolean; onSelect: (id: number) => void; runtime: Runtime }) {
+function PoolBall({ id, position, selected, isNext, interactive, onSelect, runtime }: { id: number; position: Vec2; selected: boolean; isNext: boolean; interactive: boolean; onSelect: (id: number) => void; runtime: Runtime }) {
   const group = useRef<THREE.Group>(null)
   const label = useRef<THREE.Mesh>(null)
   const drop = useRef(0)
@@ -229,6 +231,10 @@ function PoolBall({ id, position, selected, interactive, onSelect, runtime }: { 
       <ringGeometry args={[RADIUS * 1.43, RADIUS * 1.57, 64]} />
       <meshBasicMaterial color={selected ? '#d8e7ac' : '#c3d0bb'} transparent opacity={selected ? 1 : 0.55} depthWrite={false} />
     </mesh>}
+    {isNext && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -RADIUS + 0.006, 0]} raycast={() => null}>
+      <ringGeometry args={[RADIUS * 1.85, RADIUS * 1.97, 64]} />
+      <meshBasicMaterial color={POSITION_COLOR} transparent opacity={0.9} depthWrite={false} toneMapped={false} />
+    </mesh>}
   </group>
 }
 
@@ -271,6 +277,21 @@ function TargetMarker({ target, tolerance }: { target: Vec2; tolerance: number }
   </group>
 }
 
+function PositionZone({ target, radius }: { target: Vec2; radius: number }) {
+  return <group position={toWorld(target, CLOTH_Y + 0.01)} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh raycast={() => null}><circleGeometry args={[radius, 96]} /><meshBasicMaterial color={POSITION_COLOR} transparent opacity={0.13} depthWrite={false} toneMapped={false} /></mesh>
+    <mesh raycast={() => null}><ringGeometry args={[Math.max(0, radius - 0.004), radius, 96]} /><meshBasicMaterial color={POSITION_COLOR} transparent opacity={0.9} depthWrite={false} toneMapped={false} /></mesh>
+  </group>
+}
+
+/** Reveal the inspected stroke's settled finish only after the choice is scored. */
+function NominalCueFinishMarker({ position }: { position: Vec2 }) {
+  return <group position={toWorld(position, CLOTH_Y + 0.024)} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh raycast={() => null} renderOrder={8}><ringGeometry args={[0.017, 0.022, 48]} /><meshBasicMaterial color={NOMINAL_FINISH_COLOR} transparent opacity={0.95} depthWrite={false} depthTest={false} toneMapped={false} /></mesh>
+    <mesh raycast={() => null} renderOrder={8}><planeGeometry args={[0.065, 0.0025]} /><meshBasicMaterial color={NOMINAL_FINISH_COLOR} transparent opacity={0.95} depthWrite={false} depthTest={false} toneMapped={false} /></mesh>
+    <mesh raycast={() => null} renderOrder={8}><planeGeometry args={[0.0025, 0.065]} /><meshBasicMaterial color={NOMINAL_FINISH_COLOR} transparent opacity={0.95} depthWrite={false} depthTest={false} toneMapped={false} /></mesh>
+  </group>
+}
 
 /** Separate letter badges in screen space while leaders preserve exact physical endpoints. */
 function separateBadges(points: Vec2[], minDistance: number, bounds?: { left: number; right: number; top: number; bottom: number }) {
@@ -417,6 +438,7 @@ function EnsembleFinishes({ trials }: { trials: SimulationBall[][] }) {
 
 function Scene(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, playing, interactive } = props
+  const objective = scenario.objective
   const runtime = useMemo<Runtime>(() => ({ balls: new Map(), elapsed: 0, active: false, complete: false }), [])
   const selected = scenario.balls.find(b => b.id === selectedBall)
   const cue = scenario.balls.find(b => b.id === 0)
@@ -431,10 +453,11 @@ function Scene(props: PoolTableProps) {
     <TableLighting />
     <TableFurniture />
     <PlaybackDriver {...props} runtime={runtime} />
-    {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} interactive={interactive && !playing && props.selectableBallIds.includes(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
+    {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} isNext={objective?.nextBallId === ball.id} interactive={interactive && !playing && props.selectableBallIds.includes(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
     {selected && cue && !analysis && !playing && <PathLines paths={aimPath} color="#e1e9cd" opacity={0.38} dashed height={BALL_Y} />}
-    {!analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
-    {target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
+    {!objective && !analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
+    {objective?.target && <PositionZone target={objective.target} radius={objective.radius} />}
+    {!objective && target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
     {showEnsemble && analysis && <>
       <PathLines paths={analysis.samplePaths} color={ENSEMBLE_COLORS.cue} opacity={0.14} />
       <PathLines paths={nominalPaths} color={ENSEMBLE_COLORS.cue} opacity={0.32} dashed height={CLOTH_Y + 0.006} />
@@ -443,6 +466,7 @@ function Scene(props: PoolTableProps) {
       <PathLines paths={missedObjectPaths} color={ENSEMBLE_COLORS.miss} opacity={0.50} dashed dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.016} />
     </>}
     {showFinishes && analysis && !playing && <EnsembleFinishes trials={analysis.sampleBallEnds} />}
+    {objective && analysis?.nominal.stopped && !analysis.nominal.scratch && !playing && <NominalCueFinishMarker position={analysis.nominal.cueEnd} />}
   </>
 }
 
@@ -455,6 +479,7 @@ class CanvasBoundary extends Component<{ children: ReactNode; fallback: ReactNod
 /** Fully interactive 2D fallback for browsers without WebGL. */
 function FlatTable(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, interactive, playing, playbackKey, onPlaybackEnd, onPlaybackSound } = props
+  const objective = scenario.objective
   const [frame, setFrame] = useState<SimulationBall[] | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const [svgScale, setSvgScale] = useState(2)
@@ -538,15 +563,25 @@ function FlatTable(props: PoolTableProps) {
     {showFinishes && analysis && !playing && <g data-testid="ensemble-finishes" pointerEvents="none">
       {analysis.sampleBallEnds.flatMap((trial, trialIndex) => trial.filter(ball => !ball.pocketed).map(ball => <circle key={`${trialIndex}-${ball.id}`} data-testid="ensemble-ball-finish" data-ball-id={ball.id} data-trial-index={trialIndex} cx={ball.position.x * 100} cy={ball.position.y * 100} r={RADIUS * 100} fill={COLORS[ball.id] ?? '#b8c6ab'} fillOpacity=".08" stroke={COLORS[ball.id] ?? '#b8c6ab'} strokeOpacity=".6" strokeWidth=".3" />))}
     </g>}
-    {target && !playing && <g pointerEvents="none" stroke="#dce9b6" fill="none"><circle cx={target.x * 100} cy={target.y * 100} r={positionToleranceForLevel(scenario.level) * 100} strokeWidth=".3" opacity=".55" /><path d={`M${target.x * 100 - 2},${target.y * 100}h4M${target.x * 100},${target.y * 100 - 2}v4`} strokeWidth=".3" /></g>}
-    {balls.filter(b => !b.pocketed).map(ball => <g key={ball.id} transform={`translate(${ball.position.x * 100} ${ball.position.y * 100})`} role={ball.id ? 'button' : 'img'} aria-label={ball.id ? `Table ball ${ball.id}` : 'Cue ball'} aria-disabled={ball.id ? !interactive || playing || !props.selectableBallIds.includes(ball.id) : undefined} tabIndex={interactive && !playing && props.selectableBallIds.includes(ball.id) ? 0 : -1} onPointerDown={e => e.stopPropagation()} onClick={() => { if (interactive && props.selectableBallIds.includes(ball.id) && !playing) props.onSelectBall(ball.id) }} onKeyDown={event => { if (interactive && !playing && props.selectableBallIds.includes(ball.id) && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); props.onSelectBall(ball.id) } }} style={{ cursor: interactive && props.selectableBallIds.includes(ball.id) ? 'pointer' : undefined }}>
+    {objective?.target && <g data-testid="position-objective" pointerEvents="none" role="img" aria-label={`Position zone: leave the cue ball inside this circle for ball ${objective.nextBallId}`}>
+      <circle data-testid="position-zone" cx={objective.target.x * 100} cy={objective.target.y * 100} r={objective.radius * 100} fill={POSITION_COLOR} fillOpacity=".13" stroke={POSITION_COLOR} strokeOpacity=".9" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+    </g>}
+    {!objective && target && !playing && <g pointerEvents="none" stroke="#dce9b6" fill="none"><circle cx={target.x * 100} cy={target.y * 100} r={positionToleranceForLevel(scenario.level) * 100} strokeWidth=".3" opacity=".55" /><path d={`M${target.x * 100 - 2},${target.y * 100}h4M${target.x * 100},${target.y * 100 - 2}v4`} strokeWidth=".3" /></g>}
+    {balls.filter(b => !b.pocketed).map(ball => <g key={ball.id} transform={`translate(${ball.position.x * 100} ${ball.position.y * 100})`} role={ball.id ? 'button' : 'img'} aria-label={ball.id ? `Table ball ${ball.id}` : 'Cue ball'} aria-description={objective?.nextBallId === ball.id ? 'Next ball: leave the cue ball in the position zone to play this ball next.' : undefined} aria-disabled={ball.id ? !interactive || playing || !props.selectableBallIds.includes(ball.id) : undefined} tabIndex={interactive && !playing && props.selectableBallIds.includes(ball.id) ? 0 : -1} onPointerDown={e => e.stopPropagation()} onClick={() => { if (interactive && props.selectableBallIds.includes(ball.id) && !playing) props.onSelectBall(ball.id) }} onKeyDown={event => { if (interactive && !playing && props.selectableBallIds.includes(ball.id) && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); props.onSelectBall(ball.id) } }} style={{ cursor: interactive && props.selectableBallIds.includes(ball.id) ? 'pointer' : undefined }}>
       {selectedBall === ball.id && !playing && <circle r="4.5" fill="none" stroke="#dbe9b5" strokeWidth=".4" />}
+      {objective?.nextBallId === ball.id && <g data-testid="next-ball-marker" pointerEvents="none">
+        <circle r={RADIUS * 197} fill="none" stroke={POSITION_COLOR} strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+      </g>}
       <circle r={RADIUS * 100} fill={COLORS[ball.id]} filter="url(#ball-shadow)" />
       <circle r={RADIUS * 100} fill="url(#ball-shine)" />
       {!!ball.id && <><circle r="1.48" fill="#f2f0e4" /><text y=".08" textAnchor="middle" dominantBaseline="central" fontFamily="Arial,sans-serif" fontWeight="700" fontSize="2.25" fill="#20271f">{ball.id}</text></>}
       <circle r="5" fill="transparent" />
     </g>)}
-    {!analysis && !playing && props.finishOptions.map((option, i) => {
+    {objective && analysis?.nominal.stopped && !analysis.nominal.scratch && !playing && <g data-testid="nominal-cue-finish" transform={`translate(${analysis.nominal.cueEnd.x * 100} ${analysis.nominal.cueEnd.y * 100})`} pointerEvents="none" role="img" aria-label="Nominal cue-ball finish for the inspected stroke" fill="none" stroke={NOMINAL_FINISH_COLOR}>
+      <circle r="1.95" strokeWidth="1.3" vectorEffect="non-scaling-stroke" />
+      <path d="M-3.25,0H3.25M0,-3.25V3.25" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+    </g>}
+    {!objective && !analysis && !playing && props.finishOptions.map((option, i) => {
       const selected = option.id === props.selectedOptionId
       const point = badgePositions[i]
       const select = () => { if (interactive) props.onSelectOption(option.id) }
@@ -574,7 +609,7 @@ export default function PoolTable(props: PoolTableProps) {
     } catch { return false }
   })
   const fallback = <FlatTable {...props} />
-  return <div className="pool-table-scene" style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
+  return <div className="pool-table-scene" role={props.scenario.objective ? 'group' : undefined} aria-label={props.scenario.objective ? `Pool table. Pot ball ${props.scenario.objective.ballId} and leave the cue ball in the cyan position zone to play ball ${props.scenario.objective.nextBallId} next.` : undefined} style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
     {available ? <CanvasBoundary fallback={fallback}>
       <Canvas orthographic camera={{ position: [0, 6, 0.001], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08 }} style={{ touchAction: 'none' }}>
         <Suspense fallback={null}><Scene {...props} /></Suspense>

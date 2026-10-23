@@ -16,7 +16,7 @@ const stroke: ShotPlan = { id: 'straight', ballId: 1, pocketId: 1, target: { x: 
 
 describe('object-ball ensemble trajectories', () => {
   it('exports every exact trial and makes the pot count agree with potRate', () => {
-    const prepared = prepareRound(generateScenario(1, 72350));
+    const prepared = prepareRound(generateScenario(6, 72350));
     const option = prepared.balls.find(ball => ball.ballId === 3)!.options[0];
     const result = analyzeShot(prepared.scenario, option.plan, 64);
     expect(result.sampleObjectPaths).toHaveLength(64);

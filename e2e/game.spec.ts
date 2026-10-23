@@ -143,6 +143,9 @@ test('three feasible finish choices, comparison, replay and advancement without 
   test.setTimeout(90_000)
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
+  await page.addInitScript(() => {
+    if (!JSON.parse(localStorage.getItem('shot-selection-session') || 'null')?.completedLessons) localStorage.setItem('shot-selection-session', JSON.stringify({ scoringVersion: 2, completedLessons: 3, level: 4, score: 0, rounds: 3, perfect: 0, seed: 71431 }))
+  })
   await page.goto('/')
   await expect(page.locator('.pool-table-scene canvas')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 30_000 })
@@ -242,8 +245,9 @@ test('three feasible finish choices, comparison, replay and advancement without 
   await expect(page.getByRole('button', { name: 'Play the best shot' })).toBeEnabled({ timeout: 25_000 })
   await expectStableGameFrame(page, initialFrame, 'after replay')
   const completed = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
-  expect(completed.rounds).toBe(1)
-  expect(completed.level).toBe(2)
+  expect(completed.rounds).toBe(4)
+  expect(completed.completedLessons).toBe(4)
+  expect(completed.level).toBe(5)
   expect(completed.score).toBe(awardedPoints)
   expect(completed.scoringVersion).toBe(2)
   expect(completed.perfect).toBe(Number(awardedPoints === 100))
@@ -253,14 +257,14 @@ test('three feasible finish choices, comparison, replay and advancement without 
   await expect(statValue(page, 'Points earned')).toHaveText(`${Math.round(completed.score / completed.rounds)}%`)
   await page.getByRole('button', { name: 'Back to the table', exact: true }).click()
   await page.getByRole('button', { name: 'Next level' }).click()
-  await expect(page.getByText('LEVEL 02', { exact: false })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Current lesson', exact: true })).toContainText('LEVEL 05')
   await expect(page.getByRole('button', { name: 'Choose a finish', exact: true })).toBeDisabled()
   await expect(page.locator('.simulation-overlay')).toHaveCount(0, { timeout: 30_000 })
   await expectWizardStep(page, 'Ball')
   await expectStableGameFrame(page, initialFrame, 'after advancing to the next level')
   await expect(finishSwitch).toHaveCount(0)
   await page.reload()
-  await expect(page.getByText('LEVEL 02', { exact: false })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Current lesson', exact: true })).toContainText('LEVEL 05')
   const reloaded = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
   expect(reloaded).toEqual(completed)
   expect(errors).toEqual([])
@@ -271,7 +275,7 @@ test('legacy session points migrate once and retain progress and correct stats',
   await expect(page.getByRole('button', { name: 'View session stats, 0 points', exact: true })).toBeVisible()
   const legacy = { level: 3, score: 1.5, rounds: 2, perfect: 1, seed: 71431 }
   await page.evaluate(saved => localStorage.setItem('shot-selection-session', JSON.stringify(saved)), legacy)
-  const migrated = { ...legacy, score: 150, scoringVersion: 2 }
+  const migrated = { ...legacy, score: 150, scoringVersion: 2, completedLessons: 2 }
   for (let reload = 0; reload < 2; reload++) {
     await page.reload()
     await expect(page.getByRole('button', { name: 'View session stats, 150 points', exact: true })).toBeVisible()
@@ -290,10 +294,10 @@ test('360px mobile wizard works with keyboard, help and reset in the overhead vi
   await page.getByRole('button', { name: 'How to play', exact: true }).click()
   await expect(page.getByRole('dialog')).toContainText('A, B, or C')
   await page.getByRole('button', { name: 'Let’s read the table' }).click()
-  await expect(page.getByRole('button', { name: 'Select ball 2', exact: true })).toBeEnabled({ timeout: 30_000 })
+  await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 30_000 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await expectWizardStep(page, 'Ball')
-  await page.getByRole('button', { name: 'Select ball 2', exact: true }).click()
+  await page.getByRole('button', { name: 'Select ball 1', exact: true }).click()
   await page.getByRole('button', { name: 'Choose a finish', exact: true }).focus()
   await page.keyboard.press('Enter')
   await expect(page.locator('.finish-option')).toHaveCount(3)
@@ -319,6 +323,7 @@ test('360px mobile wizard works with keyboard, help and reset in the overhead vi
 test('mobile WebGL fallback keeps the frame stable through fixed choices, replay and next level', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.addInitScript(() => {
+    localStorage.setItem('shot-selection-session', JSON.stringify({ scoringVersion: 2, completedLessons: 3, level: 4, score: 0, rounds: 3, perfect: 0, seed: 71431 }))
     const original = HTMLCanvasElement.prototype.getContext
     HTMLCanvasElement.prototype.getContext = function(type: string, ...args: unknown[]) {
       if (type === 'webgl2') return null
@@ -429,7 +434,7 @@ test('mobile WebGL fallback keeps the frame stable through fixed choices, replay
   await expect(finishMarkers.first()).toBeVisible()
   await expectStableGameFrame(page, initialFrame, 'after replay on mobile')
   await page.locator('.shot-panel-actions').getByRole('button', { name: 'Next level' }).click()
-  await expect(page.getByText('LEVEL 02', { exact: false })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Current lesson', exact: true })).toContainText('LEVEL 05')
   await expect(page.locator('.simulation-overlay')).toHaveCount(0, { timeout: 30_000 })
   await expectStableGameFrame(page, initialFrame, 'after advancing on mobile')
   await expect(page.getByRole('button', { name: 'Choose a finish', exact: true })).toBeDisabled()
@@ -442,7 +447,7 @@ test('mobile WebGL fallback keeps the frame stable through fixed choices, replay
 for (const width of [860, 360]) test(`${width}px later-level wizard keeps extra balls, finishes and verdict reachable`, async ({ page }) => {
   await page.setViewportSize({ width, height: width === 360 ? 844 : 900 })
   await page.addInitScript(() => {
-    localStorage.setItem('shot-selection-session', JSON.stringify({ level: 12, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
+    localStorage.setItem('shot-selection-session', JSON.stringify({ scoringVersion: 2, completedLessons: 12, level: 13, score: 0, rounds: 12, perfect: 0, seed: 71431 }))
     const original = HTMLCanvasElement.prototype.getContext
     HTMLCanvasElement.prototype.getContext = function(type: string, ...args: unknown[]) {
       if (type === 'webgl2') return null

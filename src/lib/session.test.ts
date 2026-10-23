@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { freshSession, loadSession, SESSION_STORAGE_KEY } from './session'
+import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY } from './session'
 
 const legacySession = { level: 8, score: 4.5, rounds: 7, perfect: 3, seed: 91822 }
-const currentSession = { ...legacySession, scoringVersion: 2, score: 450 }
+const currentSession = { ...legacySession, scoringVersion: 2, completedLessons: 7, score: 450 }
 
 function storedSession(value: unknown) {
   const getItem = vi.fn().mockReturnValue(JSON.stringify(value))
@@ -12,7 +12,7 @@ function storedSession(value: unknown) {
 
 function expectFresh() {
   expect(loadSession()).toEqual({
-    scoringVersion: 2, level: 1, score: 0, rounds: 0, perfect: 0,
+    scoringVersion: 2, completedLessons: 0, level: 1, score: 0, rounds: 0, perfect: 0,
     seed: expect.any(Number),
   })
 }
@@ -78,6 +78,10 @@ describe('session scoring migration', () => {
     ['fractional seed', { ...currentSession, seed: 1.5 }],
     ['nonfinite seed', { ...currentSession, seed: Infinity }],
     ['missing seed', { ...currentSession, seed: undefined }],
+    ['course beyond final lesson', { ...currentSession, completedLessons: 19 }],
+    ['course ahead of scored rounds', { ...currentSession, completedLessons: 8, level: 9 }],
+    ['inconsistent next level', { ...currentSession, completedLessons: 6 }],
+    ['fractional course completion', { ...currentSession, completedLessons: 6.5 }],
   ])('resets safely for %s', (_label, saved) => {
     storedSession(saved)
     expectFresh()
@@ -96,5 +100,37 @@ describe('session scoring migration', () => {
   it('works when browser storage throws', () => {
     vi.stubGlobal('localStorage', { getItem: () => { throw new Error('Storage blocked') } })
     expectFresh()
+  })
+})
+
+
+describe('course progression', () => {
+  it('awards a lesson once and preserves the next unfinished level', () => {
+    const initial = freshSession()
+    const completed = completeLesson(initial, 1, 80)
+    expect(completed).toMatchObject({ completedLessons: 1, level: 2, rounds: 1, score: 80, perfect: 0 })
+    expect(completeLesson(completed, 1, 100)).toBe(completed)
+    storedSession(completed)
+    expect(loadSession()).toEqual(completed)
+  })
+
+  it('keeps completed courses complete after reloading', () => {
+    let session = freshSession()
+    for (let level = 1; level <= 18; level++) session = completeLesson(session, level, 100)
+    expect(session).toMatchObject({ level: 19, completedLessons: 18, score: 1800, rounds: 18, perfect: 18 })
+    expect(completeLesson(session, 19, 100)).toBe(session)
+    storedSession(session)
+    expect(loadSession()).toEqual(session)
+  })
+
+  it('caps legacy endless progress while keeping earned scores', () => {
+    storedSession({ scoringVersion: 2, level: 61, rounds: 60, score: 4200, perfect: 12, seed: 100 })
+    expect(loadSession()).toMatchObject({ completedLessons: 18, level: 19, score: 4200, rounds: 60 })
+  })
+
+  it('does not complete a lesson that was not played or award invalid points', () => {
+    const session = freshSession()
+    expect(completeLesson(session, 2, 100)).toBe(session)
+    for (const points of [-10, 15, 110, NaN]) expect(completeLesson(session, 1, points)).toBe(session)
   })
 })

@@ -2,8 +2,9 @@ import { TABLE } from './constants';
 import { POCKET_GEOMETRY } from './table-geometry';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
 import { simulateShot } from './physics';
+import { hasProvenNextShot } from './objectives';
 import { generateScenario } from './scenarios';
-import type { BallFinishOptions, FinishOption, PreparedRound, Scenario, ShotPlan, Simulation } from './types';
+import type { BallFinishOptions, FinishOption, PreparedRound, Scenario, ShotPlan, Simulation, Vec2 } from './types';
 
 interface Route { pocketId: number; angle: number; speed: number; difficulty: number }
 interface FeasiblePlan { plan: ShotPlan; simulation: Simulation }
@@ -33,7 +34,7 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
 
 function scenarioFingerprint(scenario: Scenario): string {
   let hash = 2166136261;
-  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
 }
 
@@ -52,7 +53,7 @@ function pairIsDistinct(a: FeasiblePlan, b: FeasiblePlan): boolean {
     && distance(a.simulation.cueEnd, b.simulation.cueEnd) >= MIN_FINISH_SEPARATION;
 }
 
-function chooseTriple(plans: FeasiblePlan[]): [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null {
+function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => boolean): [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null {
   let chosen: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
   let bestCost = Infinity;
   for (let a = 0; a < plans.length - 2; a++) {
@@ -61,6 +62,7 @@ function chooseTriple(plans: FeasiblePlan[]): [FeasiblePlan, FeasiblePlan, Feasi
       for (let c = b + 1; c < plans.length; c++) {
         if (!pairIsDistinct(plans[a], plans[c]) || !pairIsDistinct(plans[b], plans[c])) continue;
         const triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] = [plans[a], plans[b], plans[c]];
+        if (!triple.some(qualifies)) continue;
         // Prefer comfortable strokes and visually separate endpoints. This is
         // geometry/nominal feasibility only, never a hidden ensemble ranking.
         const separation = Math.min(distance(plans[a].simulation.cueEnd, plans[b].simulation.cueEnd), distance(plans[a].simulation.cueEnd, plans[c].simulation.cueEnd), distance(plans[b].simulation.cueEnd, plans[c].simulation.cueEnd));
@@ -72,8 +74,20 @@ function chooseTriple(plans: FeasiblePlan[]): [FeasiblePlan, FeasiblePlan, Feasi
   return chosen;
 }
 
-function prepareBall(scenario: Scenario, ballId: number): BallFinishOptions | null {
+function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOptions; target?: Vec2 } | null {
+  if (!scenario.balls.some(ball => ball.id === ballId)) return null;
   const feasible: FeasiblePlan[] = [];
+  const qualified = new Map<FeasiblePlan, boolean>();
+  const qualifies = (entry: FeasiblePlan): boolean => {
+    if (!scenario.objective) return true;
+    const cached = qualified.get(entry);
+    if (cached !== undefined) return cached;
+    const objective = scenario.objective;
+    const result = (!objective.target || distance(entry.simulation.cueEnd, objective.target) <= objective.radius)
+      && hasProvenNextShot(scenario, entry.simulation);
+    qualified.set(entry, result);
+    return result;
+  };
   let triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
   for (const route of routesFor(scenario, ballId)) {
     for (const multiplier of [0.95, 1.2, 1.5, 1.85, 2.3]) {
@@ -86,10 +100,11 @@ function prepareBall(scenario: Scenario, ballId: number): BallFinishOptions | nu
         }
       }
     }
-    triple = chooseTriple(feasible);
+    triple = chooseTriple(feasible, qualifies);
     if (triple) break; // Prefer three strokes to the same pocket when possible.
   }
   if (!triple) return null;
+  const target = scenario.objective ? { ...(scenario.objective.target ?? triple.find(qualifies)!.simulation.cueEnd) } : undefined;
   // Labels are fixed by stroke strength, never by score or success probability.
   triple.sort((a, b) => a.plan.speed - b.plan.speed || a.plan.topSpin - b.plan.topSpin);
   const fingerprint = scenarioFingerprint(scenario);
@@ -99,24 +114,50 @@ function prepareBall(scenario: Scenario, ballId: number): BallFinishOptions | nu
     const stroke = entry.plan.topSpin < -0.1 ? 'draw' : entry.plan.topSpin > 0.1 ? 'follow' : 'center';
     return { id, label, plan: { ...entry.plan, id, label: `Ball ${ballId} · ${label} · ${stroke}` } };
   }) as [FinishOption, FinishOption, FinishOption];
-  return { ballId, options };
+  return { ball: { ballId, options }, target };
 }
 
 function prepareLayout(scenario: Scenario): PreparedRound {
-  return { scenario, balls: scenario.balls.filter(ball => ball.id !== 0).map(ball => prepareBall(scenario, ball.id)).filter((ball): ball is BallFinishOptions => ball !== null) };
+  if (scenario.objective) {
+    const prepared = prepareBall(scenario, scenario.objective.ballId);
+    return prepared
+      ? { scenario: { ...scenario, objective: { ...scenario.objective, target: prepared.target } }, balls: [prepared.ball] }
+      : { scenario, balls: [] };
+  }
+  return { scenario, balls: scenario.balls.filter(ball => ball.id !== 0).flatMap(ball => {
+    const prepared = prepareBall(scenario, ball.id);
+    return prepared ? [prepared.ball] : [];
+  }) };
 }
 
-/** Search is bounded: at most 30 nominal strokes per object ball, three seeded
- * replacement layouts, then a known open layout whose options are still tested.
- * Unsupported balls stay visible; no impossible finishes are fabricated. */
+/** Search is bounded: at most 30 nominal strokes per object ball plus next-pot
+ * checks, then three replacements of the same authored lesson. Authored lessons
+ * and fixed position puzzles never fall back to an unrelated easier layout. */
 export function prepareRound(scenario: Scenario): PreparedRound {
   if (!scenario.balls.some(ball => ball.id === 0)) throw new Error('The table needs a cue ball.');
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const layout = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
+  const objective = scenario.objective;
+  if (objective && (!Number.isInteger(objective.ballId) || !Number.isInteger(objective.nextBallId)
+    || objective.ballId <= 0 || objective.nextBallId <= 0 || objective.ballId === objective.nextBallId
+    || !Number.isFinite(objective.radius) || objective.radius <= 0
+    || !Number.isFinite(objective.maxCutAngle) || objective.maxCutAngle < 0 || objective.maxCutAngle >= 90
+    || (objective.target && (![objective.target.x, objective.target.y].every(Number.isFinite)
+      || objective.target.x < TABLE.ballRadius || objective.target.x > TABLE.length - TABLE.ballRadius
+      || objective.target.y < TABLE.ballRadius || objective.target.y > TABLE.width - TABLE.ballRadius)))) {
+    throw new Error('The position lesson needs distinct object balls, a positive landing radius, a cut limit below 90°, and a zone on the table.');
+  }
+  if (objective && (!scenario.balls.some(ball => ball.id === objective.ballId) || !scenario.balls.some(ball => ball.id === objective.nextBallId))) {
+    throw new Error('The position lesson needs both its first object ball and its reserved next ball on the table.');
+  }
+  const attempts = objective && !scenario.curriculum ? 1 : 4;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const generated = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
+    // Regeneration changes only the layout; a lesson's objective is never lost.
+    const layout = { ...scenario, seed: generated.seed, balls: generated.balls };
     const prepared = prepareLayout(layout);
     if (prepared.balls.length) return prepared;
   }
-  const openLayout = { ...generateScenario(1, 72350), level: scenario.level, title: scenario.title, description: scenario.description };
+  if (scenario.curriculum || objective) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
+  const openLayout: Scenario = { ...scenario, seed: 72350, balls: generateScenario(1, 72350).balls };
   const prepared = prepareLayout(openLayout);
   if (!prepared.balls.length) throw new Error('No feasible three-finish layout could be prepared.');
   return prepared;

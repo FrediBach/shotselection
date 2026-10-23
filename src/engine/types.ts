@@ -4,12 +4,34 @@ import type { RoundScore } from './scoring';
 export interface Vec2 { x: number; y: number }
 export interface Ball { id: number; position: Vec2 }
 export interface Pocket { id: number; name: string; position: Vec2; kind: 'corner' | 'side' }
+export interface CurriculumLesson {
+  chapterId: string;
+  chapterTitle: string;
+  chapterIndex: number;
+  lessonIndex: number;
+  lessonCount: number;
+  lesson: string;
+  takeaway: string;
+}
+export interface PositionObjective {
+  kind: 'position';
+  ballId: number;
+  nextBallId: number;
+  /** Shared landing-zone radius in metres, independent of the offered stroke. */
+  radius: number;
+  /** Largest acceptable direct next-ball cut, in degrees. */
+  maxCutAngle: number;
+  /** Assigned during preparation when the lesson does not specify a fixed zone. */
+  target?: Vec2;
+}
 export interface Scenario {
   level: number;
   seed: number;
   title: string;
   description: string;
   balls: Ball[];
+  curriculum?: CurriculumLesson;
+  objective?: PositionObjective;
 }
 export interface Selection { ballId: number; optionId: string }
 export interface ShotPlan {
@@ -71,6 +93,8 @@ export interface ShotAnalysis {
   potRate: number;
   scratchRate: number;
   positionRate: number;
+  /** Trials leaving the reserved ball a clear direct route within the lesson's cut limit. */
+  nextShotRate?: number;
   /** RMS cue-ball endpoint spread in metres. */
   spread: number;
   meanEnd: Vec2;

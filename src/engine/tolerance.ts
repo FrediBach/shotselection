@@ -1,5 +1,4 @@
-import { positionToleranceForLevel } from './constants';
-import { distance } from './math';
+import { evaluateShotObjective, positionToleranceForScenario } from './objectives';
 import { simulateShot } from './physics';
 import type { AxisTolerance, Scenario, ShotPlan, ShotTolerance, ToleranceAxis, ToleranceBound, TolerancePoint } from './types';
 
@@ -26,7 +25,7 @@ export function analyzeShotTolerance(scenario: Scenario, plan: ShotPlan): ShotTo
     || plan.speed < MIN_SPEED || plan.speed > MAX_SPEED) {
     throw new Error('Tolerance analysis needs a finite stroke with speed between 0.05 and 4 m/s.');
   }
-  const positionTolerance = positionToleranceForLevel(scenario.level);
+  const positionTolerance = positionToleranceForScenario(scenario);
   const cache = new Map<string, Outcome>();
   const evaluate = (angle: number, sideSpin: number, speed: number): Outcome => {
     // Fixed decimal keys share nominal and axis-grid probes despite arithmetic
@@ -48,9 +47,8 @@ export function analyzeShotTolerance(scenario: Scenario, plan: ShotPlan): ShotTo
       sideSpin: plan.sideSpin + sideSpin,
       speed: Math.max(MIN_SPEED, Math.min(MAX_SPEED, cueSpeed)),
     }, { record: false });
-    const pot = simulation.stopped && !simulation.scratch
-      && simulation.firstContact === plan.ballId && simulation.potted.includes(plan.ballId);
-    const outcome = { available: true, pot, success: pot && distance(simulation.cueEnd, plan.target) <= positionTolerance };
+    const { legalPot: pot, success } = evaluateShotObjective(scenario, plan, simulation);
+    const outcome = { available: true, pot, success };
     cache.set(key, outcome);
     return outcome;
   };
