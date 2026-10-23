@@ -60,40 +60,11 @@ function VolumeSample({ point, projection }: { point: VolumePoint; projection: P
   );
 }
 
-export default function ToleranceVolume({ tolerance, label }: ToleranceVolumeProps) {
-  const descriptionId = useId();
+function useVolumeRotation() {
   const [view, setView] = useState(INITIAL_VIEW);
-  const [showFailures, setShowFailures] = useState(false);
-  const [slice, setSlice] = useState(false);
-  const [sliceIndex, setSliceIndex] = useState<number | null>(null);
   const drag = useRef<{ pointerId: number; x: number; y: number } | null>(null);
-  const { points, limits } = tolerance.volume;
-  const strengths = useMemo(() => [...new Set(points.map((point) => point.speed))].sort((a, b) => a - b), [points]);
-  const nominalSliceIndex = Math.max(0, strengths.findIndex((strength) => Math.abs(strength) < 1e-8));
-  const activeSliceIndex = Math.max(0, Math.min(sliceIndex ?? nominalSliceIndex, strengths.length - 1));
-  const sliceStrength = strengths[activeSliceIndex] ?? 0;
-  const visibleSamples = useMemo(() => points.filter((point) => !slice || Math.abs(point.speed - sliceStrength) < 1e-8), [points, slice, sliceStrength]);
-  const successCount = visibleSamples.filter((point) => point.success).length;
-  const unavailableCount = visibleSamples.filter((point) => !point.available).length;
-  const sampleShare = visibleSamples.length ? successCount / visibleSamples.length * 100 : 0;
-
-  const projected = useMemo(() => visibleSamples
-    .filter((point) => point.success || showFailures)
-    .map((point) => ({
-      point,
-      projection: project({
-        x: point.angle / (limits.angle || 1),
-        y: point.speed / (limits.speed || 1),
-        z: point.sideSpin / (limits.sideSpin || 1),
-      }, view.yaw, view.pitch),
-    }))
-    .sort((a, b) => a.projection.depth - b.projection.depth), [visibleSamples, showFailures, limits, view]);
-  const corners = CORNERS.map((point) => project(point, view.yaw, view.pitch));
-  const axes = [
-    { key: 'angle', vector: { x: 1, y: 0, z: 0 }, name: 'Angle', negative: `${signed(-limits.angle, '°')} left`, positive: `${signed(limits.angle, '°')} right` },
-    { key: 'sideSpin', vector: { x: 0, y: 0, z: 1 }, name: 'English', negative: `${signed(-limits.sideSpin)} right`, positive: `${signed(limits.sideSpin)} left` },
-    { key: 'speed', vector: { x: 0, y: 1, z: 0 }, name: 'Strength', negative: `${signed(-limits.speed, '%')} softer`, positive: `${signed(limits.speed, '%')} harder` },
-  ];
+  const resetView = () => setView(INITIAL_VIEW);
+  const onLostPointerCapture = () => { drag.current = null; };
 
   function rotate(yaw: number, pitch: number) {
     setView((previous) => ({
@@ -127,7 +98,7 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
       ArrowRight: () => rotate(0.18, 0),
       ArrowUp: () => rotate(0, -0.12),
       ArrowDown: () => rotate(0, 0.12),
-      Home: () => setView(INITIAL_VIEW),
+      Home: resetView,
     };
     const action = actions[event.key];
     if (action) {
@@ -135,6 +106,43 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
       action();
     }
   }
+
+  return { view, resetView, rotate, onPointerDown, onPointerMove, endDrag, onLostPointerCapture, onKeyDown };
+}
+
+export default function ToleranceVolume({ tolerance, label }: ToleranceVolumeProps) {
+  const descriptionId = useId();
+  const { view, resetView, rotate, onPointerDown, onPointerMove, endDrag, onLostPointerCapture, onKeyDown } = useVolumeRotation();
+  const [showFailures, setShowFailures] = useState(false);
+  const [slice, setSlice] = useState(false);
+  const [sliceIndex, setSliceIndex] = useState<number | null>(null);
+  const { points, limits } = tolerance.volume;
+  const strengths = useMemo(() => [...new Set(points.map((point) => point.speed))].sort((a, b) => a - b), [points]);
+  const nominalSliceIndex = Math.max(0, strengths.findIndex((strength) => Math.abs(strength) < 1e-8));
+  const activeSliceIndex = Math.max(0, Math.min(sliceIndex ?? nominalSliceIndex, strengths.length - 1));
+  const sliceStrength = strengths[activeSliceIndex] ?? 0;
+  const visibleSamples = useMemo(() => points.filter((point) => !slice || Math.abs(point.speed - sliceStrength) < 1e-8), [points, slice, sliceStrength]);
+  const successCount = visibleSamples.filter((point) => point.success).length;
+  const unavailableCount = visibleSamples.filter((point) => !point.available).length;
+  const sampleShare = visibleSamples.length ? successCount / visibleSamples.length * 100 : 0;
+
+  const projected = useMemo(() => visibleSamples
+    .filter((point) => point.success || showFailures)
+    .map((point) => ({
+      point,
+      projection: project({
+        x: point.angle / (limits.angle || 1),
+        y: point.speed / (limits.speed || 1),
+        z: point.sideSpin / (limits.sideSpin || 1),
+      }, view.yaw, view.pitch),
+    }))
+    .sort((a, b) => a.projection.depth - b.projection.depth), [visibleSamples, showFailures, limits, view]);
+  const corners = CORNERS.map((point) => project(point, view.yaw, view.pitch));
+  const axes = [
+    { key: 'angle', vector: { x: 1, y: 0, z: 0 }, name: 'Angle', negative: `${signed(-limits.angle, '°')} left`, positive: `${signed(limits.angle, '°')} right` },
+    { key: 'sideSpin', vector: { x: 0, y: 0, z: 1 }, name: 'English', negative: `${signed(-limits.sideSpin)} right`, positive: `${signed(limits.sideSpin)} left` },
+    { key: 'speed', vector: { x: 0, y: 1, z: 0 }, name: 'Strength', negative: `${signed(-limits.speed, '%')} softer`, positive: `${signed(limits.speed, '%')} harder` },
+  ];
 
   const sliceCorners = [
     { x: -1, y: sliceStrength / (limits.speed || 1), z: -1 },
@@ -181,7 +189,7 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
-          onLostPointerCapture={() => { drag.current = null; }}
+          onLostPointerCapture={onLostPointerCapture}
           onKeyDown={onKeyDown}
         >
           <title>{label}: sampled combinations of angle, English, and strength</title>
@@ -219,7 +227,7 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
             <button type="button" aria-label="Rotate volume right" title="Rotate right" onClick={() => rotate(0.25, 0)}><ArrowRight size={14} /></button>
             <button type="button" aria-label="Tilt volume up" title="Tilt up" onClick={() => rotate(0, -0.16)}><ArrowUp size={14} /></button>
             <button type="button" aria-label="Tilt volume down" title="Tilt down" onClick={() => rotate(0, 0.16)}><ArrowDown size={14} /></button>
-            <button type="button" aria-label="Reset volume view" title="Reset view" onClick={() => setView(INITIAL_VIEW)}><RotateCcw size={14} /></button>
+            <button type="button" aria-label="Reset volume view" title="Reset view" onClick={resetView}><RotateCcw size={14} /></button>
           </div>
         </div>
       </div>
