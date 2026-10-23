@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import { TableFurniture } from './table/TableFurniture'
 import { TableLighting } from './table/TableLighting'
+import { BallGrime, BallGrimeSvg, TableConditionSurface, TableConditionSvg } from './table/TableDamage'
 import * as THREE from 'three'
 import type { FinishOption, Scenario, ShotAnalysis, SimulationBall, SimulationSoundEvent, Vec2 } from '../engine/types'
 import { TABLE, positionToleranceForLevel } from '../engine/constants'
@@ -186,7 +187,7 @@ function PlaybackDriver({ scenario, analysis, playing, playbackKey, onPlaybackEn
   return null
 }
 
-function PoolBall({ id, position, selected, isNext, interactive, onSelect, runtime }: { id: number; position: Vec2; selected: boolean; isNext: boolean; interactive: boolean; onSelect: (id: number) => void; runtime: Runtime }) {
+function PoolBall({ id, position, selected, isNext, interactive, onSelect, runtime, dirt = 0 }: { id: number; position: Vec2; selected: boolean; isNext: boolean; interactive: boolean; onSelect: (id: number) => void; runtime: Runtime; dirt?: number }) {
   const group = useRef<THREE.Group>(null)
   const label = useRef<THREE.Mesh>(null)
   const drop = useRef(0)
@@ -221,8 +222,9 @@ function PoolBall({ id, position, selected, isNext, interactive, onSelect, runti
   return <group ref={group} position={toWorld(position, BALL_Y)}>
     <mesh castShadow onClick={onClick} onPointerDown={e => e.stopPropagation()} onPointerOver={e => { e.stopPropagation(); if (id) setHovered(true) }} onPointerOut={() => setHovered(false)}>
       <sphereGeometry args={[RADIUS, 64, 40]} />
-      <meshPhysicalMaterial color={stripe ? '#ffffff' : COLORS[id] || '#f4ead5'} map={stripe} roughness={0.15} metalness={0} clearcoat={1} clearcoatRoughness={0.075} ior={1.57} envMapIntensity={1.2} />
+      <meshPhysicalMaterial color={stripe ? '#ffffff' : COLORS[id] || '#f4ead5'} map={stripe} roughness={0.15 + dirt * .4} metalness={0} clearcoat={1 - dirt * .6} clearcoatRoughness={0.075 + dirt * .3} ior={1.57} envMapIntensity={1.2} />
     </mesh>
+    {dirt > 0 && <BallGrime id={id} dirt={dirt} />}
     {texture && <mesh ref={label} geometry={cap} raycast={() => null}>
       <meshPhysicalMaterial map={texture} transparent alphaTest={0.03} roughness={0.19} clearcoat={0.7} clearcoatRoughness={0.11} ior={1.57} envMapIntensity={0.9} depthWrite={false} polygonOffset polygonOffsetFactor={-1} />
     </mesh>}
@@ -480,8 +482,9 @@ function Scene(props: PoolTableProps) {
     <TopDownCamera />
     <TableLighting />
     <TableFurniture />
+    {scenario.conditions && <TableConditionSurface conditions={scenario.conditions} />}
     <PlaybackDriver {...props} runtime={runtime} />
-    {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} isNext={objective?.nextBallId === ball.id} interactive={interactive && !playing && selectableBalls.has(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
+    {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} isNext={objective?.nextBallId === ball.id} interactive={interactive && !playing && selectableBalls.has(ball.id)} onSelect={props.onSelectBall} runtime={runtime} dirt={scenario.conditions?.dirt} />)}
     {approach && !analysis && !playing && <PathLines paths={approachPaths} color={APPROACH_COLOR} opacity={0.85} dashed />}
     {!predictFinish && !analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
     {objective?.target && <PositionZone target={objective.target} radius={objective.radius} />}
@@ -601,6 +604,7 @@ function FlatTable(props: PoolTableProps) {
     </g>
     <g pointerEvents="none" fill="none"><rect x="-16.8" y="-16.8" width="287.6" height="160.6" rx="5.2" stroke="#c09c68" strokeOpacity=".4" strokeWidth=".25" /></g>
     {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x, i) => [-1, 1].map(sign => <rect key={`${i}-${sign}`} x={(x + WIDTH / 2) * 100 - .6} y={(sign * .772 + DEPTH / 2) * 100 - .6} width="1.2" height="1.2" fill="#bfb9a7" transform={`rotate(45 ${(x + WIDTH / 2) * 100} ${(sign * .772 + DEPTH / 2) * 100})`} />))}
+    {scenario.conditions && <g transform="scale(100)"><TableConditionSvg conditions={scenario.conditions} /></g>}
     {analysis && <FlatAnalysisOverlay analysis={analysis} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} requiredPots={scenario.trick?.requiredPots} />}
     {props.approachOption && !analysis && !playing && <g data-testid="ideal-approach" pointerEvents="none" role="img" aria-label={approachLabel(props.approachOption)}>
       <polyline data-testid="ideal-approach-path" data-option-id={props.approachOption.id} data-ball-id={props.approachOption.plan.ballId} points={props.approachOption.cueApproachPath.map(point => `${point.x * 100},${point.y * 100}`).join(' ')} fill="none" stroke={APPROACH_COLOR} opacity=".85" strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeDasharray="2.5 1.8" />
@@ -616,6 +620,7 @@ function FlatTable(props: PoolTableProps) {
       </g>}
       <circle r={RADIUS * 100} fill={COLORS[ball.id]} filter="url(#ball-shadow)" />
       <circle r={RADIUS * 100} fill="url(#ball-shine)" />
+      {!!scenario.conditions?.dirt && <g transform="scale(100)"><BallGrimeSvg id={ball.id} dirt={scenario.conditions.dirt} /></g>}
       {!!ball.id && <><circle r="1.48" fill="#f2f0e4" /><text y=".08" textAnchor="middle" dominantBaseline="central" fontFamily="Arial,sans-serif" fontWeight="700" fontSize="2.25" fill="#20271f">{ball.id}</text></>}
       <circle r="5" fill="transparent" />
     </g>)}
@@ -653,7 +658,7 @@ export default function PoolTable(props: PoolTableProps) {
   // A new scenario, inspected shot or replay starts with the initial ball layout.
   // Keying the fallback discards the previous animation before the next paint.
   const fallback = <FlatTable key={`${props.scenario.level}:${props.scenario.seed}:${props.analysis?.plan.id ?? 'setup'}:${props.playbackKey}`} {...props} />
-  return <div className="pool-table-scene" role={props.scenario.objective || props.scenario.plant || props.scenario.trick ? 'group' : undefined} aria-label={props.scenario.trick ? `Pool table. ${props.scenario.trick.description}` : props.scenario.objective ? `Pool table. Pot ball ${props.scenario.objective.ballId} and leave the cue ball in the cyan position zone to play ball ${props.scenario.objective.nextBallId} next.` : props.scenario.plant ? `Pool table. For the plant, hit ball ${props.scenario.plant.ballId} first to pot ball ${props.scenario.plant.targetBallId}, or choose a free ball.` : undefined} style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
+  return <div className="pool-table-scene" role={props.scenario.objective || props.scenario.plant || props.scenario.trick || props.scenario.conditions ? 'group' : undefined} aria-label={props.scenario.conditions ? `Pool table. ${props.scenario.conditions.name}. ${props.scenario.conditions.description}` : props.scenario.trick ? `Pool table. ${props.scenario.trick.description}` : props.scenario.objective ? `Pool table. Pot ball ${props.scenario.objective.ballId} and leave the cue ball in the cyan position zone to play ball ${props.scenario.objective.nextBallId} next.` : props.scenario.plant ? `Pool table. For the plant, hit ball ${props.scenario.plant.ballId} first to pot ball ${props.scenario.plant.targetBallId}, or choose a free ball.` : undefined} style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
     {available ? <CanvasBoundary fallback={fallback}>
       <Canvas orthographic camera={{ position: [0, 6, 0.001], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08 }} style={{ touchAction: 'none' }}>
         <Suspense fallback={null}><Scene {...props} /></Suspense>

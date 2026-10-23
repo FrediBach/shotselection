@@ -34,13 +34,19 @@ export const POCKETS: Pocket[] = [
 ];
 
 const TOURNAMENT_LAST_LEVEL = COURSE_CHAPTERS.find(chapter => chapter.id === 'tournament')!.lastLevel;
+const TRICKS_LAST_LEVEL = COURSE_CHAPTERS.find(chapter => chapter.id === 'trick-shots')!.lastLevel;
 
 /** Keep the original course's 19–8 cm progression. The trick-shot showcase
- * starts with a more forgiving 16 cm finish, narrowing to 12 cm for its finale. */
+ * starts with a more forgiving 16 cm finish, narrowing to 12 cm for its finale.
+ * Broken table gets its own 16–10 cm progression without changing prior shots. */
 export const positionToleranceForLevel = (level: number) => {
   const safeLevel = Number.isFinite(level) ? Math.max(1, Math.min(TOTAL_LEVELS, level)) : 1;
+  if (safeLevel > TRICKS_LAST_LEVEL) {
+    const progress = (safeLevel - TRICKS_LAST_LEVEL - 1) / Math.max(1, TOTAL_LEVELS - TRICKS_LAST_LEVEL - 1);
+    return 0.16 * (0.10 / 0.16) ** Math.max(0, progress);
+  }
   if (safeLevel > TOURNAMENT_LAST_LEVEL) {
-    const progress = (safeLevel - TOURNAMENT_LAST_LEVEL - 1) / (TOTAL_LEVELS - TOURNAMENT_LAST_LEVEL - 1);
+    const progress = (safeLevel - TOURNAMENT_LAST_LEVEL - 1) / (TRICKS_LAST_LEVEL - TOURNAMENT_LAST_LEVEL - 1);
     return 0.16 * (0.12 / 0.16) ** Math.max(0, progress);
   }
   const progress = (safeLevel - 1) / (TOURNAMENT_LAST_LEVEL - 1);
@@ -48,8 +54,8 @@ export const positionToleranceForLevel = (level: number) => {
 };
 
 export const PHYSICS_NOTES = {
-  model: 'Cannon-es sphere collisions at 240 Hz; sliding-to-rolling cloth friction, draw/follow, side spin, finite cushion jaws and six pocket openings.',
-  limits: 'A physics-based teaching model, not a validated professional simulator. Cushion rubber, pocket shelf acceptance and ball throw are approximations. No jumps, masse, cue deflection or table-specific calibration.',
+  model: 'Cannon-es sphere collisions at 240 Hz; sliding-to-rolling cloth friction, draw/follow, side spin, finite cushion jaws and six pocket openings. Broken tables add slow cloth, drag patches, directional drift, worn cushions, cue losses and dirty-ball contacts to the same simulation.',
+  limits: 'A physics-based teaching model, not a validated professional simulator. Cushion rubber, pocket shelf acceptance and ball throw are approximations. Broken-table defects are deterministic teaching effects, including drift only while balls move. No jumps, masse or measured table-specific calibration.',
   sources: [
     { title: 'WPA equipment specifications', url: 'https://wpapool.com/wp-content/uploads/2024/01/RECOMMENDED-EQUIPMENT-SPECIFICATIONS.pdf' },
     { title: 'Pooltool: billiards physics derivation', url: 'https://ekiefl.github.io/2020/04/24/pooltool-theory/' },

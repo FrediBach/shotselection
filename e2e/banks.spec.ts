@@ -11,7 +11,7 @@ for (const [level, cushions] of [[51, 1], [57, 2], [60, 3]]) test(`bank lesson $
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     localStorage.setItem('shot-selection-session', JSON.stringify({
-      scoringVersion: 2, courseVersion: 4, completedLessons: level - 1,
+      scoringVersion: 2, courseVersion: 5, completedLessons: level - 1,
       level, score: 0, rounds: level - 1, perfect: 0, seed: 71431,
     }))
     const originalContext = HTMLCanvasElement.prototype.getContext

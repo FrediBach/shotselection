@@ -1,12 +1,14 @@
 import { TABLE } from './constants';
 import { COURSE_CHAPTERS, TOTAL_LEVELS } from './course';
 import { seededRandom } from './math';
-import type { Ball, LessonBriefing, Scenario, TrickObjective } from './types';
+import { BROKEN_LESSONS } from './broken-lessons';
+import { reflectTableConditions } from './table-conditions';
+import type { Ball, LessonBriefing, Scenario, TableConditions, TrickObjective } from './types';
 
 export { COURSE_CHAPTERS, LEVELS_PER_CHAPTER, TOTAL_LEVELS } from './course';
 export type { CourseChapter } from './course';
 
-interface Lesson {
+export interface Lesson {
   title: string;
   description: string;
   lesson: string;
@@ -19,6 +21,7 @@ interface Lesson {
   bank?: { ballId: number; minCushions: number };
   plant?: { ballId: number; targetBallId: number; pocketId: number };
   trick?: TrickObjective;
+  conditions?: TableConditions;
 }
 
 /** Authored layouts keep the teaching problem intact. Seeded reflections vary
@@ -1047,6 +1050,7 @@ const LESSONS: readonly Lesson[] = [
     layout: [[1.15, 0.8], [1.0976, 0.36], [1.27, 0.14], [1.27, 0.06]],
     trick: { ballId: 1, potBallId: 3, pocketId: 1, aim: { x: 1.15, y: 0.4 }, requiredPots: [3], requiredContacts: [[0, 1], [0, 2], [2, 3]], description: 'Carom off the 1 into the 2, then send the 2 into the 3 to pot the 3.' },
   },
+  ...BROKEN_LESSONS,
 ];
 
 export function getCourseProgress(completedLevels: number) {
@@ -1088,6 +1092,7 @@ export function generateScenario(level: number, seed = 71431 + level * 919): Sce
     title: lesson.title,
     description: lesson.description,
     balls,
+    ...(lesson.conditions ? { conditions: reflectTableConditions(lesson.conditions, mirrorX, mirrorY) } : {}),
     curriculum: {
       chapterId: chapter.id, chapterTitle: chapter.title, chapterIndex, lessonIndex, lessonCount,
       lesson: lesson.lesson, takeaway: lesson.takeaway,

@@ -5,6 +5,8 @@ import { prepareSandboxRoundAsync } from '../engine/client'
 import { createSandboxScenario, SANDBOX_SCENARIOS, validateSandboxLayout } from '../engine/sandbox'
 import type { PreparedRound, Scenario, Vec2 } from '../engine/types'
 import { Button } from './ui/button'
+import { TableConditionSummary } from './TableConditions'
+import { BallGrimeSvg, TableConditionSvg } from './table/TableDamage'
 import './SandboxSetup.css'
 
 type Placement = 'random' | 'manual'
@@ -199,6 +201,7 @@ export default function SandboxSetup({ onStart, initialScenario, initialPlacemen
       </div>
       <section className="sandbox-editor" aria-labelledby="sandbox-layout-heading">
         <div className="sandbox-editor-heading"><div><h2 id="sandbox-layout-heading">{placement === 'manual' ? 'Your table, your setup.' : 'A fresh table.'}</h2><span>{placement === 'manual' ? 'Move any ball. The engine checks the complete shot.' : 'Preview the layout, then make your shot selection.'}</span></div><span className="sandbox-table-size">254 × 127 <span>cm</span></span></div>
+        {scenario.conditions && <TableConditionSummary conditions={scenario.conditions} finalBoss={scenario.curriculum?.lessonIndex === 9} />}
         <div className="sandbox-table-wrap">
           <svg ref={table} className={`sandbox-table${placement === 'manual' ? ' sandbox-table-editable' : ''}`} viewBox={`${-TABLE_MARGIN} ${-TABLE_MARGIN} ${TABLE.length + TABLE_MARGIN * 2} ${TABLE.width + TABLE_MARGIN * 2}`} role={placement === 'manual' ? 'group' : 'img'} aria-labelledby="sandbox-table-title" aria-describedby={placement === 'manual' ? 'sandbox-table-instructions' : 'sandbox-table-description'} tabIndex={placement === 'manual' ? 0 : undefined} onPointerDown={beginDrag} onPointerMove={dragBall} onPointerUp={stopDrag} onPointerCancel={stopDrag} onLostPointerCapture={() => { drag.current = null }} onKeyDown={moveWithKeyboard}>
             <title id="sandbox-table-title">{placement === 'manual' ? `Ball layout editor. ${ballName(selectedBallId)} selected.` : 'Sandbox ball layout'}</title>
@@ -209,10 +212,12 @@ export default function SandboxSetup({ onStart, initialScenario, initialPlacemen
             <line x1={TABLE.length / 4} x2={TABLE.length / 4} y1={0} y2={TABLE.width} stroke="#d7dfc4" strokeOpacity={0.12} strokeWidth={0.003} />
             {[1, 2, 3, 5, 6, 7].flatMap(index => [0, TABLE.width].map(y => <circle key={`${index}-${y}`} cx={TABLE.length * index / 8} cy={y === 0 ? -0.071 : y + 0.071} r={0.006} fill="#d1bb8a" opacity={0.65} />))}
             {POCKETS.map(pocket => <circle key={pocket.id} cx={pocket.position.x} cy={pocket.position.y} r={pocket.kind === 'corner' ? TABLE.cornerPocketRadius : TABLE.sidePocketRadius} fill="#0c110e" stroke="#8c7a54" strokeWidth={0.006} />)}
+            {scenario.conditions && <TableConditionSvg conditions={scenario.conditions} />}
             {scenario.balls.map(ball => <g key={ball.id} data-ball-id={ball.id} className="sandbox-table-ball" transform={`translate(${ball.position.x} ${ball.position.y})`}>
               {placement === 'manual' && selectedBallId === ball.id && <circle r={TABLE.ballRadius + 0.016} fill="none" stroke="#f2c789" strokeWidth={0.006} />}
               <circle cy={0.006} r={TABLE.ballRadius + 0.004} fill="#101a12" opacity={0.3} />
               <circle r={TABLE.ballRadius} fill={BALL_COLORS[ball.id] ?? '#c4c0a7'} stroke="#111b1680" strokeWidth={0.003} />
+              {!!scenario.conditions?.dirt && <BallGrimeSvg id={ball.id} dirt={scenario.conditions.dirt} />}
               {ball.id > 0 && <><circle r={TABLE.ballRadius * 0.58} fill="#f5f0df" /><text textAnchor="middle" dominantBaseline="central" fontFamily="Arial, sans-serif" fontSize={0.027} fontWeight={700} fill="#25291f">{ball.id}</text></>}
               <circle cx={-0.009} cy={-0.011} r={0.007} fill="white" opacity={0.32} />
               <circle r={TABLE.ballRadius + 0.018} fill="transparent" />

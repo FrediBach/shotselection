@@ -2,24 +2,27 @@ import { Body, ContactMaterial, GSSolver, Material, Sphere, Vec3, World } from '
 import type { ContactEquation } from 'cannon-es';
 import { TABLE } from './constants';
 import { clamp } from './math';
-import { isPocketed, RAILS } from './table-geometry';
-import type { Scenario, ShotPlan, Simulation, SimulateOptions, Vec2 } from './types';
+import { isPocketed, CUSHIONS } from './table-geometry';
+import { clothFrictionAt, cueStroke } from './table-conditions';
+import type { Scenario, ShotPlan, Simulation, SimulateOptions, TableConditions, Vec2 } from './types';
 
 const G = 9.80665;
 const R = TABLE.ballRadius;
+const PHYSICAL_RAILS = CUSHIONS.flatMap(cushion => [cushion.nose, ...cushion.jaws].map(rail => ({ ...rail, side: cushion.side })));
 
 /** Slip-point velocity u = v + omega x (0,0,-R). The 7/2 factor gives the
  * exact slide-to-roll transition for a solid homogeneous sphere (I=2mR²/5). */
-export function applyCloth(body: Body, dt: number) {
+export function applyCloth(body: Body, dt: number, conditions?: TableConditions) {
   const velocity = body.velocity;
   const spin = body.angularVelocity;
+  const friction = clothFrictionAt(body.position, conditions);
   const slipX = velocity.x - R * spin.y;
   const slipY = velocity.y + R * spin.x;
   const slip = Math.hypot(slipX, slipY);
   let rollingTime = dt;
   if (slip > 1e-7) {
-    const slidingTime = Math.min(dt, slip / (3.5 * TABLE.slidingFriction * G));
-    const impulse = TABLE.slidingFriction * G * slidingTime;
+    const slidingTime = Math.min(dt, slip / (3.5 * TABLE.slidingFriction * friction * G));
+    const impulse = TABLE.slidingFriction * friction * G * slidingTime;
     const dx = -impulse * slipX / slip;
     const dy = -impulse * slipY / slip;
     velocity.x += dx;
@@ -30,19 +33,31 @@ export function applyCloth(body: Body, dt: number) {
   }
   if (rollingTime > 0) {
     const speed = Math.hypot(velocity.x, velocity.y);
-    const remaining = Math.max(0, speed - TABLE.rollingFriction * G * rollingTime);
+    const remaining = Math.max(0, speed - TABLE.rollingFriction * friction * G * rollingTime);
     const ratio = speed > 0 ? remaining / speed : 0;
     velocity.x *= ratio;
     velocity.y *= ratio;
     spin.x = -velocity.y / R;
     spin.y = velocity.x / R;
   }
+  // A subtle slate lean / cloth nap curves a rolling ball. Static friction
+  // holds resting balls; limiting the lean below drag guarantees a settled end.
+  if (conditions?.nap && Math.hypot(velocity.x, velocity.y) > 0.005) {
+    const magnitude = Math.hypot(conditions.nap.x, conditions.nap.y);
+    const ratio = magnitude > 0 ? Math.min(1, TABLE.rollingFriction * friction * G * 0.8 / magnitude) : 0;
+    const dx = conditions.nap.x * ratio * dt;
+    const dy = conditions.nap.y * ratio * dt;
+    velocity.x += dx;
+    velocity.y += dy;
+    spin.x -= dy / R;
+    spin.y += dx / R;
+  }
   spin.z = Math.sign(spin.z) * Math.max(0, Math.abs(spin.z) - 10 * dt);
 }
 
-export function resolveRails(body: Body) {
+export function resolveRails(body: Body, conditions?: TableConditions) {
   let strongestImpact = 0;
-  for (const rail of RAILS) {
+  for (const rail of PHYSICAL_RAILS) {
     const dx = rail.b.x - rail.a.x;
     const dy = rail.b.y - rail.a.y;
     const t = clamp(((body.position.x - rail.a.x) * dx + (body.position.y - rail.a.y) * dy) / (dx * dx + dy * dy), 0, 1);
@@ -59,7 +74,8 @@ export function resolveRails(body: Body) {
     strongestImpact = Math.max(strongestImpact, -normalSpeed);
     body.position.x += nx * (R - gap + 1e-6);
     body.position.y += ny * (R - gap + 1e-6);
-    const normalImpulse = -(1 + TABLE.cushionRestitution) * normalSpeed;
+    const restitution = conditions?.cushions?.find(cushion => cushion.rail === rail.side)?.restitution ?? TABLE.cushionRestitution;
+    const normalImpulse = -(1 + clamp(restitution, 0, 1)) * normalSpeed;
     body.velocity.x += normalImpulse * nx;
     body.velocity.y += normalImpulse * ny;
     // Coulomb-limited tangent impulse couples running/reverse english to rebound.
@@ -83,9 +99,10 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   (world.solver as GSSolver).iterations = 12;
   (world.solver as GSSolver).tolerance = 1e-8;
   const ballMaterial = new Material('phenolic');
+  const dirt = clamp(scenario.conditions?.dirt ?? 0, 0, 1);
   world.addContactMaterial(new ContactMaterial(ballMaterial, ballMaterial, {
-    friction: 0.035,
-    restitution: TABLE.ballRestitution,
+    friction: 0.035 + 0.13 * dirt,
+    restitution: TABLE.ballRestitution - 0.2 * dirt,
     contactEquationStiffness: 1e9,
     contactEquationRelaxation: 3,
     frictionEquationStiffness: 1e8,
@@ -101,9 +118,9 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   });
   const cue = bodies.find(ball => ball.id === 0);
   if (!cue) throw new Error('A scenario needs a cue ball (id 0).');
-  const speed = clamp(plan.speed, 0.05, 4);
-  cue.body.velocity.set(Math.cos(plan.angle) * speed, Math.sin(plan.angle) * speed, 0);
-  cue.body.angularVelocity.set(-Math.sin(plan.angle) * speed / R * plan.topSpin, Math.cos(plan.angle) * speed / R * plan.topSpin, plan.sideSpin);
+  const { speed, angle, topSpin, sideSpin } = cueStroke(plan, scenario.conditions);
+  cue.body.velocity.set(Math.cos(angle) * speed, Math.sin(angle) * speed, 0);
+  cue.body.angularVelocity.set(-Math.sin(angle) * speed / R * topSpin, Math.cos(angle) * speed / R * topSpin, sideSpin);
   let firstContact: number | null = null;
   cue.body.addEventListener('collide', (event: { body: Body }) => {
     if (firstContact === null) {
@@ -162,14 +179,14 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   let quietSteps = 0;
   for (let step = 1; step <= maxSteps; step++) {
     soundTime = step * TABLE.step;
-    for (const ball of bodies) if (!ball.pocketed) applyCloth(ball.body, TABLE.step);
+    for (const ball of bodies) if (!ball.pocketed) applyCloth(ball.body, TABLE.step, scenario.conditions);
     world.step(TABLE.step);
     let moving = false;
     for (const ball of bodies) {
       if (ball.pocketed) continue;
       ball.body.position.z = 0;
       ball.body.velocity.z = 0;
-      const cushionImpact = resolveRails(ball.body);
+      const cushionImpact = resolveRails(ball.body, scenario.conditions);
       if (ball.id === 0 && firstContact === null && cushionImpact > 0 && recordPaths) {
         // A regular 30 Hz path sample can cut across a rebound. Keep its exact
         // corrected center position so even multiple banks show every turn.

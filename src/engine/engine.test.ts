@@ -112,7 +112,10 @@ describe('shot-selection scoring', () => {
     expect(positionToleranceForLevel(8)).toBeLessThan(positionToleranceForLevel(4));
     expect(positionToleranceForLevel(TOTAL_LEVELS)).toBeLessThan(positionToleranceForLevel(TOTAL_LEVELS - 1));
     expect(positionToleranceForLevel(80)).toBe(0.08);
-    expect(positionToleranceForLevel(100)).toBe(0.12);
+    expect(positionToleranceForLevel(81)).toBe(0.16);
+    expect(positionToleranceForLevel(90)).toBe(0.12);
+    expect(positionToleranceForLevel(91)).toBe(0.16);
+    expect(positionToleranceForLevel(100)).toBe(0.10);
   });
   it('scores only the offered plans and preserves the exact chosen stroke', () => {
     const scenario = generateScenario(1);

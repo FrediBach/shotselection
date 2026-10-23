@@ -7,12 +7,12 @@ import { SANDBOX_SCENARIOS, createSandboxScenario, prepareSandboxRound, validate
 
 describe('sandbox preparation', () => {
   it('opens every scenario and variation without requiring course progress', () => {
-    expect(SANDBOX_SCENARIOS).toHaveLength(9);
+    expect(SANDBOX_SCENARIOS).toHaveLength(10);
     expect(SANDBOX_SCENARIOS.flatMap(group => group.lessons.map(lesson => lesson.level)))
-      .toEqual(Array.from({ length: 90 }, (_, index) => index + 1));
-    expect(SANDBOX_SCENARIOS.at(-1)).toMatchObject({ title: 'Trick shots' });
+      .toEqual(Array.from({ length: 100 }, (_, index) => index + 1));
+    expect(SANDBOX_SCENARIOS.at(-1)).toMatchObject({ title: 'Broken table' });
     expect(() => createSandboxScenario(0)).toThrow(/available/);
-    expect(() => createSandboxScenario(91)).toThrow(/available/);
+    expect(() => createSandboxScenario(101)).toThrow(/available/);
   });
 
   it('rejects off-table, nonfinite, duplicate and overlapping ball placements', () => {

@@ -6,6 +6,7 @@ import { hasProvenNextShot, satisfiesTrick } from './objectives';
 import { bankPlanForStroke, bankRoutesFor } from './bank-routes';
 import { plantRoutesFor } from './plant-routes';
 import { generateScenario } from './scenarios';
+import { clothFrictionAt, reflectTableConditions } from './table-conditions';
 import type { BallFinishOptions, FinishOption, PreparedRound, Scenario, ShotPlan, Simulation, Vec2 } from './types';
 
 interface Route { pocketId: number; angle: number; speed: number; difficulty: number }
@@ -28,7 +29,12 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
     if (others.some(ball => segmentDistance(ball.position, cue.position, ghost) < TABLE.ballDiameter * 1.025 || segmentDistance(ball.position, object.position, pocket.center) < TABLE.ballDiameter * 1.025)) continue;
     const objectDistance = distance(object.position, pocket.center);
     const cueDistance = distance(cue.position, ghost);
-    const speed = clamp(Math.sqrt(2 * TABLE.rollingFriction * 9.80665 * (objectDistance + 0.13)) / (0.71 * cut) + cueDistance * 0.2, 0.65, 2.8);
+    const baseSpeed = Math.sqrt(2 * TABLE.rollingFriction * 9.80665 * (objectDistance + 0.13)) / (0.71 * cut) + cueDistance * 0.2;
+    // Budget for the actual cloth along both legs, including local repairs.
+    const drag = scenario.conditions ? [0.125, 0.375, 0.625, 0.875].reduce((sum, t) => sum
+      + clothFrictionAt({ x: cue.position.x + (ghost.x - cue.position.x) * t, y: cue.position.y + (ghost.y - cue.position.y) * t }, scenario.conditions)
+      + clothFrictionAt({ x: object.position.x + (pocket.center.x - object.position.x) * t, y: object.position.y + (pocket.center.y - object.position.y) * t }, scenario.conditions), 0) / 8 : 1;
+    const speed = clamp(baseSpeed * Math.sqrt(drag) / (scenario.conditions?.cue?.power ?? 1), 0.65, scenario.conditions ? 3.4 : 2.8);
     routes.push({ pocketId: pocket.id, angle: Math.atan2(aim.y, aim.x), speed, difficulty: cueDistance * 0.15 + objectDistance * 0.18 + (1 - cut) * 0.8 });
   }
   return routes.sort((a, b) => a.difficulty - b.difficulty).slice(0, 2);
@@ -36,7 +42,9 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
 
 function scenarioFingerprint(scenario: Scenario): string {
   let hash = 2166136261;
-  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant, scenario.trick, scenario.curriculum?.englishPractice])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  const identity: unknown[] = [scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant, scenario.trick, scenario.curriculum?.englishPractice];
+  if (scenario.conditions) identity.push(scenario.conditions);
+  for (const char of JSON.stringify(identity)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
 }
 
@@ -49,6 +57,32 @@ function isSafeFinish(simulation: Simulation, ballId: number): boolean {
 
 function isFeasible(simulation: Simulation, ballId: number): boolean {
   return isSafeFinish(simulation, ballId) && simulation.potted.includes(ballId);
+}
+
+/** Compensate the fixed cue bias and use the slope to seed an actual simulated
+ * angle search. A damaged table must earn its pots under its own physics. */
+function directStroke(scenario: Scenario, plan: ShotPlan): FeasiblePlan | null {
+  if (!scenario.conditions) {
+    const simulation = simulateShot(scenario, plan, { record: false });
+    return isFeasible(simulation, plan.ballId) ? { plan, simulation } : null;
+  }
+  const { cue, nap } = scenario.conditions;
+  const cueBall = scenario.balls.find(ball => ball.id === 0)!;
+  const object = scenario.balls.find(ball => ball.id === plan.ballId)!;
+  const approach = Math.max(0.08, distance(cueBall.position, object.position) - TABLE.ballDiameter);
+  const rollingSpeed = plan.speed * (cue?.power ?? 1) * Math.max(0.3, (5 + 2 * plan.topSpin * (cue?.spin ?? 1)) / 7);
+  const time = approach / Math.max(0.2, rollingSpeed * 0.9);
+  const bend = nap ? (Math.cos(plan.angle) * nap.y - Math.sin(plan.angle) * nap.x) * time * time / (2 * approach) : 0;
+  const baseAngle = plan.angle - (cue?.angleBias ?? 0) - clamp(bend, -0.075, 0.075);
+  const corrections = nap || scenario.conditions.dirt
+    ? [0, -0.002, 0.002, -0.005, 0.005, -0.01, 0.01, -0.018, 0.018, -0.028, 0.028, -0.042, 0.042, -0.06, 0.06]
+    : [0];
+  for (const correction of corrections) {
+    const calibrated = { ...plan, angle: baseAngle + correction };
+    const simulation = simulateShot(scenario, calibrated, { record: false });
+    if (isFeasible(simulation, plan.ballId)) return { plan: calibrated, simulation };
+  }
+  return null;
 }
 
 /** Distinct endpoints alone are insufficient: every pair also changes strength
@@ -166,10 +200,10 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
       for (const topSpin of [-1.1, 0, 1.05]) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
           const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
-          const simulation = simulateShot(scenario, plan, { record: false });
-          if (isFeasible(simulation, ballId)) {
-            plan.target = { ...simulation.cueEnd };
-            feasible.push({ plan, simulation });
+          const calibrated = directStroke(scenario, plan);
+          if (calibrated) {
+            calibrated.plan.target = { ...calibrated.simulation.cueEnd };
+            feasible.push(calibrated);
           }
         }
       }
@@ -230,6 +264,8 @@ function prepareLayout(scenario: Scenario): PreparedRound {
  * Trick search tries 117 strokes on its authored contact line (351 with English),
  * retaining only complete, physically proven tricks before choosing three finishes.
  * Bank search tries 12 routes, nine speeds and five spins with angle calibration.
+ * Damaged-table direct shots budget for cloth and cue power, then calibrate
+ * fixed cue bias, downhill drift and dirty contacts with up to 15 actual angles.
  * Authored lessons can try three replacement layouts of the same lesson;
  * fixed objectives never fall back to an unrelated easier layout. Passing
  * regenerate: false searches only the supplied table, as required for sandbox. */
@@ -280,9 +316,13 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
   const attempts = options.regenerate === false || ((objective || bank || plant || trick) && !scenario.curriculum) ? 1 : 4;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const generated = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
+    const originalCue = attempt > 0 && scenario.conditions && scenario.curriculum ? generateScenario(scenario.level, scenario.seed).balls[0].position : undefined;
+    const regeneratedCue = generated.balls[0].position;
     // Regeneration keeps the lesson; plant pockets and trick aim lines follow
     // the regenerated table reflection along with the balls.
     const layout = { ...scenario, seed: generated.seed, balls: generated.balls,
+      ...(originalCue && scenario.conditions ? { conditions: reflectTableConditions(scenario.conditions,
+        Math.abs(originalCue.x - regeneratedCue.x) > 1e-8, Math.abs(originalCue.y - regeneratedCue.y) > 1e-8) } : {}),
       ...(plant ? { plant: { ...plant, pocketId: generated.plant?.pocketId ?? plant.pocketId } } : {}),
       ...(trick ? { trick: generated.trick ?? trick } : {}) };
     const prepared = prepareLayout(layout);

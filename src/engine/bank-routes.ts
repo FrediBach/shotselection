@@ -2,6 +2,7 @@ import { Body } from 'cannon-es';
 import { TABLE } from './constants';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
 import { applyCloth, resolveRails } from './physics';
+import { cueStroke } from './table-conditions';
 import { CUSHIONS, isPocketed, POCKET_GEOMETRY } from './table-geometry';
 import type { CushionSide } from './table-geometry';
 import type { Scenario, ShotPlan, Vec2 } from './types';
@@ -80,9 +81,10 @@ interface Approach { error: number; gap: number; cut: number; blocked: boolean; 
  * impulses. Object-ball collisions are checked by the final full simulation. */
 function approach(scenario: Scenario, start: Vec2, ballId: number, route: BankRoute, angle: number, speed: number, topSpin: number): Approach {
   const body = new Body({ mass: TABLE.ballMass, linearDamping: 0, angularDamping: 0 });
+  const stroke = cueStroke({ angle, speed, topSpin, sideSpin: 0 }, scenario.conditions);
   body.position.set(start.x, start.y, 0);
-  body.velocity.set(Math.cos(angle) * speed, Math.sin(angle) * speed, 0);
-  body.angularVelocity.set(-Math.sin(angle) * speed / TABLE.ballRadius * topSpin, Math.cos(angle) * speed / TABLE.ballRadius * topSpin, 0);
+  body.velocity.set(Math.cos(stroke.angle) * stroke.speed, Math.sin(stroke.angle) * stroke.speed, 0);
+  body.angularVelocity.set(-Math.sin(stroke.angle) * stroke.speed / TABLE.ballRadius * stroke.topSpin, Math.cos(stroke.angle) * stroke.speed / TABLE.ballRadius * stroke.topSpin, stroke.sideSpin);
   const others = scenario.balls.filter(ball => ball.id !== 0 && ball.id !== ballId);
   let blocked = false;
   let gap = Infinity;
@@ -92,10 +94,10 @@ function approach(scenario: Scenario, start: Vec2, ballId: number, route: BankRo
   let lastBank = -Infinity;
   for (let step = 0; step < 3600; step++) {
     const previous = { x: body.position.x, y: body.position.y };
-    applyCloth(body, TABLE.step);
+    applyCloth(body, TABLE.step, scenario.conditions);
     body.position.x += body.velocity.x * TABLE.step;
     body.position.y += body.velocity.y * TABLE.step;
-    const impact = resolveRails(body);
+    const impact = resolveRails(body, scenario.conditions);
     if (impact > 0.035 && step * TABLE.step - lastBank >= 0.045) {
       lastBank = step * TABLE.step;
       const distances = SIDES.map(side => Math.abs((horizontal(side) ? body.position.y : body.position.x) - edge(side)));
@@ -124,7 +126,7 @@ export function bankPlanForStroke(scenario: Scenario, route: BankRoute, speed: n
   const cue = scenario.balls.find(ball => ball.id === 0);
   const bank = scenario.bank;
   if (!cue || !bank || !scenario.balls.some(ball => ball.id === bank.ballId)) return null;
-  let angle = route.angle;
+  let angle = route.angle - (scenario.conditions?.cue?.angleBias ?? 0);
   let result: Approach | undefined;
   for (let iteration = 0; iteration < 9; iteration++) {
     result = approach(scenario, cue.position, bank.ballId, route, angle, speed, topSpin);

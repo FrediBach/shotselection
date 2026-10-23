@@ -17,6 +17,24 @@ export interface PlayerCharacter {
 export interface Vec2 { x: number; y: number }
 export interface Ball { id: number; position: Vec2 }
 export interface Pocket { id: number; name: string; position: Vec2; kind: 'corner' | 'side' }
+/** Authored, repeatable defects; omitted properties behave like a normal table. */
+export interface TableConditions {
+  id: string;
+  name: string;
+  description: string;
+  /** Multiplier for both sliding and rolling friction. */
+  cloth?: number;
+  /** Acceleration in m/s² on moving balls, limited below rolling drag. */
+  nap?: Vec2;
+  /** Circular worn or sticky areas; friction multiplies the underlying cloth. */
+  patches?: { id: string; center: Vec2; radius: number; friction: number }[];
+  /** Absolute cushion restitution, including that rail's pocket jaws. */
+  cushions?: { rail: 'top' | 'bottom' | 'left' | 'right'; restitution: number }[];
+  /** Repeatable weak stroke or bent cue; angleBias is in radians. */
+  cue?: { power: number; angleBias: number; spin: number };
+  /** From clean (0) to dirty (1): extra contact friction and lost energy. */
+  dirt?: number;
+}
 export interface LessonBriefing {
   stage: 'introduce' | 'develop' | 'apply';
   focus: string;
@@ -67,6 +85,7 @@ export interface Scenario {
   title: string;
   description: string;
   balls: Ball[];
+  conditions?: TableConditions;
   curriculum?: CurriculumLesson;
   objective?: PositionObjective;
   /** Cue-ball cushions required before the first contact with this object ball. */

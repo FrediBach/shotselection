@@ -85,6 +85,14 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
       : nextShots / count < 0.55
         ? `Potting alone is not enough: this finish often leaves ball ${scenario.objective.nextBallId} blocked or too thin. Look for a clearer next-ball angle.`
         : `Ball ${scenario.objective.nextBallId} can be played from this side, but pace and spin must hold the shared landing zone after a legal pot.`
+    : scenario.conditions
+    ? successRate >= 0.8
+      ? 'This route handles the table defects with a repeatable pot and cue-ball finish. The same faults are active in every trial.'
+      : pots / count < 0.55
+        ? 'On this damaged table, small stroke changes often spoil the pot. Compare the contact angle, time spent rolling and any damaged areas the route crosses.'
+        : scratches / count > 0.12
+          ? 'The defects change the route, but the cue ball still reaches a pocket too often. Compare the safer finish on another stroke or ball.'
+          : 'The pot can work on this table, but the finish is sensitive to small speed and spin changes. Read the condition report alongside the spread of endpoints.'
     : successRate >= 0.8
     ? 'A generous pot and a repeatable cue-ball finish. Small stroke errors stay manageable.'
     : pots / count < 0.55

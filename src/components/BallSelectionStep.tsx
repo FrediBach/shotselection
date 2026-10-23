@@ -29,11 +29,16 @@ function ballSelectionLabel({ plant }: Scenario, id: number) {
   return `Select free ball ${id}`
 }
 
-function ballSelectionCopy({ objective, bank, plant, trick }: Scenario, ballCount: number) {
+function ballSelectionCopy({ objective, bank, plant, trick, conditions }: Scenario, ballCount: number) {
   if (trick) return {
     description: trick.description,
     unavailable: `Play ball ${trick.ballId} first. The other balls are part of the trick’s setup.`,
     hint: 'Read the complete route, then compare aim, speed and spin. Every required pot and contact must happen in the same stroke.',
+  }
+  if (conditions) return {
+    description: ballCount === 1 ? 'Same game. A very different table. Start with this ball, then compare three finishes under the faults in the table report.' : 'Which ball gives you room for error on this damaged table? Read the table report before choosing a route.',
+    unavailable: 'Dimmed balls have no set of three playable finishes under these table conditions.',
+    hint: 'The markings show real defects. Compare the whole route: the approach, contact, any rebounds, and where the cue ball stops.',
   }
   return {
     description: objective ? `Play ball ${objective.ballId} first. Keep ball ${objective.nextBallId} on the table for your next shot.` : bank ? `Reach ball ${bank.ballId} after at least ${bank.minCushions} cushion${bank.minCushions === 1 ? "" : "s"}, then pot it.` : plant ? `Play ball ${plant.ballId} into ball ${plant.targetBallId} for the plant, or attempt a difficult free ball. Read both contact lines before choosing.` : ballCount === 1 ? "Start with this object ball, then compare three ways to control the cue-ball finish." : "Which ball gives you the most room for error?",

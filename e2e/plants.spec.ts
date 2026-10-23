@@ -7,7 +7,7 @@ async function openPlantLesson(page: Page, level: number) {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     localStorage.setItem('shot-selection-session', JSON.stringify({
-      scoringVersion: 2, courseVersion: 4, completedLessons: level - 1,
+      scoringVersion: 2, courseVersion: 5, completedLessons: level - 1,
       level, score: 0, rounds: level - 1, perfect: 0, seed: 71431,
     }))
     const originalContext = HTMLCanvasElement.prototype.getContext

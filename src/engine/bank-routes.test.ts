@@ -51,6 +51,23 @@ describe('physical bank aim calibration', () => {
     expect(bankPlanForStroke(blocked, route, 1.6, 1.6)).toBeNull();
   });
 
+  it('uses the same broken-table defects in bank calibration and the complete simulation', () => {
+    const broken: Scenario = { ...scenario, conditions: {
+      id: 'worn-bank', name: 'Worn bank', description: 'A tired cushion and cue',
+      cloth: 1.1,
+      cue: { power: 0.9, angleBias: 0.02, spin: 0.8 },
+      cushions: [{ rail: 'bottom', restitution: 0.75 }],
+    } };
+    const route = bankRoutesFor(broken, 1).find(candidate => candidate.pocketId === 1 && candidate.sides[0] === 'bottom')!;
+    const plan = bankPlanForStroke(broken, route, 1.95, 2)!;
+    expect(plan).not.toBeNull();
+    const result = simulateShot(broken, plan, { record: false, recordPaths: true });
+    expect(result.firstContact).toBe(1);
+    expect(result.cueBanksBeforeContact).toBe(1);
+    expect(distance(result.cueApproachPath.at(-1)!, broken.balls[1].position)).toBeLessThanOrEqual(TABLE.ballDiameter);
+    expect(result.stopped).toBe(true);
+  });
+
   it('converges to equivalent three-cushion aims when either table axis is reflected', () => {
     const angles: number[] = [];
     for (const reflection of [0, 1, 2, 3]) {

@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     // A saved but unstarted older session must still offer player selection.
     if (!localStorage.getItem('shot-selection-session')) localStorage.setItem('shot-selection-session', JSON.stringify({
-      scoringVersion: 2, courseVersion: 4, completedLessons: 0,
+      scoringVersion: 2, courseVersion: 5, completedLessons: 0,
       level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431,
     }))
     const originalContext = HTMLCanvasElement.prototype.getContext

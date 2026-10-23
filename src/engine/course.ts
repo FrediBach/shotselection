@@ -18,6 +18,7 @@ export const COURSE_CHAPTERS: readonly CourseChapter[] = [
   { id: 'plants', title: 'Plants', description: 'Compare a combination pot with a difficult free ball and choose the more reliable shot.' },
   { id: 'tournament', title: 'Tournament table', description: 'Bring potting, position and small margins together.' },
   { id: 'trick-shots', title: 'Trick shots', description: 'Learn ten classic set-up shots with combinations, kisses, spin and cushions.' },
+  { id: 'broken-table', title: 'Broken table', description: 'Take on ten battered tables: read the faults, adapt your shot and beat the final boss.' },
 ].map((chapter, index) => ({
   ...chapter,
   firstLevel: index * LEVELS_PER_CHAPTER + 1,
