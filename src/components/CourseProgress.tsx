@@ -3,7 +3,7 @@ import { Check, Flag, Trophy } from 'lucide-react'
 import { COURSE_CHAPTERS, TOTAL_LEVELS } from '@/engine/scenarios'
 import type { Scenario } from '@/engine/types'
 
-export default function CourseProgress({ completed, scenario }: { completed: number; scenario: Scenario }) {
+export default function CourseProgress({ completed, scenario, carriedTournamentLessons = 0 }: { completed: number; scenario: Scenario; carriedTournamentLessons?: number }) {
   const percentage = Math.round(completed / TOTAL_LEVELS * 100)
   return <section className="course-progress" aria-label="Course progression">
     <div className="course-progress-heading">
@@ -20,6 +20,7 @@ export default function CourseProgress({ completed, scenario }: { completed: num
         <span><strong>{chapter.title}</strong><small>Levels {chapter.firstLevel}–{chapter.lastLevel}<span> · {count}/{chapter.lastLevel - chapter.firstLevel + 1}</span></small></span>
       </li>
     })}</ol>
+    {carriedTournamentLessons > 0 && <p className="panel-description">Ten new bank-shot lessons are ready. Your {carriedTournamentLessons} completed tournament {carriedTournamentLessons === 1 ? 'lesson is' : 'lessons are'} saved and will count again after this chapter.</p>}
   </section>
 }
 
@@ -29,7 +30,7 @@ export function CourseCompletion({ score, perfect, rounds, onRestart, headingRef
     <div className="completion-emblem"><Trophy size={36} /></div>
     <span className="eyebrow">{TOTAL_LEVELS} LESSONS. A STRONGER TABLE SENSE.</span>
     <h2 ref={headingRef} tabIndex={-1}>From your first pot to the final frame.</h2>
-    <p>You’ve completed the course: reading pots, controlling the cue ball, planning the next shot, and choosing a route through tournament traffic.</p>
+    <p>You’ve completed the course: reading pots, controlling the cue ball, planning the next shot, banking around blockers, and choosing a route through tournament traffic.</p>
     <div className="completion-stats"><div><strong>100%</strong><span>Course complete</span></div><div><strong>{score}</strong><span>Session points</span></div><div><strong>{rounds ? Math.round(score / (rounds * 100) * 100) : 0}%</strong><span>Selection accuracy</span></div><div><strong>{perfect}</strong><span>Perfect choices</span></div></div>
     <p className="completion-note">Completion tracks lessons played. Your points measure how well you selected the shot. Play again to improve your decisions.</p>
     <button className="ui-button button-primary" onClick={onRestart}>Start a new course</button>

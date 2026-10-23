@@ -3,6 +3,7 @@ import { POCKET_GEOMETRY } from './table-geometry';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
 import { simulateShot } from './physics';
 import { hasProvenNextShot } from './objectives';
+import { bankPlanForStroke, bankRoutesFor } from './bank-routes';
 import { generateScenario } from './scenarios';
 import type { BallFinishOptions, FinishOption, PreparedRound, Scenario, ShotPlan, Simulation, Vec2 } from './types';
 
@@ -34,7 +35,7 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
 
 function scenarioFingerprint(scenario: Scenario): string {
   let hash = 2166136261;
-  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
 }
 
@@ -89,7 +90,27 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     return result;
   };
   let triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
-  for (const route of routesFor(scenario, ballId)) {
+  if (scenario.bank) {
+    for (const route of bankRoutesFor(scenario, ballId)) {
+      for (const speed of [1.3, 1.6, 1.95, 2.35, 2.8, 3.3, 3.45, 3.6, 3.8]) {
+        for (const topSpin of [-1.1, 0, 0.5, 1.05, 1.6]) {
+          const aimed = bankPlanForStroke(scenario, route, speed, topSpin);
+          if (!aimed) continue;
+          for (const correction of [0, -0.0005, 0.0005, -0.001, 0.001, -0.0015, 0.0015, -0.002, 0.002]) {
+            const plan = { ...aimed, angle: aimed.angle + correction };
+            const simulation = simulateShot(scenario, plan, { record: false });
+            if (!isFeasible(simulation, ballId) || (simulation.cueBanksBeforeContact ?? 0) < scenario.bank.minCushions) continue;
+            plan.target = { ...simulation.cueEnd };
+            feasible.push({ plan, simulation });
+            break;
+          }
+        }
+      }
+      triple = chooseTriple(feasible, qualifies);
+      if (triple) break;
+    }
+  }
+  for (const route of scenario.bank ? [] : routesFor(scenario, ballId)) {
     for (const multiplier of [0.95, 1.2, 1.5, 1.85, 2.3]) {
       for (const topSpin of [-1.1, 0, 1.05]) {
         const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin: 0, target: { x: 0, y: 0 }, label: '' };
@@ -118,6 +139,10 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
 }
 
 function prepareLayout(scenario: Scenario): PreparedRound {
+  if (scenario.bank) {
+    const prepared = prepareBall(scenario, scenario.bank.ballId);
+    return { scenario, balls: prepared ? [prepared.ball] : [] };
+  }
   if (scenario.objective) {
     const prepared = prepareBall(scenario, scenario.objective.ballId);
     return prepared
@@ -130,12 +155,19 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }) };
 }
 
-/** Search is bounded: at most 30 nominal strokes per object ball plus next-pot
- * checks, then three replacements of the same authored lesson. Authored lessons
- * and fixed position puzzles never fall back to an unrelated easier layout. */
+/** Direct search tries at most 30 nominal strokes per object ball. Bank search
+ * tries 12 routes, nine speeds and five spins with bounded angle calibration.
+ * Authored lessons can try three replacement layouts of the same lesson;
+ * fixed objectives never fall back to an unrelated easier layout. */
 export function prepareRound(scenario: Scenario): PreparedRound {
   if (!scenario.balls.some(ball => ball.id === 0)) throw new Error('The table needs a cue ball.');
   const objective = scenario.objective;
+  const bank = scenario.bank;
+  if (bank && objective) throw new Error('A bank lesson cannot also define a position objective.');
+  if (bank && (!Number.isInteger(bank.ballId) || bank.ballId <= 0 || !Number.isInteger(bank.minCushions)
+    || bank.minCushions < 1 || bank.minCushions > 3 || !scenario.balls.some(ball => ball.id === bank.ballId))) {
+    throw new Error('The bank lesson needs an object ball on the table and one to three required cue-ball cushions.');
+  }
   if (objective && (!Number.isInteger(objective.ballId) || !Number.isInteger(objective.nextBallId)
     || objective.ballId <= 0 || objective.nextBallId <= 0 || objective.ballId === objective.nextBallId
     || !Number.isFinite(objective.radius) || objective.radius <= 0
@@ -148,7 +180,7 @@ export function prepareRound(scenario: Scenario): PreparedRound {
   if (objective && (!scenario.balls.some(ball => ball.id === objective.ballId) || !scenario.balls.some(ball => ball.id === objective.nextBallId))) {
     throw new Error('The position lesson needs both its first object ball and its reserved next ball on the table.');
   }
-  const attempts = objective && !scenario.curriculum ? 1 : 4;
+  const attempts = (objective || bank) && !scenario.curriculum ? 1 : 4;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const generated = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
     // Regeneration changes only the layout; a lesson's objective is never lost.
@@ -156,7 +188,7 @@ export function prepareRound(scenario: Scenario): PreparedRound {
     const prepared = prepareLayout(layout);
     if (prepared.balls.length) return prepared;
   }
-  if (scenario.curriculum || objective) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
+  if (scenario.curriculum || objective || bank) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
   const openLayout: Scenario = { ...scenario, seed: 72350, balls: generateScenario(1, 72350).balls };
   const prepared = prepareLayout(openLayout);
   if (!prepared.balls.length) throw new Error('No feasible three-finish layout could be prepared.');

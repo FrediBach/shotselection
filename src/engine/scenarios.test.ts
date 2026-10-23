@@ -8,10 +8,10 @@ import { prepareRound } from './preparation';
 import { COURSE_CHAPTERS, generateScenario, getCourseProgress, LEVELS_PER_CHAPTER, TOTAL_LEVELS } from './scenarios';
 
 describe('authored pool curriculum', () => {
-  it('covers every level once with six distinct ten-lesson chapters', () => {
-    expect(COURSE_CHAPTERS).toHaveLength(6);
+  it('covers every level once with seven distinct ten-lesson chapters', () => {
+    expect(COURSE_CHAPTERS).toHaveLength(7);
     expect(LEVELS_PER_CHAPTER).toBe(10);
-    expect(TOTAL_LEVELS).toBe(60);
+    expect(TOTAL_LEVELS).toBe(70);
     expect(COURSE_CHAPTERS.flatMap(chapter => Array.from({ length: chapter.lastLevel - chapter.firstLevel + 1 }, (_, index) => chapter.firstLevel + index)))
       .toEqual(Array.from({ length: TOTAL_LEVELS }, (_, index) => index + 1));
     const scenarios = Array.from({ length: TOTAL_LEVELS }, (_, index) => generateScenario(index + 1, 0));
@@ -34,6 +34,7 @@ describe('authored pool curriculum', () => {
     expect(scenarios.slice(0, 10).every(scenario => scenario.balls.length === 2 && !scenario.objective)).toBe(true);
     expect(scenarios.slice(10, 20).every(scenario => scenario.balls.length >= 3 && !scenario.objective)).toBe(true);
     expect(scenarios.slice(20, 30).every(scenario => scenario.objective)).toBe(true);
+    expect(scenarios.slice(50, 60).every(scenario => scenario.bank && !scenario.objective)).toBe(true);
   });
 
   it('tightens finishing precision throughout each scenario and next-shot requirements across position lessons', () => {
@@ -55,19 +56,22 @@ describe('authored pool curriculum', () => {
   });
 
   it('keeps numbered lessons, chapter position and completion percentage aligned', () => {
-    expect(getCourseProgress(0)).toMatchObject({ completedLevels: 0, totalLevels: 60, percentage: 0, complete: false, chapterIndex: 0, lessonIndex: 0, lessonCount: 10 });
-    expect(getCourseProgress(9)).toMatchObject({ percentage: 15, chapterIndex: 0, lessonIndex: 9 });
-    expect(getCourseProgress(10)).toMatchObject({ percentage: 17, chapterIndex: 1, lessonIndex: 0 });
-    expect(getCourseProgress(30)).toMatchObject({ percentage: 50, chapterIndex: 3, lessonIndex: 0 });
-    expect(getCourseProgress(59)).toMatchObject({ percentage: 98, complete: false, chapterIndex: 5, lessonIndex: 9 });
-    expect(getCourseProgress(60)).toMatchObject({ percentage: 100, complete: true, completedLevels: 60 });
-    expect(getCourseProgress(99)).toEqual(getCourseProgress(60));
+    expect(getCourseProgress(0)).toMatchObject({ completedLevels: 0, totalLevels: 70, percentage: 0, complete: false, chapterIndex: 0, lessonIndex: 0, lessonCount: 10 });
+    expect(getCourseProgress(9)).toMatchObject({ percentage: 13, chapterIndex: 0, lessonIndex: 9 });
+    expect(getCourseProgress(10)).toMatchObject({ percentage: 14, chapterIndex: 1, lessonIndex: 0 });
+    expect(getCourseProgress(30)).toMatchObject({ percentage: 43, chapterIndex: 3, lessonIndex: 0 });
+    expect(getCourseProgress(50)).toMatchObject({ percentage: 71, chapterIndex: 5, lessonIndex: 0, chapter: { id: 'banks' } });
+    expect(getCourseProgress(59)).toMatchObject({ percentage: 84, complete: false, chapterIndex: 5, lessonIndex: 9 });
+    expect(getCourseProgress(60)).toMatchObject({ percentage: 86, complete: false, chapterIndex: 6, lessonIndex: 0 });
+    expect(getCourseProgress(69)).toMatchObject({ percentage: 99, complete: false, chapterIndex: 6, lessonIndex: 9 });
+    expect(getCourseProgress(70)).toMatchObject({ percentage: 100, complete: true, completedLevels: 70 });
+    expect(getCourseProgress(99)).toEqual(getCourseProgress(70));
     expect(getCourseProgress(-10)).toEqual(getCourseProgress(0));
     expect(getCourseProgress(Number.NaN)).toEqual(getCourseProgress(0));
     expect(generateScenario(-1).level).toBe(1);
     expect(generateScenario(Number.NaN).level).toBe(1);
     expect(generateScenario(Number.POSITIVE_INFINITY).seed).toBe(72350);
-    expect(generateScenario(99).level).toBe(60);
+    expect(generateScenario(99).level).toBe(70);
   });
 
   // These seeds cover all four reflected orientations of every authored table.
@@ -90,6 +94,15 @@ describe('authored pool curriculum', () => {
     expect(prepared.balls.length).toBeGreaterThan(0);
     expect(prepared.balls.flatMap(ball => ball.options).some(option => analyzeShot(prepared.scenario, option.plan, 32).successRate > 0)).toBe(true);
     if (level <= 20) expect(prepared.balls.map(ball => ball.ballId)).toEqual(scenario.balls.filter(ball => ball.id !== 0).map(ball => ball.id));
+    if (scenario.bank) {
+      expect(prepared.scenario.bank).toEqual(scenario.bank);
+      expect(prepared.balls.map(ball => ball.ballId)).toEqual([scenario.bank.ballId]);
+      for (const option of prepared.balls[0].options) {
+        const nominal = simulateShot(prepared.scenario, option.plan, { record: false });
+        expect(nominal.cueBanksBeforeContact).toBeGreaterThanOrEqual(scenario.bank.minCushions);
+        expect(evaluateShotObjective(prepared.scenario, option.plan, nominal).success).toBe(true);
+      }
+    }
     if (!scenario.objective) return;
     expect(prepared.scenario.objective).toMatchObject(scenario.objective);
     expect(prepared.scenario.objective!.target).toBeDefined();

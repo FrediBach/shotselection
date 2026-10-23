@@ -89,6 +89,51 @@ describe('one position objective across scoring and tolerance', () => {
   });
 });
 
+describe('bank requirements across scoring and tolerance', () => {
+  const bankScenario: Scenario = {
+    ...scenario,
+    objective: undefined,
+    bank: { ballId: 1, minCushions: 2 },
+  };
+  const bankPlan: ShotPlan = { ...plan, target: simulation.cueEnd };
+
+  it.each([undefined, 0, 1])('rejects a pot with only %s pre-contact cushions', cueBanksBeforeContact => {
+    const result = { ...simulation, cueBanksBeforeContact };
+    vi.spyOn(physics, 'simulateShot').mockReturnValue(result);
+    expect(evaluateShotObjective(bankScenario, bankPlan, result)).toMatchObject({ legalPot: false, success: false });
+    const analysis = analyzeShot(bankScenario, bankPlan, 8);
+    expect(analysis.potRate).toBe(1);
+    expect(analysis.successRate).toBe(0);
+    expect(analysis.score).toBe(0);
+    const tolerance = analyzeShotTolerance(bankScenario, bankPlan);
+    expect(tolerance.nominalPot).toBe(false);
+    expect(tolerance.nominalSuccess).toBe(false);
+    expect(tolerance.volume.potCount).toBe(0);
+    expect(tolerance.volume.successCount).toBe(0);
+  });
+
+  it.each([2, 3])('accepts a legal target pot after %i pre-contact cushions', cueBanksBeforeContact => {
+    const result = { ...simulation, cueBanksBeforeContact };
+    vi.spyOn(physics, 'simulateShot').mockReturnValue(result);
+    expect(evaluateShotObjective(bankScenario, bankPlan, result)).toMatchObject({ legalPot: true, success: true });
+    expect(analyzeShot(bankScenario, bankPlan, 8).successRate).toBe(1);
+    const tolerance = analyzeShotTolerance(bankScenario, bankPlan);
+    expect(tolerance.nominalPot).toBe(true);
+    expect(tolerance.nominalSuccess).toBe(true);
+    expect(tolerance.volume.successCount).toBe(441);
+  });
+
+  it('reserves the target ball and still applies the ordinary shot rules', () => {
+    const valid = { ...simulation, cueBanksBeforeContact: 2 };
+    expect(evaluateShotObjective(bankScenario, { ...bankPlan, ballId: 2 }, { ...valid, firstContact: 2, potted: [2] }).legalPot).toBe(false);
+    for (const invalid of [{ scratch: true }, { stopped: false }, { firstContact: 2 }, { potted: [] }]) {
+      expect(evaluateShotObjective(bankScenario, bankPlan, { ...valid, ...invalid }).legalPot).toBe(false);
+    }
+    expect(evaluateShotObjective(bankScenario, { ...bankPlan, target: { x: 2.1, y: 1 } }, valid)).toMatchObject({ legalPot: true, success: false });
+    expect(evaluateShotObjective({ ...bankScenario, bank: undefined }, bankPlan, simulation).success).toBe(true);
+  });
+});
+
 describe('preparing a position lesson', () => {
   const layout: Scenario = {
     level: 21, seed: 273, title: 'Make the next shot', description: 'Choose a useful leave.',

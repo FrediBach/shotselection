@@ -14,6 +14,7 @@ export const COURSE_CHAPTERS: readonly CourseChapter[] = [
   { id: 'position', title: 'Play for position', description: 'Pot one ball and leave a usable shot on the next.' },
   { id: 'patterns', title: 'Build a pattern', description: 'Read a sequence before committing to its first shot.' },
   { id: 'traffic', title: 'Navigate traffic', description: 'Protect the next shot when other balls crowd the table.' },
+  { id: 'banks', title: 'Bank shots', description: 'Reach a blocked ball with one cushion, then link multiple banks.' },
   { id: 'tournament', title: 'Tournament table', description: 'Bring potting, position and small margins together.' },
 ].map((chapter, index) => ({
   ...chapter,

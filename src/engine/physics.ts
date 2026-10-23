@@ -10,7 +10,7 @@ const R = TABLE.ballRadius;
 
 /** Slip-point velocity u = v + omega x (0,0,-R). The 7/2 factor gives the
  * exact slide-to-roll transition for a solid homogeneous sphere (I=2mR²/5). */
-function applyCloth(body: Body, dt: number) {
+export function applyCloth(body: Body, dt: number) {
   const velocity = body.velocity;
   const spin = body.angularVelocity;
   const slipX = velocity.x - R * spin.y;
@@ -40,7 +40,7 @@ function applyCloth(body: Body, dt: number) {
   spin.z = Math.sign(spin.z) * Math.max(0, Math.abs(spin.z) - 10 * dt);
 }
 
-function resolveRails(body: Body) {
+export function resolveRails(body: Body) {
   let strongestImpact = 0;
   for (const rail of RAILS) {
     const dx = rail.b.x - rail.a.x;
@@ -108,7 +108,8 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   cue.body.addEventListener('collide', (event: { body: Body }) => {
     if (firstContact === null) firstContact = bodyIds.get(event.body.id) ?? null;
   });
-  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, duration: 0, stopped: false };
+  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, duration: 0, stopped: false };
+  let lastCueBankTime = -Infinity;
   let soundTime = 0;
   const lastSoundTimes = record ? new Map<string, number>() : null;
   const recordImpact = (type: 'ball' | 'cushion', key: string, impactSpeed: number) => {
@@ -152,6 +153,10 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       ball.body.position.z = 0;
       ball.body.velocity.z = 0;
       const cushionImpact = resolveRails(ball.body);
+      if (ball.id === 0 && firstContact === null && cushionImpact > 0.035 && soundTime - lastCueBankTime >= 0.045) {
+        simulation.cueBanksBeforeContact!++;
+        lastCueBankTime = soundTime;
+      }
       if (record && cushionImpact > 0) recordImpact('cushion', `cushion:${ball.id}`, cushionImpact);
       if (isPocketed(ball.body.position)) {
         ball.pocketed = true;

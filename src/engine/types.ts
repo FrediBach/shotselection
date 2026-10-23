@@ -39,6 +39,8 @@ export interface Scenario {
   balls: Ball[];
   curriculum?: CurriculumLesson;
   objective?: PositionObjective;
+  /** Cue-ball cushions required before the first contact with this object ball. */
+  bank?: { ballId: number; minCushions: number };
 }
 export interface Selection { ballId: number; optionId: string }
 export interface ShotPlan {
@@ -90,6 +92,8 @@ export interface Simulation {
   potted: number[];
   scratch: boolean;
   firstContact: number | null;
+  /** Actual cue-ball rebounds before its first object-ball contact. */
+  cueBanksBeforeContact?: number;
   duration: number;
   /** True only when all unpocketed balls have settled before the time limit. */
   stopped: boolean;

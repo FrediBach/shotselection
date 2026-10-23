@@ -454,7 +454,7 @@ function Scene(props: PoolTableProps) {
     <TableFurniture />
     <PlaybackDriver {...props} runtime={runtime} />
     {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} isNext={objective?.nextBallId === ball.id} interactive={interactive && !playing && props.selectableBallIds.includes(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
-    {selected && cue && !analysis && !playing && <PathLines paths={aimPath} color="#e1e9cd" opacity={0.38} dashed height={BALL_Y} />}
+    {selected && cue && !scenario.bank && !analysis && !playing && <PathLines paths={aimPath} color="#e1e9cd" opacity={0.38} dashed height={BALL_Y} />}
     {!objective && !analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
     {objective?.target && <PositionZone target={objective.target} radius={objective.radius} />}
     {!objective && target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
