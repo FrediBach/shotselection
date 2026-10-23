@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { startLevel } from './helpers'
 
 test.beforeEach(async ({ page }) => {
   // Onboarding behavior does not depend on a graphics context.
@@ -21,13 +22,18 @@ test('first visit shows help, remembers dismissal and supports manual reopening'
   await expect(page.getByText('Good players make shots.', { exact: false })).toHaveCount(0)
   await page.screenshot({ path: '/tmp/shot-selection-first-visit-mobile.png', fullPage: true })
   await page.getByRole('button', { name: 'Let’s read the table' }).click()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('dialog', { name: 'Your first pot', exact: true })).toBeVisible()
+  await expect(page.getByRole('dialog')).toContainText('New scenario')
+  await page.screenshot({ path: '/tmp/shot-selection-first-briefing-mobile.png', fullPage: true })
+  await startLevel(page, 1)
   expect(await page.evaluate(() => localStorage.getItem('shot-selection-help-dismissed'))).toBe('true')
   await expect(page.getByRole('button', { name: 'How to play', exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 
   await page.setViewportSize({ width: 1440, height: 1050 })
   await page.reload()
+  await expect(page.getByRole('dialog', { name: 'Your first pot', exact: true })).toBeVisible()
+  await startLevel(page, 1)
   await expect(page.getByRole('heading', { name: 'Choose your ball.' })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.locator('.simulation-overlay')).toHaveCount(0, { timeout: 30_000 })
@@ -49,9 +55,12 @@ for (const dismissal of ['Escape', 'close button', 'outside click'] as const) {
     if (dismissal === 'Escape') await page.keyboard.press('Escape')
     else if (dismissal === 'close button') await page.getByRole('button', { name: 'Close dialog' }).click()
     else await page.mouse.click(5, 5)
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.getByRole('dialog', { name: 'Your first pot', exact: true })).toBeVisible()
     expect(await page.evaluate(() => localStorage.getItem('shot-selection-help-dismissed'))).toBe('true')
+    await startLevel(page, 1)
     await page.reload()
+    await expect(page.getByRole('dialog', { name: 'Your first pot', exact: true })).toBeVisible()
+    await startLevel(page, 1)
     await expect(page.getByRole('heading', { name: 'Choose your ball.' })).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
@@ -68,6 +77,7 @@ test('blocked browser storage leaves help and shot selection usable', async ({ p
   await page.goto('/')
   await expect(page.getByRole('dialog')).toContainText('Play the percentages.')
   await page.getByRole('button', { name: 'Let’s read the table' }).click()
+  await startLevel(page, 1)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.getByRole('button', { name: 'How to play', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()

@@ -16,6 +16,17 @@ describe('authored pool curriculum', () => {
     expect(new Set(scenarios.map(scenario => scenario.title)).size).toBe(TOTAL_LEVELS);
     expect(new Set(scenarios.map(scenario => scenario.curriculum!.lesson)).size).toBe(TOTAL_LEVELS);
     expect(new Set(scenarios.map(scenario => scenario.curriculum!.takeaway)).size).toBe(TOTAL_LEVELS);
+    expect(new Set(scenarios.map(scenario => scenario.curriculum!.briefing?.focus)).size).toBe(TOTAL_LEVELS);
+    expect(new Set(scenarios.map(scenario => scenario.curriculum!.briefing?.gotcha)).size).toBe(TOTAL_LEVELS);
+    for (const chapter of COURSE_CHAPTERS) {
+      const lessons = scenarios.slice(chapter.firstLevel - 1, chapter.lastLevel);
+      expect(lessons.map(scenario => scenario.curriculum!.briefing?.stage)).toEqual(['introduce', 'develop', 'apply']);
+      for (const scenario of lessons) {
+        const briefing = scenario.curriculum!.briefing!;
+        expect(briefing.focus.trim().length).toBeGreaterThan(0);
+        expect(briefing.gotcha.trim().length).toBeGreaterThan(0);
+      }
+    }
     expect(scenarios.slice(0, 3).every(scenario => scenario.balls.length === 2 && !scenario.objective)).toBe(true);
     expect(scenarios.filter(scenario => scenario.objective)).toHaveLength(10);
     expect(scenarios.at(-1)!.objective!.radius).toBeLessThan(scenarios[6].objective!.radius);

@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { startLevel } from './helpers'
 import type { PreparedRound, RoundAnalysis, ShotTolerance, ToleranceAxis } from '../src/engine/types'
 
 interface WorkerObservation {
@@ -76,6 +77,7 @@ function panel(page: Page) {
 
 async function completeRound(page: Page) {
   await page.goto('/')
+  await startLevel(page)
   await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 45_000 })
   await expect(panel(page)).toHaveCount(0)
   await page.getByRole('button', { name: 'Select ball 1', exact: true }).click()
@@ -214,6 +216,7 @@ test('real worker margins follow the inspected stroke, criterion and interactive
   await expect.poll(() => page.evaluate(id => (window as unknown as ObservedWindow).toleranceWorkers
     .some(worker => worker.method === 'tolerance' && worker.planId === id), unvisited.id)).toBe(true)
   await page.getByRole('button', { name: 'Next level', exact: true }).click()
+  await startLevel(page, 2)
   await expect(panel(page)).toHaveCount(0)
   await expect.poll(() => page.evaluate(() => (window as unknown as ObservedWindow).toleranceWorkers
     .filter(worker => worker.method === 'tolerance').every(worker => worker.terminated))).toBe(true)

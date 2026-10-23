@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDownRight, ArrowLeft, ArrowRight, Check, ChevronRight, CircleHelp, Crosshair, Flag, FlaskConical, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDownRight, ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Crosshair, Flag, FlaskConical, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
@@ -7,21 +7,22 @@ import PoolTable from '@/components/PoolTable'
 import PerfectCelebration from '@/components/PerfectCelebration'
 import ShotTolerancePanel from '@/components/ShotTolerancePanel'
 import CourseProgress, { CourseCompletion } from '@/components/CourseProgress'
+import LevelBriefing from '@/components/LevelBriefing'
 import { TOTAL_LEVELS } from '@/engine/scenarios'
 import { analyzeRoundAsync, evaluateShotObjective, generateScenario, POCKETS, prepareRoundAsync, scoreSelection } from '@/engine'
 import type { PreparedRound, RoundAnalysis, ShotAnalysis, ShotPlan } from '@/engine/types'
 import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY, type Session } from '@/lib/session'
 import { createGameAudio } from '@/lib/sound'
 
-type Modal = 'help' | 'physics' | 'stats' | 'reset' | null
+type Modal = 'help' | 'lesson' | 'physics' | 'stats' | 'reset' | null
 const HELP_DISMISSED_KEY = 'shot-selection-help-dismissed'
 const SOUND_ENABLED_KEY = 'shot-selection-sound-enabled'
 function loadSoundEnabled() {
   try { return localStorage.getItem(SOUND_ENABLED_KEY) !== 'false' }
   catch { return true }
 }
-function initialModal(): Modal {
-  try { return localStorage.getItem(HELP_DISMISSED_KEY) === 'true' ? null : 'help' }
+function initialModal(courseComplete: boolean): Modal {
+  try { return localStorage.getItem(HELP_DISMISSED_KEY) === 'true' ? courseComplete ? null : 'lesson' : 'help' }
   catch { return 'help' }
 }
 const colors: Record<number, string> = { 1: '#e9b14e', 2: '#6594d2', 3: '#db7466', 4: '#a68cce', 5: '#e59857', 6: '#71aa89', 7: '#b7747d', 8: '#787e79' }
@@ -58,7 +59,8 @@ export default function App() {
   const [showFinishes, setShowFinishes] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [playbackKey, setPlaybackKey] = useState(0)
-  const [modal, setModal] = useState<Modal>(initialModal)
+  const [modal, setModal] = useState<Modal>(() => initialModal(showCourseSummary))
+  const [lessonStarted, setLessonStarted] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(loadSoundEnabled)
   const [celebrating, setCelebrating] = useState(false)
   const audio = useRef<ReturnType<typeof createGameAudio> | null>(null)
@@ -70,6 +72,11 @@ export default function App() {
   const previousStep = useRef(1)
   const request = useRef(0)
   const analysisController = useRef<AbortController | null>(null)
+  useEffect(() => {
+    if (!modal) return
+    dialogHeading.current?.focus({ preventScroll: true })
+    dialogHeading.current?.closest('.dialog-content')?.scrollTo(0, 0)
+  }, [modal, requestedScenario.level])
   useEffect(() => {
     const player = createGameAudio()
     audio.current = player
@@ -113,9 +120,9 @@ export default function App() {
   const showPlannedFinish = Boolean(result && objective && inspected?.nominal.stopped && !inspected.nominal.scratch && !playing)
   const step = result ? 3 : selectionStep === 'ball' ? 1 : 2
   useEffect(() => {
-    if (previousStep.current !== step) sidebarHeading.current?.focus({ preventScroll: true })
+    if (previousStep.current !== step && !modal) sidebarHeading.current?.focus({ preventScroll: true })
     previousStep.current = step
-  }, [step])
+  }, [step, modal])
   const selectBall = (id: number) => {
     if (!busy && !preparing && !result && selectableBallIds.includes(id)) {
       audio.current?.unlock()
@@ -141,6 +148,9 @@ export default function App() {
     setPrepared(null); setPreparing(true)
     setSelectionStep('ball')
     setResult(null); setInspected(null); setBusy(false); setPlaying(false); setError('')
+    dialogOpener.current = null
+    setLessonStarted(false)
+    setModal('lesson')
   }
   async function submit() {
     if (selectionStep !== 'finish' || !prepared || selectedBall === null || !selectedOption || busy || preparing || result) return
@@ -170,6 +180,12 @@ export default function App() {
       try { localStorage.setItem(HELP_DISMISSED_KEY, 'true') }
       catch { /* Help remains usable when browser storage is unavailable. */ }
     }
+    if (modal !== 'lesson' && !lessonStarted && !showCourseSummary) {
+      dialogOpener.current = null
+      setModal('lesson')
+      return
+    }
+    if (modal === 'lesson') setLessonStarted(true)
     setModal(null)
   }
   function toggleSound() {
@@ -196,14 +212,10 @@ export default function App() {
     <main id="main-content" tabIndex={-1}>
       <h1 className="sr-only">Shot Selection</h1>
       <CourseProgress completed={session.completedLessons} scenario={scenario} />
-      {showCourseSummary ? <CourseCompletion score={session.score} perfect={session.perfect} rounds={session.rounds} headingRef={completionHeading} onRestart={() => { clearRound(freshSession()); requestAnimationFrame(() => sidebarHeading.current?.focus({ preventScroll: true })) }} /> : <>
-      <section className="lesson-brief" aria-label="Current lesson">
-        <div className="lesson-heading"><span className="eyebrow">LEVEL {String(scenario.level).padStart(2, '0')} / {TOTAL_LEVELS} <span>·</span> LESSON {(scenario.curriculum?.lessonIndex ?? 0) + 1} OF {scenario.curriculum?.lessonCount ?? 3}</span><h2>{scenario.title}</h2><p>{scenario.description}</p></div>
-        <div className="lesson-goal"><span className="lesson-goal-label"><Focus size={15} /> LEARN THIS</span><p>{scenario.curriculum?.lesson}</p>{objective && <div className="position-objective"><span>Pot <BallIcon id={objective.ballId} small /></span><ArrowRight size={13} /><span>Hold the cyan zone</span><ArrowRight size={13} /><span>Leave <BallIcon id={objective.nextBallId} small /> next · cut ≤ {objective.maxCutAngle}°</span></div>}</div>
-      </section>
+      {showCourseSummary ? <CourseCompletion score={session.score} perfect={session.perfect} rounds={session.rounds} headingRef={completionHeading} onRestart={() => clearRound(freshSession())} /> : <>
       <div className="game-layout">
         <section className={`table-panel${objective ? " table-panel-position" : ""}`} aria-label="Interactive pool table">
-          <div className="table-toolbar"><div className="level-label"><span className="level-number">{String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">LEVEL {String(scenario.level).padStart(2, '0')} OF {TOTAL_LEVELS} <span>·</span> {objectBalls.length} OBJECT BALL{objectBalls.length === 1 ? "" : "S"}</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" className="sound-toggle" aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} onClick={toggleSound}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</Button><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" aria-haspopup="dialog" onClick={event => openModal('reset', event.currentTarget)} disabled={busy}><RotateCcw size={16} /></Button></div></div>
+          <div className="table-toolbar"><div className="level-label"><span className="level-number">{String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">LEVEL {String(scenario.level).padStart(2, '0')} OF {TOTAL_LEVELS} <span>·</span> {objectBalls.length} OBJECT BALL{objectBalls.length === 1 ? "" : "S"}</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" aria-label="Review level briefing" title="Review level briefing" aria-haspopup="dialog" onClick={event => openModal('lesson', event.currentTarget)}><BookOpen size={17} /></Button><Button variant="ghost" size="icon" className="sound-toggle" aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} onClick={toggleSound}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</Button><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" aria-haspopup="dialog" onClick={event => openModal('reset', event.currentTarget)} disabled={busy}><RotateCcw size={16} /></Button></div></div>
           <div className="table-stage">
             <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? objective ? 'Preparing stroke choices' : 'Preparing playable finish options' : selectionStep === 'ball' ? (selectedBall === null ? 'Start by selecting an object ball' : `Ball ${selectedBall} selected. Choose a ${objective ? "stroke" : "finish"} next.`) : selectedOption === null ? objective ? 'Choose a stroke in the side panel' : 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
             <div className="pool-canvas"><PoolTable scenario={scenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : !objective && selectionStep === 'finish' ? target : null} onSelectBall={selectBall} finishOptions={objective || result || selectionStep !== 'finish' ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} showFinishes={Boolean(result) && showFinishes} playing={playing} playbackKey={playbackKey} onPlaybackSound={event => { if (!document.hidden) audio.current?.play(event.type === 'cue' ? 'shot' : event.type === 'ball' ? 'collision' : event.type, event.strength) }} onPlaybackEnd={() => { setPlaying(false); audio.current?.stop() }} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
@@ -296,6 +308,7 @@ export default function App() {
     </main>
 
     <Dialog open={modal !== null} onOpenChange={open => { if (!open) closeModal() }}><DialogContent
+      className={modal === 'lesson' ? 'level-briefing' : undefined}
       onOpenAutoFocus={event => { event.preventDefault(); dialogHeading.current?.focus({ preventScroll: true }) }}
       onCloseAutoFocus={event => {
         event.preventDefault()
@@ -305,10 +318,11 @@ export default function App() {
         else sidebarHeading.current?.focus({ preventScroll: true })
       }}
     >
+      {modal === 'lesson' && <LevelBriefing scenario={scenario} headingRef={dialogHeading} onStart={closeModal} reviewing={lessonStarted} />}
       {modal === 'help' && <><div className="modal-symbol"><Crosshair size={25} /></div><DialogTitle ref={dialogHeading} tabIndex={-1}>Play the percentages.</DialogTitle><DialogDescription>Build your table sense through 18 lessons in six scenarios, from first pots to tournament decisions.</DialogDescription><ol className="help-steps"><li><strong>Choose a ball.</strong> Choose an available colored ball, then continue to its options. In position lessons, the first ball is defined and the next ball is reserved; the cyan ring identifies it in the table legend.</li><li><strong>Choose a finish or a stroke.</strong> Open-table lessons offer three marked finishes: A, B, or C. Position lessons show a landing zone and three stroke profiles in the side panel. Compare speed, spin, and the intended pocket to predict where the cue ball will stop; its finish is revealed after committing. Use “Back to balls” to change your target; switching balls clears the choice.</li><li><strong>Commit to your choice.</strong> The engine repeats the exact stroke behind each option with small variations in aim, speed, and spin. All three can pot the first ball. Position lessons also require the cyan zone and a clear direct shot on the defined next ball.</li><li><strong>Read the ensemble.</strong> Compare the pale cue-ball paths, cyan object-ball pots, and dashed coral misses or fouls. A cyan path can still scratch or miss the cue-ball finish, so compare overall success too. Enable “Show finish positions” to see where the balls end across every trial. Colored rings match the balls; pocketed balls are omitted. Watch the best shot, then advance.</li></ol><div className="scoring-guide"><span><strong>70 pts</strong> Quality vs. the best</span><span><strong>30 pts</strong> Rank among choices</span><span><strong>100 pts</strong> Maximum per round</span></div><p className="modal-note">The course percentage tracks completed lessons; points measure selection quality. Each part rounds to the nearest 10 points. Quality compares potting, safe finishes and target accuracy with the best ensemble. Similar results share a rank. No successful pot and finish in the trials means 0 points. The result shows the breakdown.</p><Button className="full-width" onClick={() => closeModal()}>Let’s read the table <ArrowRight size={16} /></Button></>}
       {modal === 'physics' && <><div className="modal-symbol"><FlaskConical size={25} /></div><DialogTitle ref={dialogHeading} tabIndex={-1}>Real dimensions. Honest physics.</DialogTitle><DialogDescription>A deterministic simulation, with uncertainty added at the cue.</DialogDescription><dl className="physics-specs"><div><dt>Playing surface</dt><dd>2,540 × 1,270 mm</dd></div><div><dt>Ball diameter / mass</dt><dd>57.15 mm / 170 g</dd></div><div><dt>Physics engine</dt><dd>cannon-es · SI units</dd></div><div><dt>Simulation timestep</dt><dd>1 / 240 second</dd></div><div><dt>Ensemble</dt><dd>64 trials per candidate</dd></div></dl><p>The model includes ball collisions, cushion rebounds, sliding and rolling resistance, spin, pockets, and scratches. Shot planning searches direct pots and different stroke settings.</p><p className="modal-note">This is a training prototype. Cloth and cushion parameters are assumptions, pocket capture is simplified, and jump shots, masse, cue deflection, and full ball–ball throw are not calibrated. Real-table accuracy needs measured validation.</p><a className="source-link" href="https://wpapool.com/wp-content/uploads/2024/01/RECOMMENDED-EQUIPMENT-SPECIFICATIONS.pdf" target="_blank" rel="noreferrer">WPA equipment specifications <ArrowRight size={14} /></a></>}
       {modal === 'stats' && <><div className="modal-symbol"><Trophy size={25} /></div><DialogTitle ref={dialogHeading} tabIndex={-1}>Your table sense, in numbers.</DialogTitle><DialogDescription>{session.completedLessons} of {TOTAL_LEVELS} lessons complete ({Math.round(session.completedLessons / TOTAL_LEVELS * 100)}%). Session progress is saved in this browser.</DialogDescription><div className="stats-grid"><div><strong>{session.score}</strong><span>Total points</span></div><div><strong>{session.rounds}</strong><span>Rounds played</span></div><div><strong>{session.perfect}</strong><span>100-point choices</span></div><div><strong>{session.rounds ? Math.round(session.score / session.rounds) : 0}%</strong><span>Points earned</span></div></div><Button className="full-width" onClick={() => closeModal()}>Back to the table</Button></>}
-      {modal === 'reset' && <><DialogTitle ref={dialogHeading} tabIndex={-1}>A fresh table?</DialogTitle><DialogDescription>This resets your saved session score and starts the course again at level one.</DialogDescription><div className="dialog-actions"><Button variant="outline" onClick={() => closeModal()}>Keep playing</Button><Button onClick={() => { clearRound(freshSession()); closeModal() }}><RotateCcw size={15} /> Start fresh</Button></div></>}
+      {modal === 'reset' && <><DialogTitle ref={dialogHeading} tabIndex={-1}>A fresh table?</DialogTitle><DialogDescription>This resets your saved session score and starts the course again at level one.</DialogDescription><div className="dialog-actions"><Button variant="outline" onClick={() => closeModal()}>Keep playing</Button><Button onClick={() => clearRound(freshSession())}><RotateCcw size={15} /> Start fresh</Button></div></>}
     </DialogContent></Dialog>
   </div>
 }

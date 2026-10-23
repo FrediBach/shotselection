@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { startLevel } from './helpers'
 import { generateScenario } from '../src/engine/scenarios'
 import { prepareRound } from '../src/engine/preparation'
 import { analyzeRound } from '../src/engine/analysis'
@@ -61,6 +62,7 @@ test('100 points celebrates once; real audio plays for selections and moving bal
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/')
+  await startLevel(page)
   expect(await soundStarts(page)).toBe(0)
   await scoreRound(page, perfect)
   await expect(page.locator('.points-awarded strong')).toHaveText('100 / 100')
@@ -88,6 +90,7 @@ test('100 points celebrates once; real audio plays for selections and moving bal
   await expect(page.getByRole('button', { name: 'Play the best shot' })).toBeEnabled({ timeout: 25000 })
   expect(await soundStarts(page)).toBe(beforeMutedReplay)
   await page.reload()
+  await startLevel(page, 2)
   await expect(page.getByRole('button', { name: 'Enable sound effects' })).toHaveAttribute('aria-pressed', 'false')
   await expect(celebration).toHaveCount(0)
   expect(errors).toEqual([])
@@ -105,6 +108,7 @@ test('mobile reduced-motion celebration stays visible while muted and clears on 
     } as typeof original
   })
   await page.goto('/')
+  await startLevel(page)
   await scoreRound(page, perfect)
   await expect(page.locator('.perfect-celebration')).toHaveCSS('position', 'fixed')
   await expect(page.locator('.perfect-celebration-badge')).toHaveCSS('animation-name', 'none')
@@ -115,6 +119,7 @@ test('mobile reduced-motion celebration stays visible while muted and clears on 
   await testInfo.attach('Reduced-motion mobile celebration', { path, contentType: 'image/png' })
   expect(await soundStarts(page)).toBe(0)
   await page.getByRole('button', { name: 'Next level' }).click()
+  await startLevel(page, 2)
   await expect(page.locator('.perfect-celebration')).toHaveCount(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
@@ -122,6 +127,7 @@ test('mobile reduced-motion celebration stays visible while muted and clears on 
 test('an ordinary round crossing 100 session points does not trigger the perfect celebration', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('shot-selection-session', JSON.stringify({ scoringVersion: 2, level: 1, score: 90, rounds: 1, perfect: 0, seed: 71431 })))
   await page.goto('/')
+  await startLevel(page)
   await scoreRound(page, ordinary)
   expect(Number.parseInt((await page.locator('.points-awarded strong').textContent())!, 10)).toBeLessThan(100)
   await expect(page.locator('.perfect-celebration')).toHaveCount(0)

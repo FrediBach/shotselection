@@ -4,6 +4,11 @@ import type { RoundScore } from './scoring';
 export interface Vec2 { x: number; y: number }
 export interface Ball { id: number; position: Vec2 }
 export interface Pocket { id: number; name: string; position: Vec2; kind: 'corner' | 'side' }
+export interface LessonBriefing {
+  stage: 'introduce' | 'develop' | 'apply';
+  focus: string;
+  gotcha: string;
+}
 export interface CurriculumLesson {
   chapterId: string;
   chapterTitle: string;
@@ -12,6 +17,8 @@ export interface CurriculumLesson {
   lessonCount: number;
   lesson: string;
   takeaway: string;
+  /** Pre-level coaching, progressing from introduction to independent practice. */
+  briefing?: LessonBriefing;
 }
 export interface PositionObjective {
   kind: 'position';

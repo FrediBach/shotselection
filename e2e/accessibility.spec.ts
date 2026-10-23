@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { startLevel } from './helpers'
 
 test.beforeEach(async ({ page }) => {
   // These keyboard and screen-reader behaviors do not need a graphics context.
@@ -12,7 +13,7 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('help starts at its heading and returns keyboard focus after dismissal', async ({ page }) => {
+test('help leads to a focused briefing and both dialogs restore keyboard focus when reopened', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
   const dialog = page.getByRole('dialog')
@@ -21,6 +22,11 @@ test('help starts at its heading and returns keyboard focus after dismissal', as
   await expect(title).toBeInViewport()
   await expect.poll(() => dialog.evaluate(element => element.scrollTop)).toBe(0)
 
+  await page.keyboard.press('Escape')
+  const briefingTitle = dialog.getByRole('heading', { name: 'Your first pot', exact: true })
+  await expect(briefingTitle).toBeFocused()
+  await expect(briefingTitle).toBeInViewport()
+  await expect.poll(() => dialog.evaluate(element => element.scrollTop)).toBe(0)
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Choose your ball.', exact: true })).toBeFocused()
@@ -33,15 +39,32 @@ test('help starts at its heading and returns keyboard focus after dismissal', as
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   await expect(opener).toBeFocused()
+
+  const review = page.getByRole('button', { name: 'Review level briefing', exact: true })
+  await review.focus()
+  await page.keyboard.press('Enter')
+  await expect(briefingTitle).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(review).toBeFocused()
+})
+
+test('closing the automatic briefing starts the level and focuses the first decision', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('shot-selection-help-dismissed', 'true'))
+  await page.goto('/')
+  await page.getByRole('dialog').getByRole('button', { name: 'Close dialog', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Choose your ball.', exact: true })).toBeFocused()
 })
 
 test('keyboard users can skip navigation and hear each finish’s stroke details', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('shot-selection-help-dismissed', 'true'))
   await page.goto('/')
+  await startLevel(page, 1)
   await expect(page.getByRole('heading', { name: 'Choose your ball.', exact: true })).toBeVisible()
 
-  await page.keyboard.press('Tab')
   const skipLink = page.getByRole('link', { name: 'Skip to game', exact: true })
+  await skipLink.focus()
   await expect(skipLink).toBeFocused()
   await expect(skipLink).toBeInViewport()
   await page.keyboard.press('Enter')

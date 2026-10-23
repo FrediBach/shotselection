@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { startLevel } from './helpers'
 
 const visualViewports = [
   { name: 'desktop', width: 1440, height: 1050 },
@@ -103,6 +104,7 @@ for (const viewport of visualViewports) {
       })
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
       await page.goto('/')
+      await startLevel(page)
       await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 30_000 })
       await expect(page.locator('.simulation-overlay')).toHaveCount(0)
       await expect(page.locator('.finish-option')).toHaveCount(0)
@@ -147,6 +149,7 @@ test('three feasible finish choices, comparison, replay and advancement without 
     if (!JSON.parse(localStorage.getItem('shot-selection-session') || 'null')?.completedLessons) localStorage.setItem('shot-selection-session', JSON.stringify({ scoringVersion: 2, completedLessons: 3, level: 4, score: 0, rounds: 3, perfect: 0, seed: 71431 }))
   })
   await page.goto('/')
+  await startLevel(page)
   await expect(page.locator('.pool-table-scene canvas')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 30_000 })
   await expect(page.getByRole('heading', { name: 'Choose your ball.' })).toBeVisible()
@@ -257,14 +260,16 @@ test('three feasible finish choices, comparison, replay and advancement without 
   await expect(statValue(page, 'Points earned')).toHaveText(`${Math.round(completed.score / completed.rounds)}%`)
   await page.getByRole('button', { name: 'Back to the table', exact: true }).click()
   await page.getByRole('button', { name: 'Next level' }).click()
-  await expect(page.getByRole('region', { name: 'Current lesson', exact: true })).toContainText('LEVEL 05')
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 05')
+  await startLevel(page, 5)
   await expect(page.getByRole('button', { name: 'Choose a finish', exact: true })).toBeDisabled()
   await expect(page.locator('.simulation-overlay')).toHaveCount(0, { timeout: 30_000 })
   await expectWizardStep(page, 'Ball')
   await expectStableGameFrame(page, initialFrame, 'after advancing to the next level')
   await expect(finishSwitch).toHaveCount(0)
   await page.reload()
-  await expect(page.getByRole('region', { name: 'Current lesson', exact: true })).toContainText('LEVEL 05')
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 05')
+  await startLevel(page, 5)
   const reloaded = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
   expect(reloaded).toEqual(completed)
   expect(errors).toEqual([])
@@ -272,12 +277,14 @@ test('three feasible finish choices, comparison, replay and advancement without 
 
 test('legacy session points migrate once and retain progress and correct stats', async ({ page }) => {
   await page.goto('/')
+  await startLevel(page)
   await expect(page.getByRole('button', { name: 'View session stats, 0 points', exact: true })).toBeVisible()
   const legacy = { level: 3, score: 1.5, rounds: 2, perfect: 1, seed: 71431 }
   await page.evaluate(saved => localStorage.setItem('shot-selection-session', JSON.stringify(saved)), legacy)
   const migrated = { ...legacy, score: 150, scoringVersion: 2, completedLessons: 2 }
   for (let reload = 0; reload < 2; reload++) {
     await page.reload()
+    await startLevel(page, 3)
     await expect(page.getByRole('button', { name: 'View session stats, 150 points', exact: true })).toBeVisible()
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toEqual(migrated)
     await page.getByRole('button', { name: 'View session stats, 150 points', exact: true }).click()
@@ -291,6 +298,7 @@ test('legacy session points migrate once and retain progress and correct stats',
 test('360px mobile wizard works with keyboard, help and reset in the overhead view', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 844 })
   await page.goto('/')
+  await startLevel(page)
   await page.getByRole('button', { name: 'How to play', exact: true }).click()
   await expect(page.getByRole('dialog')).toContainText('A, B, or C')
   await page.getByRole('button', { name: 'Let’s read the table' }).click()
@@ -315,6 +323,7 @@ test('360px mobile wizard works with keyboard, help and reset in the overhead vi
   await expect(finishC).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: 'Restart session' }).click()
   await page.getByRole('button', { name: 'Start fresh' }).click()
+  await startLevel(page, 1)
   await expect(page.getByRole('button', { name: 'Choose a finish', exact: true })).toBeDisabled()
   await expect(page.locator('.finish-option')).toHaveCount(0)
   await expectWizardStep(page, 'Ball')
@@ -331,6 +340,7 @@ test('mobile WebGL fallback keeps the frame stable through fixed choices, replay
     } as typeof original
   })
   await page.goto('/')
+  await startLevel(page)
   await expect(page.getByText('2D view · WebGL unavailable')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 30_000 })
   const initialFrame = await readGameFrame(page)
@@ -434,7 +444,8 @@ test('mobile WebGL fallback keeps the frame stable through fixed choices, replay
   await expect(finishMarkers.first()).toBeVisible()
   await expectStableGameFrame(page, initialFrame, 'after replay on mobile')
   await page.locator('.shot-panel-actions').getByRole('button', { name: 'Next level' }).click()
-  await expect(page.getByRole('region', { name: 'Current lesson', exact: true })).toContainText('LEVEL 05')
+  await expect(page.getByRole('dialog')).toContainText('LEVEL 05')
+  await startLevel(page, 5)
   await expect(page.locator('.simulation-overlay')).toHaveCount(0, { timeout: 30_000 })
   await expectStableGameFrame(page, initialFrame, 'after advancing on mobile')
   await expect(page.getByRole('button', { name: 'Choose a finish', exact: true })).toBeDisabled()
@@ -455,6 +466,7 @@ for (const width of [860, 360]) test(`${width}px later-level wizard keeps extra 
     } as typeof original
   })
   await page.goto('/')
+  await startLevel(page)
   await expect(page.locator('.simulation-overlay')).toHaveCount(0, { timeout: 30_000 })
   const balls = page.locator('.ball-choice')
   expect(await balls.count()).toBeGreaterThan(3)
