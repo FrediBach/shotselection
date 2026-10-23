@@ -524,6 +524,28 @@ function useFlatTablePlayback({ scenario, analysis, playing, playbackKey, onPlay
   return frame
 }
 
+function FlatAnalysisOverlay({ analysis, showEnsemble, showFinishes, playing }: {
+  analysis: ShotAnalysis
+  showEnsemble: boolean
+  showFinishes: boolean
+  playing: boolean
+}) {
+  const nominalObjectPotted = analysis.nominal.potted.includes(analysis.plan.potBallId ?? analysis.plan.ballId)
+    && analysis.nominal.firstContact === analysis.plan.ballId
+  return <>
+    {showEnsemble && <g data-testid="ensemble-paths" fill="none" pointerEvents="none">
+      {analysis.samplePaths.map((path, i) => <polyline key={`cue-${i}`} data-testid="cue-ensemble-path" points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".14" />)}
+      <polyline points={analysis.nominal.cuePath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".32" strokeDasharray="2.5 1.8" />
+      <polyline points={analysis.nominal.objectPath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".16" strokeDasharray={nominalObjectPotted ? undefined : '4.5 2.5'} />
+      {analysis.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map((trial, i) => <polyline key={`object-pot-${i}`} data-testid="object-pot-path" points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.pot} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".30" />)}
+      {analysis.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map((trial, i) => <polyline key={`object-miss-${i}`} data-testid={trial.outcome === 'foul' ? 'object-foul-path' : 'object-miss-path'} points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".50" strokeDasharray="4.5 2.5" />)}
+    </g>}
+    {showFinishes && !playing && <g data-testid="ensemble-finishes" pointerEvents="none">
+      {analysis.sampleBallEnds.flatMap((trial, trialIndex) => trial.filter(ball => !ball.pocketed).map(ball => <circle key={`${trialIndex}-${ball.id}`} data-testid="ensemble-ball-finish" data-ball-id={ball.id} data-trial-index={trialIndex} cx={ball.position.x * 100} cy={ball.position.y * 100} r={RADIUS * 100} fill={COLORS[ball.id] ?? '#b8c6ab'} fillOpacity=".08" stroke={COLORS[ball.id] ?? '#b8c6ab'} strokeOpacity=".6" strokeWidth=".3" />))}
+    </g>}
+  </>
+}
+
 /** Fully interactive 2D fallback for browsers without WebGL. */
 function FlatTable(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, interactive, playing } = props
@@ -542,7 +564,6 @@ function FlatTable(props: PoolTableProps) {
     return () => observer.disconnect()
   }, [])
   const balls = frame || scenario.balls.map(ball => ({ ...ball, pocketed: false }))
-  const nominalObjectPotted = Boolean(analysis && analysis.nominal.potted.includes(analysis.plan.potBallId ?? analysis.plan.ballId) && analysis.nominal.firstContact === analysis.plan.ballId)
   const badgePositions = separateBadges(props.finishOptions.map(option => ({ x: option.plan.target.x * 100, y: option.plan.target.y * 100 })), 42 / svgScale, { left: -22 + 19 / svgScale, right: 276 - 19 / svgScale, top: -24 + 19 / svgScale, bottom: 151 - 19 / svgScale })
   return <svg ref={svgRef} viewBox="-22 -24 298 175" width="100%" height="100%" role="group" aria-label="Interactive pool table, top view" style={{ display: 'block' }}>
     <defs>
@@ -574,16 +595,7 @@ function FlatTable(props: PoolTableProps) {
     </g>
     <g pointerEvents="none" fill="none"><rect x="-16.8" y="-16.8" width="287.6" height="160.6" rx="5.2" stroke="#c09c68" strokeOpacity=".4" strokeWidth=".25" /></g>
     {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x, i) => [-1, 1].map(sign => <rect key={`${i}-${sign}`} x={(x + WIDTH / 2) * 100 - .6} y={(sign * .772 + DEPTH / 2) * 100 - .6} width="1.2" height="1.2" fill="#bfb9a7" transform={`rotate(45 ${(x + WIDTH / 2) * 100} ${(sign * .772 + DEPTH / 2) * 100})`} />))}
-    {showEnsemble && analysis && <g data-testid="ensemble-paths" fill="none" pointerEvents="none">
-      {analysis.samplePaths.map((path, i) => <polyline key={`cue-${i}`} data-testid="cue-ensemble-path" points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".14" />)}
-      <polyline points={analysis.nominal.cuePath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".32" strokeDasharray="2.5 1.8" />
-      <polyline points={analysis.nominal.objectPath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".16" strokeDasharray={nominalObjectPotted ? undefined : '4.5 2.5'} />
-      {analysis.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map((trial, i) => <polyline key={`object-pot-${i}`} data-testid="object-pot-path" points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.pot} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".30" />)}
-      {analysis.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map((trial, i) => <polyline key={`object-miss-${i}`} data-testid={trial.outcome === 'foul' ? 'object-foul-path' : 'object-miss-path'} points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".50" strokeDasharray="4.5 2.5" />)}
-    </g>}
-    {showFinishes && analysis && !playing && <g data-testid="ensemble-finishes" pointerEvents="none">
-      {analysis.sampleBallEnds.flatMap((trial, trialIndex) => trial.filter(ball => !ball.pocketed).map(ball => <circle key={`${trialIndex}-${ball.id}`} data-testid="ensemble-ball-finish" data-ball-id={ball.id} data-trial-index={trialIndex} cx={ball.position.x * 100} cy={ball.position.y * 100} r={RADIUS * 100} fill={COLORS[ball.id] ?? '#b8c6ab'} fillOpacity=".08" stroke={COLORS[ball.id] ?? '#b8c6ab'} strokeOpacity=".6" strokeWidth=".3" />))}
-    </g>}
+    {analysis && <FlatAnalysisOverlay analysis={analysis} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} />}
     {objective?.target && <g data-testid="position-objective" pointerEvents="none" role="img" aria-label={`Position zone: leave the cue ball inside this circle for ball ${objective.nextBallId}`}>
       <circle data-testid="position-zone" cx={objective.target.x * 100} cy={objective.target.y * 100} r={objective.radius * 100} fill={POSITION_COLOR} fillOpacity=".13" stroke={POSITION_COLOR} strokeOpacity=".9" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
     </g>}
