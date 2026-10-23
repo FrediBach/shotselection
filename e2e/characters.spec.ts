@@ -86,6 +86,12 @@ test('custom slider talents drive the ensemble and survive progress until a new 
   const path = '/tmp/shot-selection-custom-character-mobile.png'
   await page.screenshot({ path, fullPage: true })
   await testInfo.attach('Custom player sliders on mobile', { path, contentType: 'image/png' })
+  await page.getByRole('button', { name: 'Choose Mina Park', exact: true }).click()
+  await page.getByRole('button', { name: /^Create a custom player/ }).click()
+  await expect(page.getByRole('textbox', { name: 'Player name', exact: true })).toHaveValue('Robin Cue')
+  for (const { key, label } of TALENT_DEFINITIONS) {
+    await expect(page.getByRole('slider', { name: label, exact: true })).toHaveValue(String(talents[key]))
+  }
   const character: PlayerCharacter = { id: 'custom', name: 'Robin Cue', talents }
   await page.getByRole('button', { name: 'Start playthrough', exact: true }).click()
   await startLevel(page, 1)

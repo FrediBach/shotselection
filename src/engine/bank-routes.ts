@@ -78,13 +78,12 @@ interface Approach { error: number; gap: number; cut: number; blocked: boolean; 
 
 /** Fast cue-only integration uses exactly the full simulator's cloth and rail
  * impulses. Object-ball collisions are checked by the final full simulation. */
-function approach(scenario: Scenario, route: BankRoute, angle: number, speed: number, topSpin: number): Approach {
-  const start = scenario.balls.find(ball => ball.id === 0)!.position;
+function approach(scenario: Scenario, start: Vec2, ballId: number, route: BankRoute, angle: number, speed: number, topSpin: number): Approach {
   const body = new Body({ mass: TABLE.ballMass, linearDamping: 0, angularDamping: 0 });
   body.position.set(start.x, start.y, 0);
   body.velocity.set(Math.cos(angle) * speed, Math.sin(angle) * speed, 0);
   body.angularVelocity.set(-Math.sin(angle) * speed / TABLE.ballRadius * topSpin, Math.cos(angle) * speed / TABLE.ballRadius * topSpin, 0);
-  const others = scenario.balls.filter(ball => ball.id !== 0 && ball.id !== scenario.bank!.ballId);
+  const others = scenario.balls.filter(ball => ball.id !== 0 && ball.id !== ballId);
   let blocked = false;
   let gap = Infinity;
   let error = Infinity;
@@ -122,22 +121,25 @@ function approach(scenario: Scenario, route: BankRoute, angle: number, speed: nu
 /** Bounded Newton shooting corrects ideal reflected angles for actual cushions.
  * Every speed/spin combination is independently aimed; no endpoint is invented. */
 export function bankPlanForStroke(scenario: Scenario, route: BankRoute, speed: number, topSpin: number): ShotPlan | null {
+  const cue = scenario.balls.find(ball => ball.id === 0);
+  const bank = scenario.bank;
+  if (!cue || !bank || !scenario.balls.some(ball => ball.id === bank.ballId)) return null;
   let angle = route.angle;
   let result: Approach | undefined;
   for (let iteration = 0; iteration < 9; iteration++) {
-    result = approach(scenario, route, angle, speed, topSpin);
+    result = approach(scenario, cue.position, bank.ballId, route, angle, speed, topSpin);
     if (!Number.isFinite(result.error)) return null;
     if (result.gap < 0.0003) break;
     const delta = 0.0007;
     // A symmetric derivative preserves mirrored-table behavior. One-sided
     // differences can diverge on one reflection at discrete cushion steps.
-    const before = approach(scenario, route, angle - delta, speed, topSpin);
-    const after = approach(scenario, route, angle + delta, speed, topSpin);
+    const before = approach(scenario, cue.position, bank.ballId, route, angle - delta, speed, topSpin);
+    const after = approach(scenario, cue.position, bank.ballId, route, angle + delta, speed, topSpin);
     const derivative = (after.error - before.error) / (2 * delta);
     if (!Number.isFinite(derivative) || Math.abs(derivative) < 0.05) return null;
     angle -= clamp(result.error / derivative, -0.12, 0.12);
   }
   if (!result || result.gap > 0.003 || result.cut < 0.17 || result.blocked
     || result.sides.some((side, index) => side !== route.sides[index])) return null;
-  return { id: '', ballId: scenario.bank!.ballId, pocketId: route.pocketId, angle, speed, topSpin, sideSpin: 0, target: { x: 0, y: 0 }, label: '' };
+  return { id: '', ballId: bank.ballId, pocketId: route.pocketId, angle, speed, topSpin, sideSpin: 0, target: { x: 0, y: 0 }, label: '' };
 }

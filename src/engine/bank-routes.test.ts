@@ -12,6 +12,14 @@ const scenario: Scenario = {
 };
 
 describe('physical bank aim calibration', () => {
+  it('rejects bank planning when the cue ball, target ball or bank objective is missing', () => {
+    const route = bankRoutesFor(scenario, 1)[0];
+    expect(route).toBeDefined();
+    expect(bankPlanForStroke({ ...scenario, balls: scenario.balls.filter(ball => ball.id !== 0) }, route, 1.6, 1.6)).toBeNull();
+    expect(bankPlanForStroke({ ...scenario, balls: scenario.balls.filter(ball => ball.id !== 1) }, route, 1.6, 1.6)).toBeNull();
+    expect(bankPlanForStroke({ ...scenario, bank: undefined }, route, 1.6, 1.6)).toBeNull();
+  });
+
   it('corrects a mirror-table aim for actual cushion restitution and spin', () => {
     const route = bankRoutesFor(scenario, 1).find(candidate => candidate.pocketId === 1 && candidate.sides[0] === 'bottom')!;
     const plan = bankPlanForStroke(scenario, route, 1.6, 1.6)!;

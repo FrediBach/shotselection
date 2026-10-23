@@ -24,7 +24,7 @@ export function PlayerTalents({ character }: { character: PlayerCharacter }) {
 export default function CharacterSelection({ onStart }: { onStart: (character: PlayerCharacter) => void }) {
   const [selectedId, setSelectedId] = useState(DEFAULT_CHARACTER.id)
   const [custom, setCustom] = useState<PlayerCharacter>({ id: 'custom', name: 'Your player', talents: { ...DEFAULT_CHARACTER.talents } })
-  const [hasCustomized, setHasCustomized] = useState(false)
+  const hasCustomized = useRef(false)
   const heading = useRef<HTMLHeadingElement>(null)
   const selected = selectedId === 'custom' ? custom : PREMADE_CHARACTERS.find(character => character.id === selectedId) ?? DEFAULT_CHARACTER
   const customSelected = selectedId === 'custom'
@@ -33,8 +33,8 @@ export default function CharacterSelection({ onStart }: { onStart: (character: P
   useEffect(() => { heading.current?.focus({ preventScroll: true }) }, [])
 
   function chooseCustom() {
-    if (!hasCustomized) setCustom(previous => ({ ...previous, talents: { ...selected.talents } }))
-    setHasCustomized(true)
+    if (!hasCustomized.current) setCustom(previous => ({ ...previous, talents: { ...selected.talents } }))
+    hasCustomized.current = true
     setSelectedId('custom')
   }
 
