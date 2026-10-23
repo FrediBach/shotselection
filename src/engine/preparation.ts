@@ -1,4 +1,5 @@
-import { POCKETS, TABLE } from './constants';
+import { TABLE } from './constants';
+import { POCKET_GEOMETRY } from './table-geometry';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
 import { simulateShot } from './physics';
 import { generateScenario } from './scenarios';
@@ -12,15 +13,17 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
   const cue = scenario.balls.find(ball => ball.id === 0)!;
   const object = scenario.balls.find(ball => ball.id === ballId)!;
   const routes: Route[] = [];
-  for (const pocket of POCKETS) {
-    const direction = normalize(subtract(pocket.position, object.position));
+  for (const pocket of POCKET_GEOMETRY) {
+    // Oblique entry must continue across the shelf into the recessed well.
+    // A ray through the mouth midpoint alone can run into the far facing.
+    const direction = normalize(subtract(pocket.center, object.position));
     const ghost = { x: object.position.x - direction.x * TABLE.ballDiameter, y: object.position.y - direction.y * TABLE.ballDiameter };
     const aim = normalize(subtract(ghost, cue.position));
     const cut = dot(direction, aim);
     if (cut < 0.17) continue;
     const others = scenario.balls.filter(ball => ball.id !== 0 && ball.id !== ballId);
-    if (others.some(ball => segmentDistance(ball.position, cue.position, ghost) < TABLE.ballDiameter * 1.025 || segmentDistance(ball.position, object.position, pocket.position) < TABLE.ballDiameter * 1.025)) continue;
-    const objectDistance = distance(object.position, pocket.position);
+    if (others.some(ball => segmentDistance(ball.position, cue.position, ghost) < TABLE.ballDiameter * 1.025 || segmentDistance(ball.position, object.position, pocket.center) < TABLE.ballDiameter * 1.025)) continue;
+    const objectDistance = distance(object.position, pocket.center);
     const cueDistance = distance(cue.position, ghost);
     const speed = clamp(Math.sqrt(2 * TABLE.rollingFriction * 9.80665 * (objectDistance + 0.13)) / (0.71 * cut) + cueDistance * 0.2, 0.65, 2.8);
     routes.push({ pocketId: pocket.id, angle: Math.atan2(aim.y, aim.x), speed, difficulty: cueDistance * 0.15 + objectDistance * 0.18 + (1 - cut) * 0.8 });

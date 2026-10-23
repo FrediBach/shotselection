@@ -180,7 +180,13 @@ svg { flex-shrink: 0; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
 .section-heading h2 { font-size: 22px; font-weight: 450; margin: 7px 0 0; letter-spacing: -.6px; }
 .section-heading .eyebrow { font-size: 8px; color: #8b9a7e; }
-.ensemble-switch { display: flex; align-items: center; gap: 9px; font-size: 10px; color: #adbba0; }
+.ensemble-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px 20px; }
+.ensemble-switch { display: flex; align-items: center; gap: 9px; font-size: 10px; color: #adbba0; white-space: nowrap; cursor: pointer; }
+.ensemble-switch .ui-switch { flex-shrink: 0; }
+@media (max-width: 720px) {
+  .ensemble-section .section-heading { align-items: flex-start; flex-direction: column; }
+  .ensemble-controls { justify-content: flex-start; }
+}
 .ui-switch { width: 29px; height: 17px; border: 1px solid #90a37655; background: #303b29; padding: 2px; border-radius: 20px; display: inline-flex; align-items: center; }
 .ui-switch[data-state='checked'] { background: #b6c7a0; }
 .switch-thumb { height: 11px; width: 11px; border-radius: 50%; background: #151b13; transform: translateX(0); transition: transform .15s; }

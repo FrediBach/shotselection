@@ -5,6 +5,7 @@ import { distance, normalRandom, seededRandom } from './math';
 import { simulateShot } from './physics';
 import { prepareRound } from './preparation';
 import { generateScenario } from './scenarios';
+import { isPocketed } from './table-geometry';
 import type { Scenario, ShotPlan } from './types';
 
 const straight: Scenario = {
@@ -41,15 +42,16 @@ describe('object-ball ensemble trajectories', () => {
     expect(analyzeShot(prepared.scenario, option.plan, 64).sampleObjectPaths).toEqual(result.sampleObjectPaths);
   });
 
-  it('preserves the pre-visualization seeded score, pot rate and endpoint spread', () => {
+  it('ends successful seeded trials inside the actual pocket wells', () => {
     const prepared = prepareRound(generateScenario(1, 72350));
     const result = analyzeShot(prepared.scenario, prepared.balls[0].options[0].plan, 64);
-    // Captured before lightweight path recording was introduced.
-    expect(result.score).toBe(0.9021836684561283);
-    expect(result.potRate).toBe(0.953125);
-    expect(result.successRate).toBe(0.90625);
-    expect(result.scratchRate).toBe(0);
-    expect(result.spread).toBe(0.08579976622026196);
+    const pots = result.sampleObjectPaths.filter(trial => trial.outcome === 'pot');
+    expect(pots.length).toBeGreaterThan(0);
+    for (const trial of pots) {
+      expect(isPocketed(trial.path.at(-1)!)).toBe(true);
+      expect(trial.path.slice(0, -1).every(point => !isPocketed(point))).toBe(true);
+    }
+    expect(analyzeShot(prepared.scenario, result.plan, 64)).toEqual(result);
   });
 
   it('records paths without frames or changes to the physical outcome', () => {

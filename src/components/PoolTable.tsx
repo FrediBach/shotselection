@@ -1,4 +1,4 @@
-import { Component, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Component, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -7,6 +7,7 @@ import { TableLighting } from './table/TableLighting'
 import * as THREE from 'three'
 import type { FinishOption, Scenario, ShotAnalysis, SimulationBall, SimulationSoundEvent, Vec2 } from '../engine/types'
 import { TABLE, positionToleranceForLevel } from '../engine/constants'
+import { CUSHIONS, POCKET_GEOMETRY } from '../engine/table-geometry'
 import { PlaybackSoundCursor } from '../lib/playback-events'
 
 export interface PoolTableProps {
@@ -20,6 +21,7 @@ export interface PoolTableProps {
   selectableBallIds: number[]
   analysis: ShotAnalysis | null
   showEnsemble: boolean
+  showFinishes: boolean
   playing: boolean
   playbackKey: number
   onPlaybackEnd: () => void
@@ -38,10 +40,6 @@ const COLORS: Record<number, string> = {
   5: '#e36a16', 6: '#076342', 7: '#681e27', 8: '#11161a', 9: '#e7af12',
   10: '#3763b0', 11: '#bd4337', 12: '#65458a', 13: '#dd783c', 14: '#287a65', 15: '#81372d',
 }
-const POCKET_POSITIONS: [number, number, boolean][] = [
-  [-WIDTH / 2, -DEPTH / 2, false], [0, -DEPTH / 2 - 0.018, true], [WIDTH / 2, -DEPTH / 2, false],
-  [-WIDTH / 2, DEPTH / 2, false], [0, DEPTH / 2 + 0.018, true], [WIDTH / 2, DEPTH / 2, false],
-]
 const toWorld = (p: Vec2, height = CLOTH_Y + 0.004): [number, number, number] => [p.x - WIDTH / 2, height, p.y - DEPTH / 2]
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
 
@@ -383,18 +381,42 @@ function FinishMarkers({ options, selectedOptionId, interactive, onSelect }: { o
   return <>{options.map((option, i) => <FinishBadge key={option.id} option={option} selected={option.id === selectedOptionId} interactive={interactive} onSelect={onSelect} location={locations[i]} />)}</>
 }
 
-function EnsembleEndpoints({ points }: { points: Vec2[] }) {
-  const geometry = useMemo(() => {
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(points.flatMap(p => toWorld(p, CLOTH_Y + 0.008)), 3))
-    return geo
-  }, [points])
-  useEffect(() => () => geometry.dispose(), [geometry])
-  return <points geometry={geometry} raycast={() => null}><pointsMaterial size={0.008} color="#d9e7a9" transparent opacity={0.6} depthWrite={false} sizeAttenuation /></points>
+function EnsembleFinishes({ trials }: { trials: SimulationBall[][] }) {
+  const fill = useRef<THREE.InstancedMesh>(null)
+  const outline = useRef<THREE.InstancedMesh>(null)
+  const balls = useMemo(() => trials.flatMap(trial => trial.filter(ball => !ball.pocketed)), [trials])
+  useLayoutEffect(() => {
+    const marker = new THREE.Object3D()
+    marker.rotation.x = -Math.PI / 2
+    const color = new THREE.Color()
+    const white = new THREE.Color('#ffffff')
+    for (const mesh of [fill.current, outline.current]) {
+      if (!mesh) continue
+      balls.forEach((ball, index) => {
+        marker.position.set(...toWorld(ball.position, CLOTH_Y + 0.02))
+        marker.updateMatrix()
+        mesh.setMatrixAt(index, marker.matrix)
+        mesh.setColorAt(index, color.set(COLORS[ball.id] ?? '#b8c6ab').lerp(white, 0.3))
+      })
+      mesh.instanceMatrix.needsUpdate = true
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+      mesh.computeBoundingSphere()
+    }
+  }, [balls])
+  return <group>
+    <instancedMesh ref={fill} args={[undefined, undefined, balls.length]} raycast={() => null} renderOrder={4}>
+      <circleGeometry args={[RADIUS, 32]} />
+      <meshBasicMaterial transparent opacity={0.08} depthWrite={false} toneMapped={false} />
+    </instancedMesh>
+    <instancedMesh ref={outline} args={[undefined, undefined, balls.length]} raycast={() => null} renderOrder={5}>
+      <ringGeometry args={[RADIUS * 0.9, RADIUS, 32]} />
+      <meshBasicMaterial transparent opacity={0.45} depthWrite={false} toneMapped={false} />
+    </instancedMesh>
+  </group>
 }
 
 function Scene(props: PoolTableProps) {
-  const { scenario, selectedBall, target, analysis, showEnsemble, playing, interactive } = props
+  const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, playing, interactive } = props
   const runtime = useMemo<Runtime>(() => ({ balls: new Map(), elapsed: 0, active: false, complete: false }), [])
   const selected = scenario.balls.find(b => b.id === selectedBall)
   const cue = scenario.balls.find(b => b.id === 0)
@@ -415,12 +437,12 @@ function Scene(props: PoolTableProps) {
     {target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
     {showEnsemble && analysis && <>
       <PathLines paths={analysis.samplePaths} color={ENSEMBLE_COLORS.cue} opacity={0.14} />
-      <EnsembleEndpoints points={analysis.sampleEnds} />
       <PathLines paths={nominalPaths} color={ENSEMBLE_COLORS.cue} opacity={0.32} dashed height={CLOTH_Y + 0.006} />
       <PathLines paths={objectPaths} color={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} opacity={0.16} dashed={!nominalObjectPotted} dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.014} />
       <PathLines paths={pottedObjectPaths} color={ENSEMBLE_COLORS.pot} opacity={0.30} height={CLOTH_Y + 0.015} />
       <PathLines paths={missedObjectPaths} color={ENSEMBLE_COLORS.miss} opacity={0.50} dashed dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.016} />
     </>}
+    {showFinishes && analysis && !playing && <EnsembleFinishes trials={analysis.sampleBallEnds} />}
   </>
 }
 
@@ -432,7 +454,7 @@ class CanvasBoundary extends Component<{ children: ReactNode; fallback: ReactNod
 
 /** Fully interactive 2D fallback for browsers without WebGL. */
 function FlatTable(props: PoolTableProps) {
-  const { scenario, selectedBall, target, analysis, showEnsemble, interactive, playing, playbackKey, onPlaybackEnd, onPlaybackSound } = props
+  const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, interactive, playing, playbackKey, onPlaybackEnd, onPlaybackSound } = props
   const [frame, setFrame] = useState<SimulationBall[] | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const [svgScale, setSvgScale] = useState(2)
@@ -489,26 +511,22 @@ function FlatTable(props: PoolTableProps) {
     </defs>
     <rect x="-19" y="-16" width="292" height="164" rx="7" fill="#121b17" />
     <rect x="-18" y="-18" width="290" height="163" rx="6" fill="url(#table-walnut)" stroke="#a9865c" strokeWidth=".35" filter="url(#wood-grain)" />
-    <rect x="-4" y="-4" width="262" height="135" rx="2" fill="#235443" />
-    <rect width="254" height="127" fill="url(#table-cloth)" filter="url(#cloth-weave)" />
-    <g fill="url(#cushion-fabric)" stroke="#1b5342" strokeWidth=".25" pointerEvents="none">
-      {[-1, 1].flatMap(sign => {
-        const corner = TABLE.cornerMouth / Math.SQRT2 * 100
-        const halfSide = TABLE.sideMouth * 50
-        const edge = sign < 0 ? 0 : 127
-        const outer = edge + sign * 6.9
-        return [[corner, 127 - halfSide], [127 + halfSide, 254 - corner]].map(([a, b], i) =>
-          <polygon key={`long-${sign}-${i}`} points={`${a},${edge} ${b},${edge} ${b + 4.2},${outer} ${a - 4.2},${outer}`} />)
-      })}
-      {[-1, 1].map(sign => {
-        const corner = TABLE.cornerMouth / Math.SQRT2 * 100
-        const edge = sign < 0 ? 0 : 254
-        const outer = edge + sign * 6.9
-        return <polygon key={`short-${sign}`} points={`${edge},${corner} ${edge},${127 - corner} ${outer},${131.2 - corner} ${outer},${corner - 4.2}`} />
-      })}
+    <rect x={-TABLE.cushionDepth * 100} y={-TABLE.cushionDepth * 100} width={(WIDTH + 2 * TABLE.cushionDepth) * 100} height={(DEPTH + 2 * TABLE.cushionDepth) * 100} fill="url(#table-cloth)" />
+    <rect width={WIDTH * 100} height={DEPTH * 100} fill="url(#table-cloth)" filter="url(#cloth-weave)" />
+    <g pointerEvents="none">
+      {POCKET_GEOMETRY.map(pocket => <g key={pocket.id}>
+        <circle cx={pocket.center.x * 100} cy={pocket.center.y * 100} r={(pocket.radius + 0.0065) * 100} fill="#473425" stroke="#89654a" strokeWidth=".25" />
+        <circle cx={pocket.center.x * 100} cy={pocket.center.y * 100} r={pocket.radius * 100} fill="url(#pocket-well)" />
+      </g>)}
     </g>
-    <g pointerEvents="none" fill="none"><rect x="-16.8" y="-16.8" width="287.6" height="160.6" rx="5.2" stroke="#c09c68" strokeOpacity=".4" strokeWidth=".25" /><rect x="-3" y="-3" width="260" height="133" rx="1" stroke="#41917b" strokeWidth=".7" /><rect x=".3" y=".3" width="253.4" height="126.4" stroke="#0a3a2d" strokeOpacity=".4" strokeWidth=".65" /></g>
-    {POCKET_POSITIONS.map(([x, y, side], i) => <circle key={i} cx={(x + WIDTH / 2) * 100} cy={(y + DEPTH / 2) * 100} r={side ? 7 : 7.6} fill="url(#pocket-well)" stroke="#473425" strokeWidth="1.5" />)}
+    <g fill="url(#cushion-fabric)" stroke="#1b5342" strokeWidth=".25" pointerEvents="none">
+      {CUSHIONS.map(cushion => <g key={cushion.id}>
+        <polygon points={cushion.polygon.map(point => `${point.x * 100},${point.y * 100}`).join(' ')} />
+        <line x1={cushion.nose.a.x * 100} y1={cushion.nose.a.y * 100} x2={cushion.nose.b.x * 100} y2={cushion.nose.b.y * 100} stroke="#103e30" strokeWidth=".55" />
+        <line x1={cushion.polygon[2].x * 100} y1={cushion.polygon[2].y * 100} x2={cushion.polygon[3].x * 100} y2={cushion.polygon[3].y * 100} stroke="#65a58d" strokeWidth=".3" strokeOpacity=".65" />
+      </g>)}
+    </g>
+    <g pointerEvents="none" fill="none"><rect x="-16.8" y="-16.8" width="287.6" height="160.6" rx="5.2" stroke="#c09c68" strokeOpacity=".4" strokeWidth=".25" /></g>
     {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x, i) => [-1, 1].map(sign => <rect key={`${i}-${sign}`} x={(x + WIDTH / 2) * 100 - .6} y={(sign * .772 + DEPTH / 2) * 100 - .6} width="1.2" height="1.2" fill="#bfb9a7" transform={`rotate(45 ${(x + WIDTH / 2) * 100} ${(sign * .772 + DEPTH / 2) * 100})`} />))}
     {showEnsemble && analysis && <g data-testid="ensemble-paths" fill="none" pointerEvents="none">
       {analysis.samplePaths.map((path, i) => <polyline key={`cue-${i}`} data-testid="cue-ensemble-path" points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".14" />)}
@@ -517,11 +535,14 @@ function FlatTable(props: PoolTableProps) {
       {analysis.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map((trial, i) => <polyline key={`object-pot-${i}`} data-testid="object-pot-path" points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.pot} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".30" />)}
       {analysis.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map((trial, i) => <polyline key={`object-miss-${i}`} data-testid={trial.outcome === 'foul' ? 'object-foul-path' : 'object-miss-path'} points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".50" strokeDasharray="4.5 2.5" />)}
     </g>}
+    {showFinishes && analysis && !playing && <g data-testid="ensemble-finishes" pointerEvents="none">
+      {analysis.sampleBallEnds.flatMap((trial, trialIndex) => trial.filter(ball => !ball.pocketed).map(ball => <circle key={`${trialIndex}-${ball.id}`} data-testid="ensemble-ball-finish" data-ball-id={ball.id} data-trial-index={trialIndex} cx={ball.position.x * 100} cy={ball.position.y * 100} r={RADIUS * 100} fill={COLORS[ball.id] ?? '#b8c6ab'} fillOpacity=".08" stroke={COLORS[ball.id] ?? '#b8c6ab'} strokeOpacity=".6" strokeWidth=".3" />))}
+    </g>}
     {target && !playing && <g pointerEvents="none" stroke="#dce9b6" fill="none"><circle cx={target.x * 100} cy={target.y * 100} r={positionToleranceForLevel(scenario.level) * 100} strokeWidth=".3" opacity=".55" /><path d={`M${target.x * 100 - 2},${target.y * 100}h4M${target.x * 100},${target.y * 100 - 2}v4`} strokeWidth=".3" /></g>}
     {balls.filter(b => !b.pocketed).map(ball => <g key={ball.id} transform={`translate(${ball.position.x * 100} ${ball.position.y * 100})`} role={ball.id ? 'button' : 'img'} aria-label={ball.id ? `Table ball ${ball.id}` : 'Cue ball'} aria-disabled={ball.id ? !interactive || playing || !props.selectableBallIds.includes(ball.id) : undefined} tabIndex={interactive && !playing && props.selectableBallIds.includes(ball.id) ? 0 : -1} onPointerDown={e => e.stopPropagation()} onClick={() => { if (interactive && props.selectableBallIds.includes(ball.id) && !playing) props.onSelectBall(ball.id) }} onKeyDown={event => { if (interactive && !playing && props.selectableBallIds.includes(ball.id) && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); props.onSelectBall(ball.id) } }} style={{ cursor: interactive && props.selectableBallIds.includes(ball.id) ? 'pointer' : undefined }}>
       {selectedBall === ball.id && !playing && <circle r="4.5" fill="none" stroke="#dbe9b5" strokeWidth=".4" />}
-      <circle r="2.8575" fill={COLORS[ball.id]} filter="url(#ball-shadow)" />
-      <circle r="2.8575" fill="url(#ball-shine)" />
+      <circle r={RADIUS * 100} fill={COLORS[ball.id]} filter="url(#ball-shadow)" />
+      <circle r={RADIUS * 100} fill="url(#ball-shine)" />
       {!!ball.id && <><circle r="1.48" fill="#f2f0e4" /><text y=".08" textAnchor="middle" dominantBaseline="central" fontFamily="Arial,sans-serif" fontWeight="700" fontSize="2.25" fill="#20271f">{ball.id}</text></>}
       <circle r="5" fill="transparent" />
     </g>)}

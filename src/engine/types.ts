@@ -51,6 +51,8 @@ export interface SimulationSoundEvent {
 }
 export interface Simulation {
   frames: SimulationFrame[];
+  /** Exact final state of every ball, even when replay recording is disabled. */
+  finalBalls: SimulationBall[];
   /** Physical impacts for full replays; empty for ensemble trials. */
   soundEvents: SimulationSoundEvent[];
   cuePath: Vec2[];
@@ -76,6 +78,8 @@ export interface ShotAnalysis {
   /** All trial object-ball paths, in the same trial order as samplePaths. */
   sampleObjectPaths: ObjectBallTrial[];
   sampleEnds: Vec2[];
+  /** Every ball's final state for every trial, in sampleObjectPaths trial order. */
+  sampleBallEnds: SimulationBall[][];
   /** Robust utility in [0,1], based on actual ensemble outcomes. */
   score: number;
   nominal: Simulation;

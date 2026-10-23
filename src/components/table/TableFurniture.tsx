@@ -2,25 +2,18 @@ import { useEffect, useMemo } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { TABLE } from '../../engine/constants'
+import { CUSHIONS, POCKET_GEOMETRY, cushionJawOffset } from '../../engine/table-geometry'
 import { createTableMaterials } from './materials'
 
 const W = TABLE.length
 const D = TABLE.width
 const CLOTH_Y = 0.062
-const CORNER_GAP = TABLE.cornerMouth / Math.SQRT2
-const SIDE_GAP = TABLE.sideMouth / 2
 const RAIL_TOP = CLOTH_Y + 0.048
-const CUSHION_BACK = 0.069
-const CORNER_JAW_SLOPE = 0.043 / 0.04
-const CORNER_JAW_BACK = -CORNER_GAP + CUSHION_BACK * CORNER_JAW_SLOPE
-// The rounded back meets both diagonal jaws at the back of the cushions.
-const CORNER_BOWL_CENTER = (CUSHION_BACK + CORNER_JAW_BACK) / 2
-const CORNER_BOWL_RADIUS = (CUSHION_BACK - CORNER_JAW_BACK) / Math.SQRT2
-const CORNER_COLLAR_RADIUS = CORNER_BOWL_RADIUS + 0.022
-const CORNER_RAIL_RADIUS = CORNER_BOWL_RADIUS + 0.008
+const CUSHION_BACK = TABLE.cushionDepth
+const COLLAR_WIDTH = 0.012
 
 type Side = 'top' | 'bottom' | 'left' | 'right'
-type Pocket = { x: number; z: number; side: boolean; sign: number; path: THREE.Path }
+type Pocket = { x: number; z: number; radius: number; angle: number; path: THREE.Path }
 
 function roundedOutline(width: number, depth: number, radius: number) {
   const x = width / 2, y = depth / 2
@@ -39,39 +32,12 @@ function roundedOutline(width: number, depth: number, radius: number) {
 
 /** Paths are in the shape's XY plane: shape Y maps to negative table Z. */
 function pocketContours(): Pocket[] {
-  const pockets: Pocket[] = []
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    const x = sx * W / 2, z = sz * D / 2
-    const point = (a: number, b: number): [number, number] => [x + sx * a, -(z + sz * b)]
+  return POCKET_GEOMETRY.map(pocket => {
+    const x = pocket.center.x - W / 2, z = pocket.center.y - D / 2
     const path = new THREE.Path()
-    path.moveTo(...point(-CORNER_GAP, 0))
-    path.lineTo(...point(CORNER_JAW_BACK, CUSHION_BACK))
-    // Sample one semicircle in outward corner coordinates, then mirror it.
-    // The cloth opening, well, collar and rail cutout share this rounded back.
-    for (let i = 1; i <= 48; i++) {
-      const angle = Math.PI * 3 / 4 - Math.PI * i / 48
-      path.lineTo(...point(CORNER_BOWL_CENTER + CORNER_BOWL_RADIUS * Math.cos(angle), CORNER_BOWL_CENTER + CORNER_BOWL_RADIUS * Math.sin(angle)))
-    }
-    path.lineTo(...point(0, -CORNER_GAP))
-    path.bezierCurveTo(...point(-CORNER_GAP * 0.36, -CORNER_GAP), ...point(-CORNER_GAP, -CORNER_GAP * 0.36), ...point(-CORNER_GAP, 0))
-    path.closePath()
-    pockets.push({ x, z, side: false, sign: sz, path })
-  }
-  for (const sign of [-1, 1]) {
-    const z = sign * D / 2
-    const point = (a: number, b: number): [number, number] => [a, -(z + sign * b)]
-    const path = new THREE.Path()
-    path.moveTo(...point(-SIDE_GAP, 0))
-    // Match the engine's 9 mm inward side jaws over their 36 mm depth.
-    path.lineTo(...point(-SIDE_GAP + 0.009, 0.036))
-    path.bezierCurveTo(...point(-0.062, 0.072), ...point(-0.036, 0.108), ...point(0, 0.108))
-    path.bezierCurveTo(...point(0.036, 0.108), ...point(0.062, 0.072), ...point(SIDE_GAP - 0.009, 0.036))
-    path.lineTo(...point(SIDE_GAP, 0))
-    path.bezierCurveTo(...point(0.049, -0.033), ...point(-0.049, -0.033), ...point(-SIDE_GAP, 0))
-    path.closePath()
-    pockets.push({ x: 0, z, side: true, sign, path })
-  }
-  return pockets
+    path.absarc(x, -z, pocket.radius, 0, Math.PI * 2, true)
+    return { x, z, radius: pocket.radius, angle: Math.atan2(-pocket.outward.y, pocket.outward.x), path }
+  })
 }
 
 function horizontalGeometry(shape: THREE.Shape, thickness = 0, bevel = 0) {
@@ -115,24 +81,33 @@ function orientRail(geometry: THREE.BufferGeometry, side: Side, baseY: number) {
 
 function railGeometry(side: Side) {
   const horizontal = side === 'top' || side === 'bottom'
+  const sign = side === 'top' || side === 'left' ? -1 : 1
   const halfLength = (horizontal ? W : D) / 2
-  const inner = 0.066, outer = 0.208
+  const halfDepth = (horizontal ? D : W) / 2
+  const inner = CUSHION_BACK - 0.003, outer = 0.208
+  // Cut the wood around the same recessed wells as the cloth and physics.
+  // The extra clearance includes the wood bevel and the leather back facing.
+  const cutouts = POCKET_GEOMETRY.map(pocket => ({
+    u: (horizontal ? pocket.center.x : pocket.center.y) - halfLength,
+    v: sign * ((horizontal ? pocket.center.y : pocket.center.x) - halfDepth) - halfDepth,
+    radius: pocket.radius + COLLAR_WIDTH + 0.008,
+    kind: pocket.kind,
+  })).filter(pocket => pocket.v > 0)
   const innerDepth = (u: number) => {
     let depth = inner
-    for (const sign of [-1, 1]) {
-      const x = sign * u - halfLength - CORNER_BOWL_CENTER
-      if (Math.abs(x) < CORNER_RAIL_RADIUS) depth = Math.max(depth, CORNER_BOWL_CENTER + Math.sqrt(CORNER_RAIL_RADIUS ** 2 - x ** 2))
+    for (const pocket of cutouts) {
+      const x = u - pocket.u
+      if (Math.abs(x) < pocket.radius) depth = Math.max(depth, pocket.v + Math.sqrt(pocket.radius ** 2 - x ** 2))
     }
-    if (horizontal && Math.abs(u) < 0.09) depth = Math.max(depth, 0.031 + Math.sqrt(0.09 ** 2 - u ** 2))
     return depth
   }
   const shape = new THREE.Shape()
-  const miter = CORNER_BOWL_CENTER + CORNER_RAIL_RADIUS / Math.SQRT2
+  const corner = cutouts.find(pocket => pocket.kind === 'corner')!
+  const miter = corner.v + corner.radius / Math.SQRT2
   const from = -halfLength - miter, to = halfLength + miter
-  const samples = Array.from({ length: 257 }, (_, i) => -halfLength - inner + (2 * halfLength + 2 * inner) * i / 256)
-  // Give each small corner cutout the same resolution on long and short rails.
-  for (const sign of [-1, 1]) for (let i = 0; i <= 48; i++) {
-    samples.push(sign * (halfLength + CORNER_BOWL_CENTER - CORNER_RAIL_RADIUS + (CORNER_RAIL_RADIUS + miter - CORNER_BOWL_CENTER) * i / 48))
+  const samples = Array.from({ length: 257 }, (_, i) => from + (to - from) * i / 256)
+  for (const pocket of cutouts) for (let i = 0; i <= 64; i++) {
+    samples.push(pocket.u - pocket.radius + 2 * pocket.radius * i / 64)
   }
   // Start on the straight outer edge so extrusion triangulates the concave
   // pocket cutouts consistently instead of bridging across their openings.
@@ -166,13 +141,12 @@ function cushionGeometry(side: Side, start: number, end: number, startJaw: 'corn
   const nose = TABLE.ballDiameter * 0.635
   // A cloth-wrapped K-style cushion: small nose bevel, sloping crown, flat back.
   const profile: [number, number][] = [
-    [0, nose], [0.0016, nose + 0.0027], [0.014, 0.045], [0.057, 0.0475],
+    [0, nose], [0.0016, nose + 0.0027], [0.014, 0.045], [CUSHION_BACK - 0.009, 0.0475],
     [CUSHION_BACK, 0.043], [CUSHION_BACK, 0.003], [0.019, 0.003], [0.0012, nose - 0.003],
   ]
   const positions: number[] = [], uv: number[] = []
   const capU = (u: number, depth: number, jaw: 'corner' | 'side', endSign: number) => {
-    const amount = jaw === 'corner' ? depth * CORNER_JAW_SLOPE : Math.min(depth / 0.036, 1.2) * 0.009
-    return u + endSign * amount
+    return u + endSign * cushionJawOffset(jaw, depth)
   }
   const vertex = (index: number, far: boolean) => {
     const [v, h] = profile[index]
@@ -203,9 +177,8 @@ function cushionGeometry(side: Side, start: number, end: number, startJaw: 'corn
 
 function wellGeometry(pocket: Pocket, clothLip: boolean) {
   const contour = pocket.path.getSpacedPoints(96).slice(0, -1)
-  if (!pocket.side && THREE.ShapeUtils.isClockWise(contour)) contour.reverse()
-  const centerX = pocket.x + (pocket.side ? 0 : Math.sign(pocket.x) * CORNER_BOWL_CENTER)
-  const centerZ = pocket.z + pocket.sign * (pocket.side ? 0.028 : CORNER_BOWL_CENTER)
+  if (THREE.ShapeUtils.isClockWise(contour)) contour.reverse()
+  const centerX = pocket.x, centerZ = pocket.z
   const levels = clothLip
     ? [{ y: CLOTH_Y, scale: 1 }, { y: CLOTH_Y - 0.009, scale: 1 }]
     : [{ y: CLOTH_Y - 0.008, scale: 1 }, { y: CLOTH_Y - 0.03, scale: 1.015 }, { y: CLOTH_Y - 0.11, scale: 0.82 }, { y: CLOTH_Y - 0.195, scale: 0.68 }]
@@ -234,50 +207,21 @@ function wellGeometry(pocket: Pocket, clothLip: boolean) {
 }
 
 function wellBottomGeometry(pocket: Pocket) {
-  if (pocket.side) {
-    const geometry = new THREE.CircleGeometry(0.048, 48)
-    geometry.rotateX(-Math.PI / 2)
-    geometry.translate(pocket.x, CLOTH_Y - 0.198, pocket.z + pocket.sign * 0.028)
-    return geometry
-  }
-  // Cap the entire tapered opening so its rounded back cannot reveal the floor.
-  const centerX = pocket.x + Math.sign(pocket.x) * CORNER_BOWL_CENTER
-  const centerZ = pocket.z + pocket.sign * CORNER_BOWL_CENTER
-  const geometry = horizontalGeometry(new THREE.Shape(pocket.path.getPoints(40)))
-  geometry.translate(-centerX, 0, -centerZ)
-  geometry.scale(0.68, 1, 0.68)
-  geometry.translate(centerX, CLOTH_Y - 0.195, centerZ)
+  const geometry = new THREE.CircleGeometry(pocket.radius * 0.68, 64)
+  geometry.rotateX(-Math.PI / 2)
+  geometry.translate(pocket.x, CLOTH_Y - 0.195, pocket.z)
   return geometry
 }
 
 function collarGeometry(pocket: Pocket) {
   const shape = new THREE.Shape()
-  if (pocket.side) {
-    const radius = 0.068
-    // A recessed leather facing set into the rail, open all the way to the mouth.
-    shape.moveTo(-radius, 0.034)
-    shape.lineTo(-0.098, 0.034)
-    shape.lineTo(-0.098, 0.12)
-    shape.quadraticCurveTo(-0.098, 0.133, -0.085, 0.133)
-    shape.lineTo(0.085, 0.133)
-    shape.quadraticCurveTo(0.098, 0.133, 0.098, 0.12)
-    shape.lineTo(0.098, 0.034)
-    shape.lineTo(radius, 0.034)
-    shape.absarc(0, 0.034, radius, 0, Math.PI, false)
-  } else {
-    const center = CORNER_BOWL_CENTER
-    shape.moveTo(CORNER_JAW_BACK, CUSHION_BACK)
-    shape.absarc(center, center, CORNER_COLLAR_RADIUS, Math.PI * 3 / 4, -Math.PI / 4, true)
-    shape.lineTo(CUSHION_BACK, CORNER_JAW_BACK)
-    shape.absarc(center, center, CORNER_BOWL_RADIUS, -Math.PI / 4, Math.PI * 3 / 4, false)
-  }
+  // A horseshoe behind the well leaves its approach and shelf unobstructed.
+  const from = pocket.angle - Math.PI / 2, to = pocket.angle + Math.PI / 2
+  shape.absarc(pocket.x, -pocket.z, pocket.radius + COLLAR_WIDTH, from, to, false)
+  shape.absarc(pocket.x, -pocket.z, pocket.radius, to, from, true)
   shape.closePath()
   const geometry = horizontalGeometry(shape, 0.0015, 0.0005)
-  const sx = pocket.side ? 1 : Math.sign(pocket.x)
-  const sz = Math.sign(pocket.z)
-  geometry.scale(sx, 1, -sz)
-  if (-sx * sz < 0) reverseWinding(geometry)
-  geometry.translate(pocket.x, RAIL_TOP - 0.001, pocket.z)
+  geometry.translate(0, RAIL_TOP - 0.001, 0)
   const positions = geometry.getAttribute('position')
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(Array.from({ length: positions.count }, (_, i) => [positions.getX(i), positions.getZ(i)]).flat(), 2))
   return geometry
@@ -301,22 +245,17 @@ export function TableFurniture() {
   }, [materials])
   const assets = useMemo(() => {
     const pockets = pocketContours()
-    const clothShape = roundedOutline(W + 0.24, D + 0.24, 0.035)
+    const clothShape = roundedOutline(W + 0.32, D + 0.32, 0.035)
     clothShape.holes.push(...pockets.map(pocket => pocket.path))
     const cloth = horizontalGeometry(clothShape)
     const positions = cloth.getAttribute('position')
     cloth.setAttribute('uv', new THREE.Float32BufferAttribute(Array.from({ length: positions.count }, (_, i) => [(positions.getX(i) + W / 2) / W, (D / 2 - positions.getZ(i)) / D]).flat(), 2))
     const slate = horizontalGeometry(clothShape, 0.027)
-    const body = horizontalGeometry(frameShape(W + 0.44, D + 0.44, 0.06, W + 0.245, D + 0.245), 0.145, 0.006)
+    const body = horizontalGeometry(frameShape(W + 0.44, D + 0.44, 0.06, W + 0.29, D + 0.29), 0.145, 0.006)
     const trim = horizontalGeometry(frameShape(W + 0.434, D + 0.434, 0.055, W + 0.428, D + 0.428), 0.0015)
-    const darkLip = horizontalGeometry(frameShape(W + 0.433, D + 0.433, 0.055, W + 0.245, D + 0.245), 0.008)
+    const darkLip = horizontalGeometry(frameShape(W + 0.433, D + 0.433, 0.055, W + 0.29, D + 0.29), 0.008)
     const rails = (['top', 'bottom', 'left', 'right'] as const).map(railGeometry)
-    const cushions = (['top', 'bottom'] as const).flatMap(side => [
-      cushionGeometry(side, -W / 2 + CORNER_GAP, -SIDE_GAP, 'corner', 'side'),
-      cushionGeometry(side, SIDE_GAP, W / 2 - CORNER_GAP, 'side', 'corner'),
-    ])
-    cushions.push(cushionGeometry('left', -D / 2 + CORNER_GAP, D / 2 - CORNER_GAP, 'corner', 'corner'))
-    cushions.push(cushionGeometry('right', -D / 2 + CORNER_GAP, D / 2 - CORNER_GAP, 'corner', 'corner'))
+    const cushions = CUSHIONS.map(cushion => cushionGeometry(cushion.side, cushion.start, cushion.end, cushion.startJaw, cushion.endJaw))
     const wells = pockets.map(pocket => wellGeometry(pocket, false))
     const wellBottoms = pockets.map(wellBottomGeometry)
     const lips = pockets.map(pocket => wellGeometry(pocket, true))
@@ -352,7 +291,7 @@ export function TableFurniture() {
     {assets.lips.map((geometry, i) => <mesh key={`lip-${i}`} geometry={geometry} material={materials.cushion} receiveShadow />)}
     {assets.wells.map((geometry, i) => <mesh key={`well-${i}`} geometry={geometry} material={materials.leather} receiveShadow />)}
     {assets.collars.map((geometry, i) => <mesh key={`collar-${i}`} geometry={geometry} material={materials.leather} />)}
-    {assets.pockets.flatMap((pocket, i) => (pocket.side ? [[-0.083, 0.115], [0.083, 0.115]] : [[CORNER_BOWL_CENTER + CORNER_BOWL_RADIUS + 0.011, CORNER_BOWL_CENTER], [CORNER_BOWL_CENTER, CORNER_BOWL_CENTER + CORNER_BOWL_RADIUS + 0.011]]).map(([a, b], j) => <mesh key={`pocket-rivet-${i}-${j}`} position={[pocket.x + a * (pocket.side ? 1 : Math.sign(pocket.x)), RAIL_TOP + 0.0011, pocket.z + b * Math.sign(pocket.z)]}>
+    {assets.pockets.flatMap((pocket, i) => [-0.8, 0.8].map((offset, j) => <mesh key={`pocket-rivet-${i}-${j}`} position={[pocket.x + Math.cos(pocket.angle + offset) * (pocket.radius + COLLAR_WIDTH / 2), RAIL_TOP + 0.0011, pocket.z - Math.sin(pocket.angle + offset) * (pocket.radius + COLLAR_WIDTH / 2)]}>
       <cylinderGeometry args={[0.0018, 0.0018, 0.0009, 16]} /><meshStandardMaterial color="#7c715b" metalness={0.7} roughness={0.38} />
     </mesh>))}
     {assets.wellBottoms.map((geometry, i) => <mesh key={`well-bottom-${i}`} geometry={geometry}>

@@ -122,7 +122,7 @@ The table uses SI units and a 2.54 m × 1.27 m playing surface. Regulation pool 
 
 Regulation dimensions do not establish predictive accuracy. Cloth friction, collision response, pocket capture, and player execution noise are simulation assumptions until validated against measurements from a real table. Ensemble percentages describe this model and its chosen noise distribution; they are not calibrated probabilities for an individual player.
 
-The simulation advances cannon-es spheres at 240 Hz with planar motion. A separate cloth model transitions from sliding to rolling and carries draw/follow spin; cushion impulses couple side spin to rebound. Finite cushion segments leave six pocket openings, with angled jaws and simplified drop tests. Replay uses frames from the same solver as the analysis.
+The simulation advances cannon-es spheres at 240 Hz with planar motion. A separate cloth model transitions from sliding to rolling and carries draw/follow spin; cushion impulses couple side spin to rebound. `src/engine/table-geometry.ts` defines the six cushion noses, angled pocket facings, mouth points, and recessed round wells used by both the WebGL table and SVG fallback. Collision segments follow those same facings. A ball drops when its centre crosses the visible well edge after cushion collisions are resolved; crossing a table boundary alone does not count as a pot. Shot preparation aims at the recessed well centres so oblique entries account for the shelf. Analysis, tolerance calculations, and replay use the same solver.
 
 The current model parameters are centralized in `src/engine/constants.ts`:
 
@@ -131,6 +131,10 @@ The current model parameters are centralized in `src/engine/constants.ts`:
 | Playing surface | 2.54 × 1.27 m | WPA 9-foot dimensions |
 | Ball diameter / mass | 57.15 mm / 170 g | Within WPA specifications |
 | Corner / side pocket mouth | 114.3 mm / 127 mm | Lower end of WPA ranges |
+| Corner / side horizontal jaw angle | 142° / 104° | WPA pocket cut angles |
+| Corner / side shelf depth | 32 mm / 6.35 mm | Chosen within WPA ranges |
+| Corner / side well diameter | 110 mm / 120 mm | Round-well approximation behind the shelf |
+| Cushion depth | 50 mm | Within WPA cushion-width range |
 | Sliding / rolling friction coefficients | 0.20 / 0.012 | Assumed cloth response |
 | Ball / cushion restitution | 0.96 / 0.82 | Assumed collision response |
 | Simulation time step | 1/240 second | Numerical choice |

@@ -1,39 +1,12 @@
 import { Body, ContactMaterial, GSSolver, Material, Sphere, Vec3, World } from 'cannon-es';
 import type { ContactEquation } from 'cannon-es';
-import { POCKETS, TABLE } from './constants';
-import { clamp, distance } from './math';
+import { TABLE } from './constants';
+import { clamp } from './math';
+import { isPocketed, RAILS } from './table-geometry';
 import type { Scenario, ShotPlan, Simulation, SimulateOptions, Vec2 } from './types';
 
 const G = 9.80665;
 const R = TABLE.ballRadius;
-interface Rail { a: Vec2; b: Vec2 }
-
-/** Finite cushion noses and angled pocket jaws, rather than an enclosed rectangle. */
-function buildRails(): Rail[] {
-  const length = TABLE.length;
-  const width = TABLE.width;
-  const corner = TABLE.cornerMouth / Math.SQRT2;
-  const side = TABLE.sideMouth / 2;
-  const rails: Rail[] = [];
-  const add = (ax: number, ay: number, bx: number, by: number) => rails.push({ a: { x: ax, y: ay }, b: { x: bx, y: by } });
-  for (const y of [0, width]) {
-    const outside = y === 0 ? -1 : 1;
-    add(corner, y, length / 2 - side, y);
-    add(length / 2 + side, y, length - corner, y);
-    add(corner, y, corner - 0.043, y + outside * 0.04);
-    add(length - corner, y, length - corner + 0.043, y + outside * 0.04);
-    add(length / 2 - side, y, length / 2 - side + 0.009, y + outside * 0.036);
-    add(length / 2 + side, y, length / 2 + side - 0.009, y + outside * 0.036);
-  }
-  for (const x of [0, length]) {
-    const outside = x === 0 ? -1 : 1;
-    add(x, corner, x, width - corner);
-    add(x, corner, x + outside * 0.04, corner - 0.043);
-    add(x, width - corner, x + outside * 0.04, width - corner + 0.043);
-  }
-  return rails;
-}
-const RAILS = buildRails();
 
 /** Slip-point velocity u = v + omega x (0,0,-R). The 7/2 factor gives the
  * exact slide-to-roll transition for a solid homogeneous sphere (I=2mR²/5). */
@@ -101,14 +74,6 @@ function resolveRails(body: Body) {
   return strongestImpact;
 }
 
-function isPocketed(position: Vec2): boolean {
-  return POCKETS.some(pocket => {
-    if (pocket.kind === 'corner') return distance(position, pocket.position) < 0.049;
-    const atMouth = pocket.position.y === 0 ? position.y < 0.008 : position.y > TABLE.width - 0.008;
-    return atMouth && Math.abs(position.x - pocket.position.x) < 0.045;
-  });
-}
-
 export function simulateShot(scenario: Scenario, plan: ShotPlan, options: SimulateOptions = {}): Simulation {
   const record = options.record !== false;
   const recordPaths = record || options.recordPaths === true;
@@ -143,7 +108,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   cue.body.addEventListener('collide', (event: { body: Body }) => {
     if (firstContact === null) firstContact = bodyIds.get(event.body.id) ?? null;
   });
-  const simulation: Simulation = { frames: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, duration: 0, stopped: false };
+  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, duration: 0, stopped: false };
   let soundTime = 0;
   const lastSoundTimes = record ? new Map<string, number>() : null;
   const recordImpact = (type: 'ball' | 'cushion', key: string, impactSpeed: number) => {
@@ -195,12 +160,6 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
         world.removeBody(ball.body);
         ball.body.velocity.setZero();
         ball.body.angularVelocity.setZero();
-      } else if (ball.body.position.x < -0.12 || ball.body.position.x > TABLE.length + 0.12 || ball.body.position.y < -0.12 || ball.body.position.y > TABLE.width + 0.12) {
-        // A ball travelling completely beyond an open pocket throat has dropped.
-        ball.pocketed = true;
-        simulation.potted.push(ball.id);
-        if (record) simulation.soundEvents.push({ type: 'pocket', time: soundTime, strength: clamp(Math.hypot(ball.body.velocity.x, ball.body.velocity.y) / 2.5, 0, 1) });
-        world.removeBody(ball.body);
       } else if (Math.hypot(ball.body.velocity.x, ball.body.velocity.y) > 0.005 || Math.hypot(ball.body.angularVelocity.x, ball.body.angularVelocity.y) * R > 0.008) moving = true;
       if (ball.pocketed && recordPaths) {
         // Save the exact physics capture location on the actual drop step. The
@@ -215,6 +174,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     if (quietSteps >= 8) { simulation.stopped = true; break; }
   }
   saveSnapshot(simulation.duration);
+  simulation.finalBalls = bodies.map(({ id, body, pocketed }) => ({ id, position: { x: body.position.x, y: body.position.y }, pocketed }));
   simulation.cueEnd = { x: cue.body.position.x, y: cue.body.position.y };
   simulation.scratch = cue.pocketed;
   simulation.firstContact = firstContact;

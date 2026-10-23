@@ -15,7 +15,7 @@ const plan: ShotPlan = {
   angle: -Math.PI / 2, speed: 1.35, topSpin: 0, sideSpin: 0, label: 'Straight pot',
 };
 const successful: Simulation = {
-  frames: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: plan.target,
+  frames: [], finalBalls: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: plan.target,
   potted: [1], scratch: false, firstContact: 1, duration: 2, stopped: true,
 };
 const axes: ToleranceAxis[] = ['angle', 'sideSpin', 'speed'];
