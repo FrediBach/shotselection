@@ -110,22 +110,16 @@ function useVolumeRotation() {
   return { view, resetView, rotate, onPointerDown, onPointerMove, endDrag, onLostPointerCapture, onKeyDown };
 }
 
-export default function ToleranceVolume({ tolerance, label }: ToleranceVolumeProps) {
-  const descriptionId = useId();
-  const { view, resetView, rotate, onPointerDown, onPointerMove, endDrag, onLostPointerCapture, onKeyDown } = useVolumeRotation();
-  const [showFailures, setShowFailures] = useState(false);
-  const [slice, setSlice] = useState(false);
-  const [sliceIndex, setSliceIndex] = useState<number | null>(null);
-  const { points, limits } = tolerance.volume;
-  const strengths = useMemo(() => [...new Set(points.map((point) => point.speed))].sort((a, b) => a - b), [points]);
-  const nominalSliceIndex = Math.max(0, strengths.findIndex((strength) => Math.abs(strength) < 1e-8));
-  const activeSliceIndex = Math.max(0, Math.min(sliceIndex ?? nominalSliceIndex, strengths.length - 1));
-  const sliceStrength = strengths[activeSliceIndex] ?? 0;
-  const visibleSamples = useMemo(() => points.filter((point) => !slice || Math.abs(point.speed - sliceStrength) < 1e-8), [points, slice, sliceStrength]);
-  const successCount = visibleSamples.filter((point) => point.success).length;
-  const unavailableCount = visibleSamples.filter((point) => !point.available).length;
-  const sampleShare = visibleSamples.length ? successCount / visibleSamples.length * 100 : 0;
+interface VolumePlotContentsProps {
+  visibleSamples: VolumePoint[];
+  limits: ShotTolerance['volume']['limits'];
+  view: typeof INITIAL_VIEW;
+  showFailures: boolean;
+  slice: boolean;
+  sliceStrength: number;
+}
 
+function VolumePlotContents({ visibleSamples, limits, view, showFailures, slice, sliceStrength }: VolumePlotContentsProps) {
   const projected = useMemo(() => visibleSamples
     .filter((point) => point.success || showFailures)
     .map((point) => ({
@@ -150,6 +144,50 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
     { x: 1, y: sliceStrength / (limits.speed || 1), z: 1 },
     { x: -1, y: sliceStrength / (limits.speed || 1), z: 1 },
   ].map((point) => project(point, view.yaw, view.pitch));
+
+  return <>
+    <g className="tolerance-volume-cube">
+      {EDGES.map(([a, b]) => <line key={`${a}-${b}`} x1={corners[a].x} y1={corners[a].y} x2={corners[b].x} y2={corners[b].y} />)}
+    </g>
+    {slice && <polygon className="tolerance-volume-slice-plane" points={sliceCorners.map((point) => `${point.x},${point.y}`).join(' ')} />}
+    {axes.map((axis) => {
+      const start = project({ x: -axis.vector.x * 1.12, y: -axis.vector.y * 1.12, z: -axis.vector.z * 1.12 }, view.yaw, view.pitch);
+      const end = project({ x: axis.vector.x * 1.12, y: axis.vector.y * 1.12, z: axis.vector.z * 1.12 }, view.yaw, view.pitch);
+      return <line className={`tolerance-volume-axis tolerance-axis-${axis.key}`} key={axis.key} x1={start.x} y1={start.y} x2={end.x} y2={end.y} />;
+    })}
+    {projected.map(({ point, projection }) => <VolumeSample key={`${point.angle}-${point.sideSpin}-${point.speed}`} point={point} projection={projection} />)}
+    <g className="tolerance-volume-origin" aria-label="Nominal shot at zero deviation">
+      <circle cx={CENTER.x} cy={CENTER.y} r="8" />
+      <path d={`M${CENTER.x - 13},${CENTER.y}h26 M${CENTER.x},${CENTER.y - 13}v26`} />
+      <circle cx={CENTER.x} cy={CENTER.y} r="2" />
+    </g>
+    {axes.flatMap((axis) => [-1, 1].map((direction) => {
+      const end = project({ x: axis.vector.x * direction * 1.38, y: axis.vector.y * direction * 1.38, z: axis.vector.z * direction * 1.38 }, view.yaw, view.pitch);
+      const anchor = end.x > CENTER.x + 28 ? 'start' : end.x < CENTER.x - 28 ? 'end' : 'middle';
+      const dy = end.y < CENTER.y - 40 ? -8 : 12;
+      return <text className={`tolerance-volume-axis-label tolerance-axis-${axis.key}`} key={`${axis.key}-${direction}`} x={end.x} y={end.y + dy} textAnchor={anchor}>
+        <tspan x={end.x}>{axis.name}</tspan>
+        <tspan x={end.x} dy="1.2em" className="tolerance-volume-axis-value">{direction < 0 ? axis.negative : axis.positive}</tspan>
+      </text>;
+    }))}
+  </>;
+}
+
+export default function ToleranceVolume({ tolerance, label }: ToleranceVolumeProps) {
+  const descriptionId = useId();
+  const { view, resetView, rotate, onPointerDown, onPointerMove, endDrag, onLostPointerCapture, onKeyDown } = useVolumeRotation();
+  const [showFailures, setShowFailures] = useState(false);
+  const [slice, setSlice] = useState(false);
+  const [sliceIndex, setSliceIndex] = useState<number | null>(null);
+  const { points, limits } = tolerance.volume;
+  const strengths = useMemo(() => [...new Set(points.map((point) => point.speed))].sort((a, b) => a - b), [points]);
+  const nominalSliceIndex = Math.max(0, strengths.findIndex((strength) => Math.abs(strength) < 1e-8));
+  const activeSliceIndex = Math.max(0, Math.min(sliceIndex ?? nominalSliceIndex, strengths.length - 1));
+  const sliceStrength = strengths[activeSliceIndex] ?? 0;
+  const visibleSamples = useMemo(() => points.filter((point) => !slice || Math.abs(point.speed - sliceStrength) < 1e-8), [points, slice, sliceStrength]);
+  const successCount = visibleSamples.filter((point) => point.success).length;
+  const unavailableCount = visibleSamples.filter((point) => !point.available).length;
+  const sampleShare = visibleSamples.length ? successCount / visibleSamples.length * 100 : 0;
 
   return (
     <section className="tolerance-volume" aria-label={`${label} success volume`}>
@@ -194,30 +232,7 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
         >
           <title>{label}: sampled combinations of angle, English, and strength</title>
           <desc>{successCount} of {visibleSamples.length} grid points succeed. Green dots represent a legal pot with the cue ball in the target area. Hollow gray dots are outside the modeled speed range and were not simulated. The gold crosshair is the nominal shot. Drag or use arrow keys to rotate; Home resets the view.</desc>
-          <g className="tolerance-volume-cube">
-            {EDGES.map(([a, b]) => <line key={`${a}-${b}`} x1={corners[a].x} y1={corners[a].y} x2={corners[b].x} y2={corners[b].y} />)}
-          </g>
-          {slice && <polygon className="tolerance-volume-slice-plane" points={sliceCorners.map((point) => `${point.x},${point.y}`).join(' ')} />}
-          {axes.map((axis) => {
-            const start = project({ x: -axis.vector.x * 1.12, y: -axis.vector.y * 1.12, z: -axis.vector.z * 1.12 }, view.yaw, view.pitch);
-            const end = project({ x: axis.vector.x * 1.12, y: axis.vector.y * 1.12, z: axis.vector.z * 1.12 }, view.yaw, view.pitch);
-            return <line className={`tolerance-volume-axis tolerance-axis-${axis.key}`} key={axis.key} x1={start.x} y1={start.y} x2={end.x} y2={end.y} />;
-          })}
-          {projected.map(({ point, projection }) => <VolumeSample key={`${point.angle}-${point.sideSpin}-${point.speed}`} point={point} projection={projection} />)}
-          <g className="tolerance-volume-origin" aria-label="Nominal shot at zero deviation">
-            <circle cx={CENTER.x} cy={CENTER.y} r="8" />
-            <path d={`M${CENTER.x - 13},${CENTER.y}h26 M${CENTER.x},${CENTER.y - 13}v26`} />
-            <circle cx={CENTER.x} cy={CENTER.y} r="2" />
-          </g>
-          {axes.flatMap((axis) => [-1, 1].map((direction) => {
-            const end = project({ x: axis.vector.x * direction * 1.38, y: axis.vector.y * direction * 1.38, z: axis.vector.z * direction * 1.38 }, view.yaw, view.pitch);
-            const anchor = end.x > CENTER.x + 28 ? 'start' : end.x < CENTER.x - 28 ? 'end' : 'middle';
-            const dy = end.y < CENTER.y - 40 ? -8 : 12;
-            return <text className={`tolerance-volume-axis-label tolerance-axis-${axis.key}`} key={`${axis.key}-${direction}`} x={end.x} y={end.y + dy} textAnchor={anchor}>
-              <tspan x={end.x}>{axis.name}</tspan>
-              <tspan x={end.x} dy="1.2em" className="tolerance-volume-axis-value">{direction < 0 ? axis.negative : axis.positive}</tspan>
-            </text>;
-          }))}
+          <VolumePlotContents visibleSamples={visibleSamples} limits={limits} view={view} showFailures={showFailures} slice={slice} sliceStrength={sliceStrength} />
         </svg>
         {successCount === 0 && <div className="tolerance-volume-empty">No successful samples {slice ? 'in this strength slice' : 'in this grid'}</div>}
         <div className="tolerance-volume-controls">

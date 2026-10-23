@@ -439,6 +439,31 @@ function EnsembleFinishes({ trials }: { trials: SimulationBall[][] }) {
   </group>
 }
 
+function SceneAnalysis({ analysis, showEnsemble, showFinishes, playing, objective }: {
+  analysis: ShotAnalysis
+  showEnsemble: boolean
+  showFinishes: boolean
+  playing: boolean
+  objective: boolean
+}) {
+  const nominalPaths = useMemo(() => [analysis.nominal.cuePath], [analysis])
+  const objectPaths = useMemo(() => [analysis.nominal.objectPath], [analysis])
+  const nominalObjectPotted = Boolean(analysis.nominal.potted.includes(analysis.plan.potBallId ?? analysis.plan.ballId) && analysis.nominal.firstContact === analysis.plan.ballId)
+  const pottedObjectPaths = useMemo(() => analysis.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map(trial => trial.path) ?? [], [analysis])
+  const missedObjectPaths = useMemo(() => analysis.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map(trial => trial.path) ?? [], [analysis])
+  return <>
+    {showEnsemble && <>
+      <PathLines paths={analysis.samplePaths} color={ENSEMBLE_COLORS.cue} opacity={0.14} />
+      <PathLines paths={nominalPaths} color={ENSEMBLE_COLORS.cue} opacity={0.32} dashed height={CLOTH_Y + 0.006} />
+      <PathLines paths={objectPaths} color={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} opacity={0.16} dashed={!nominalObjectPotted} dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.014} />
+      <PathLines paths={pottedObjectPaths} color={ENSEMBLE_COLORS.pot} opacity={0.30} height={CLOTH_Y + 0.015} />
+      <PathLines paths={missedObjectPaths} color={ENSEMBLE_COLORS.miss} opacity={0.50} dashed dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.016} />
+    </>}
+    {showFinishes && !playing && <EnsembleFinishes trials={analysis.sampleBallEnds} />}
+    {objective && analysis.nominal.stopped && !analysis.nominal.scratch && !playing && <NominalCueFinishMarker position={analysis.nominal.cueEnd} />}
+  </>
+}
+
 function Scene(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, playing, interactive } = props
   const selectableBalls = new Set(props.selectableBallIds)
@@ -447,11 +472,6 @@ function Scene(props: PoolTableProps) {
   const selected = scenario.balls.find(b => b.id === selectedBall)
   const cue = scenario.balls.find(b => b.id === 0)
   const aimPath = useMemo(() => cue && selected ? [[cue.position, selected.position]] : [], [cue, selected])
-  const nominalPaths = useMemo(() => analysis ? [analysis.nominal.cuePath] : [], [analysis])
-  const objectPaths = useMemo(() => analysis ? [analysis.nominal.objectPath] : [], [analysis])
-  const nominalObjectPotted = Boolean(analysis && analysis.nominal.potted.includes(analysis.plan.potBallId ?? analysis.plan.ballId) && analysis.nominal.firstContact === analysis.plan.ballId)
-  const pottedObjectPaths = useMemo(() => analysis?.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map(trial => trial.path) ?? [], [analysis])
-  const missedObjectPaths = useMemo(() => analysis?.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map(trial => trial.path) ?? [], [analysis])
   return <>
     <TopDownCamera />
     <TableLighting />
@@ -462,15 +482,7 @@ function Scene(props: PoolTableProps) {
     {!objective && !analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
     {objective?.target && <PositionZone target={objective.target} radius={objective.radius} />}
     {!objective && target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
-    {showEnsemble && analysis && <>
-      <PathLines paths={analysis.samplePaths} color={ENSEMBLE_COLORS.cue} opacity={0.14} />
-      <PathLines paths={nominalPaths} color={ENSEMBLE_COLORS.cue} opacity={0.32} dashed height={CLOTH_Y + 0.006} />
-      <PathLines paths={objectPaths} color={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} opacity={0.16} dashed={!nominalObjectPotted} dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.014} />
-      <PathLines paths={pottedObjectPaths} color={ENSEMBLE_COLORS.pot} opacity={0.30} height={CLOTH_Y + 0.015} />
-      <PathLines paths={missedObjectPaths} color={ENSEMBLE_COLORS.miss} opacity={0.50} dashed dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.016} />
-    </>}
-    {showFinishes && analysis && !playing && <EnsembleFinishes trials={analysis.sampleBallEnds} />}
-    {objective && analysis?.nominal.stopped && !analysis.nominal.scratch && !playing && <NominalCueFinishMarker position={analysis.nominal.cueEnd} />}
+    {analysis && <SceneAnalysis analysis={analysis} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} objective={Boolean(objective)} />}
   </>
 }
 
