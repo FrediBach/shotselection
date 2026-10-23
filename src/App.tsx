@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDownRight, ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Crosshair, Flag, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDownRight, ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Crosshair, Flag, Focus, Layers3, LoaderCircle, MousePointer2, RotateCcw, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import BallIcon from '@/components/BallIcon'
 import EnsembleResults from '@/components/EnsembleResults'
 import BallSelectionStep from '@/components/BallSelectionStep'
 import FinishSelectionStep from '@/components/FinishSelectionStep'
-import { percent } from '@/lib/shot-presentation'
+import RoundResultStep from '@/components/RoundResultStep'
+import { ResultActions, BallSelectionActions, FinishSelectionActions } from '@/components/ShotPanelActions'
 import PoolTable from '@/components/PoolTable'
 import PerfectCelebration from '@/components/PerfectCelebration'
 import ShotTolerancePanel from '@/components/ShotTolerancePanel'
@@ -105,7 +106,6 @@ export default function App() {
   const finishLabel = (id: string) => prepared?.balls.flatMap(ball => ball.options).find(option => option.id === id)?.label ?? ''
   const difficulty = scenario.curriculum?.chapterTitle ?? 'Training'
   const objective = scenario.objective
-  const bank = scenario.bank
   const plant = scenario.plant
   const ballChoiceLabel = (ballId: number) => plant ? ballId === plant.ballId ? `Plant ${ballId} → ${plant.targetBallId}` : ballId === plant.targetBallId ? `Target ${ballId}` : `Free ball ${ballId}` : `Ball ${ballId}`
   const shotLabel = (plan: ShotPlan) => plan.potBallId !== undefined && plan.potBallId !== plan.ballId ? `Plant ${plan.ballId} → ${plan.potBallId}` : plant ? `Free ball ${plan.ballId}` : `Ball ${plan.ballId}`
@@ -193,6 +193,11 @@ export default function App() {
     setSoundEnabled(enabled)
     if (enabled) { audio.current?.unlock(); audio.current?.play('select') }
   }
+  function advanceRound() {
+    if (!lastLesson) { clearRound(session); return }
+    audio.current?.stop()
+    setPlaying(false); setCelebrating(false); setShowCourseSummary(true)
+  }
   function inspectShot(shot: ShotAnalysis) {
     audio.current?.stop(); audio.current?.unlock(); audio.current?.play('select')
     setInspected(shot); setPlaying(false)
@@ -248,33 +253,13 @@ export default function App() {
             </li>)}
           </ol>
           <div className="shot-panel-body" data-step={result ? 'result' : selectionStep} key={`${scenario.level}-${step}`}>
-            {result ? <>
-              <h2 ref={sidebarHeading} tabIndex={-1}>{result.candidates.every(shot => shot.successRate === 0) ? 'A difficult table.' : result.points === 100 ? 'That’s the smart shot.' : result.points >= 80 ? 'A strong choice.' : result.points >= 50 ? 'Room to improve.' : 'There’s a safer way.'}</h2>
-              <div className={`points-awarded${result.points === 100 ? ' points-perfect' : ''}`}><span>{result.points === 100 ? <Trophy size={18} /> : <Target size={18} />} Round score</span><strong>{result.points} <span>/ 100</span></strong></div>
-              <section className="score-breakdown" aria-label="How your score adds up">
-                <h3>How your score adds up</h3>
-                <dl>
-                  <div><dt>Shot quality<span>About {percent(result.scoring.relativeQuality)} of best quality</span></dt><dd>{result.scoring.qualityPoints}<span> / 70</span></dd></div>
-                  <div><dt>Ensemble rank<span>{result.scoring.tiedCount > 1 ? 'Joint ' : ''}rank {result.scoring.rank} of {result.scoring.candidateCount} choices</span></dt><dd>{result.scoring.rankPoints}<span> / 30</span></dd></div>
-                </dl>
-                <p>{result.scoring.noSuccessfulTrials ? `No successful pot + finish in ${result.samples} trials, so both parts earn 0.` : 'Quality rewards pots, safe finishes and target accuracy. Rank rewards your place among all choices.'}</p>
-                <p className="score-rounding">{result.scoring.qualityPoints} + {result.scoring.rankPoints} = {result.points}. Each part rounds to 10 points. Similar results share a rank.</p>
-              </section>
-              <div className="result-comparison"><div><span>Your shot{plant ? ` · ${shotLabel(result.selected.plan)}` : ''} · {finishLabel(result.selected.plan.id)}</span><strong>{percent(result.selected.successRate)}</strong></div><div><span>Best <BallIcon id={result.best.plan.potBallId ?? result.best.plan.ballId} small />{plant ? ` ${shotLabel(result.best.plan)}` : ''} · {finishLabel(result.best.plan.id)}</span><strong>{percent(result.best.successRate)}</strong></div><p>{objective ? `Pot + zone + a clear next shot on ball ${objective.nextBallId}` : bank ? `${bank.minCushions} bank${bank.minCushions === 1 ? "" : "s"} + pot + safe finish` : "Pot + safe finish"} in {result.samples} trials, within {Math.round(result.positionTolerance * 100)} cm of the target.</p></div>
-            </> : selectionStep === 'ball' ? <BallSelectionStep scenario={scenario} selectedBall={selectedBall} selectableBallIds={selectableBallIds} preparing={preparing} ready={Boolean(prepared)} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectBall} /> : <FinishSelectionStep scenario={scenario} selectedBall={selectedBall} finishOptions={finishOptions} selectedOptionId={selectedOptionId} busy={busy} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectOption} />}
+            {result ? <RoundResultStep result={result} scenario={scenario} headingRef={sidebarHeading} shotLabel={shotLabel} finishLabel={finishLabel} /> : selectionStep === 'ball' ? <BallSelectionStep scenario={scenario} selectedBall={selectedBall} selectableBallIds={selectableBallIds} preparing={preparing} ready={Boolean(prepared)} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectBall} /> : <FinishSelectionStep scenario={scenario} selectedBall={selectedBall} finishOptions={finishOptions} selectedOptionId={selectedOptionId} busy={busy} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectOption} />}
             {error && <div role="alert" className="error-message"><p>{error}</p>{!prepared && !preparing && <Button variant="outline" size="sm" onClick={() => setPrepareAttempt(attempt => attempt + 1)}>Retry preparation</Button>}</div>}
           </div>
           <div className="shot-panel-actions">
-            {result ? <>
-              <Button className="full-width" onClick={() => playShot(result.best)} disabled={playing}><Play size={16} fill="currentColor" /> {playing ? 'Shot in motion…' : 'Play the best shot'}</Button>
-              <Button className="full-width next-level" variant="outline" onClick={() => { if (lastLesson) { audio.current?.stop(); setPlaying(false); setCelebrating(false); setShowCourseSummary(true) } else clearRound(session) }}>{lastLesson ? "View course summary" : "Next level"} <ArrowRight size={16} /></Button>
-            </> : selectionStep === 'ball' ? <>
-              <Button className="full-width lock-button" onClick={() => setSelectionStep('finish')} disabled={selectedBall === null || preparing || !prepared}>{objective ? "Choose a stroke" : "Choose a finish"} <ArrowRight size={17} /></Button>
-              <p className="lock-caption">{preparing ? plant ? 'Preparing shot choices…' : 'Checking playable shots…' : selectedBall === null ? 'Select a ball to continue.' : `${ballChoiceLabel(selectedBall)} selected.`}</p>
-            </> : <>
-              <Button className="lock-button full-width" onClick={submit} disabled={!selectedOption || busy || preparing || !prepared}>{busy ? <><LoaderCircle size={17} className="spin" /> Running ensemble…</> : <>Lock in your shot <ArrowRight size={17} /></>}</Button>
-              <Button className="wizard-back full-width" variant="ghost" onClick={() => setSelectionStep('ball')} disabled={busy}><ArrowLeft size={14} /> Back to balls</Button>
-            </>}
+            {result ? <ResultActions playing={playing} lastLesson={lastLesson} onReplay={() => playShot(result.best)} onNext={advanceRound} />
+              : selectionStep === 'ball' ? <BallSelectionActions selectedBall={selectedBall} selectedBallLabel={selectedBall === null ? '' : ballChoiceLabel(selectedBall)} preparing={preparing} ready={Boolean(prepared)} positionLesson={Boolean(objective)} plantLesson={Boolean(plant)} onContinue={() => setSelectionStep('finish')} />
+              : <FinishSelectionActions hasSelection={Boolean(selectedOption)} busy={busy} preparing={preparing} ready={Boolean(prepared)} onSubmit={submit} onBack={() => setSelectionStep('ball')} />}
           </div>
         </aside>
       </div>
