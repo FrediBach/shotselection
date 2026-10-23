@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import BallIcon from '@/components/BallIcon'
 import EnsembleResults from '@/components/EnsembleResults'
-import { percent, strokeDescription } from '@/lib/shot-presentation'
+import BallSelectionStep from '@/components/BallSelectionStep'
+import FinishSelectionStep from '@/components/FinishSelectionStep'
+import { percent } from '@/lib/shot-presentation'
 import PoolTable from '@/components/PoolTable'
 import PerfectCelebration from '@/components/PerfectCelebration'
 import ShotTolerancePanel from '@/components/ShotTolerancePanel'
@@ -13,7 +15,7 @@ import GameDialogBody, { type Modal } from '@/components/GameDialogBody'
 import CharacterSelection from '@/components/CharacterSelection'
 import type { PlayerCharacter } from '@/engine/characters'
 import { TOTAL_LEVELS } from '@/engine/scenarios'
-import { analyzeRoundAsync, generateScenario, POCKETS, prepareRoundAsync } from '@/engine'
+import { analyzeRoundAsync, generateScenario, prepareRoundAsync } from '@/engine'
 import type { PreparedRound, RoundAnalysis, ShotAnalysis, ShotPlan } from '@/engine/types'
 import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY, type Session } from '@/lib/session'
 import { createGameAudio } from '@/lib/sound'
@@ -259,33 +261,7 @@ export default function App() {
                 <p className="score-rounding">{result.scoring.qualityPoints} + {result.scoring.rankPoints} = {result.points}. Each part rounds to 10 points. Similar results share a rank.</p>
               </section>
               <div className="result-comparison"><div><span>Your shot{plant ? ` · ${shotLabel(result.selected.plan)}` : ''} · {finishLabel(result.selected.plan.id)}</span><strong>{percent(result.selected.successRate)}</strong></div><div><span>Best <BallIcon id={result.best.plan.potBallId ?? result.best.plan.ballId} small />{plant ? ` ${shotLabel(result.best.plan)}` : ''} · {finishLabel(result.best.plan.id)}</span><strong>{percent(result.best.successRate)}</strong></div><p>{objective ? `Pot + zone + a clear next shot on ball ${objective.nextBallId}` : bank ? `${bank.minCushions} bank${bank.minCushions === 1 ? "" : "s"} + pot + safe finish` : "Pot + safe finish"} in {result.samples} trials, within {Math.round(result.positionTolerance * 100)} cm of the target.</p></div>
-            </> : selectionStep === 'ball' ? <>
-              <h2 ref={sidebarHeading} tabIndex={-1}>Choose your ball.</h2>
-              <p className="panel-description">{objective ? `Play ball ${objective.ballId} first. Keep ball ${objective.nextBallId} on the table for your next shot.` : bank ? `Reach ball ${bank.ballId} after at least ${bank.minCushions} cushion${bank.minCushions === 1 ? "" : "s"}, then pot it.` : plant ? `Play ball ${plant.ballId} into ball ${plant.targetBallId} for the plant, or attempt a difficult free ball. Read both contact lines before choosing.` : objectBalls.length === 1 ? "Start with this object ball, then compare three ways to control the cue-ball finish." : "Which ball gives you the most room for error?"}</p>
-              <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <button key={ball.id} className={`ball-choice ${selectedBall === ball.id ? 'selected' : ''}`} onClick={() => selectBall(ball.id)} disabled={preparing || !selectableBalls.has(ball.id)} title={prepared && !selectableBalls.has(ball.id) ? (objective ? ball.id === objective.nextBallId ? 'Reserved for your next shot' : 'Traffic: read the route around this ball' : bank ? 'Blocker: bank around this ball to reach the target' : plant ? `Plant target: pot this ball by playing ball ${plant.ballId} first` : 'No three playable finishes found for this ball') : `Choose ${ballChoiceLabel(ball.id).toLowerCase()}`} aria-pressed={selectedBall === ball.id} aria-label={plant ? ball.id === plant.ballId ? `Select plant ${ball.id} to ${plant.targetBallId}` : ball.id === plant.targetBallId ? `Plant target ball ${ball.id}` : `Select free ball ${ball.id}` : `Select ball ${ball.id}`}><BallIcon id={ball.id} /><span>{plant ? ballChoiceLabel(ball.id) : `${objective?.nextBallId === ball.id ? 'Next' : 'Ball'} ${ball.id}`}</span>{selectedBall === ball.id && <span className="ball-check"><Check size={10} /></span>}</button>)}</div>
-              {prepared && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">{objective ? "The next ball and traffic balls are reserved for this lesson." : bank ? "Dimmed balls are blockers. Ball 1 is the target for this lesson." : plant ? `Ball ${plant.targetBallId} is the plant target. Select ball ${plant.ballId} to attempt the plant.` : "Dimmed balls have no set of three playable finishes."}</p>}
-              <div className="wizard-hint"><MousePointer2 size={17} /><p>{objective ? "Select the first ball, then compare the strokes that could leave position for the next." : plant ? "Select the plant or a free ball, then compare the stroke and finish options. The plant is an attempt; its pot is not guaranteed." : "Choose a ball here or directly on the table. Then move on to its finish positions."}</p></div>
-            </> : <>
-              <h2 ref={sidebarHeading} tabIndex={-1}>{objective ? "Choose your stroke." : "Choose your finish."}</h2>
-              <p className="panel-description">{objective ? `Which speed and spin will land in the zone and leave ball ${objective.nextBallId} with a cut of ${objective.maxCutAngle}° or less?` : "Where should the cue ball stop? Pick A, B, or C on the table or below."}</p>
-              {selectedBall !== null && <div className="selected-ball-summary"><BallIcon id={selectedBall} /><span>{plant ? 'Your shot' : 'Your object ball'}<strong>{ballChoiceLabel(selectedBall)}</strong>{plant && selectedBall === plant.ballId && <span>Hit {plant.ballId} first · Pot {plant.targetBallId}</span>}</span></div>}
-              <div className="finish-options" role="group" aria-label={objective ? "Stroke options" : "Cue-ball finish options"}>
-                {finishOptions.map(option => <button
-                  key={option.id}
-                  className={`finish-option ${selectedOptionId === option.id ? 'finish-selected' : ''}`}
-                  aria-label={`Choose ${objective ? "stroke" : "finish"} ${option.label}`}
-                  aria-describedby={`finish-details-${option.id}`}
-                  aria-pressed={selectedOptionId === option.id}
-                  disabled={busy}
-                  onClick={() => selectOption(option.id)}
-                >
-                  <span className="finish-letter">{option.label}</span>
-                  <span className="finish-copy" id={`finish-details-${option.id}`}><strong>{option.plan.speed.toFixed(2)} m/s <span>cue-ball speed</span></strong><span title="Spin percentage is relative to natural rolling at launch, not cue-tip offset.">{strokeDescription(option.plan)}</span>{(objective || bank || plant) && <span className="stroke-pocket">{plant ? `Attempt ball ${option.plan.potBallId ?? option.plan.ballId} to` : 'Pot to'} {POCKETS.find(pocket => pocket.id === option.plan.pocketId)?.name} pocket</span>}</span>
-                  {selectedOptionId === option.id && <Check size={14} />}
-                </button>)}
-              </div>
-              <p className="finish-assurance">{objective ? "All three can pot the first ball. Predict the cue-ball travel; finishes and paths are revealed after you lock in." : bank ? `All three bank at least ${bank.minCushions} time${bank.minCushions === 1 ? "" : "s"} before reaching the target. Choose the most forgiving finish.` : plant ? "A plant may work, miss, or offer very little margin. Compare its alignment and cue-ball finish with the difficult free ball before committing." : "All three are playable. Choose the most forgiving."}</p>
-            </>}
+            </> : selectionStep === 'ball' ? <BallSelectionStep scenario={scenario} selectedBall={selectedBall} selectableBallIds={selectableBallIds} preparing={preparing} ready={Boolean(prepared)} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectBall} /> : <FinishSelectionStep scenario={scenario} selectedBall={selectedBall} finishOptions={finishOptions} selectedOptionId={selectedOptionId} busy={busy} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectOption} />}
             {error && <div role="alert" className="error-message"><p>{error}</p>{!prepared && !preparing && <Button variant="outline" size="sm" onClick={() => setPrepareAttempt(attempt => attempt + 1)}>Retry preparation</Button>}</div>}
           </div>
           <div className="shot-panel-actions">
