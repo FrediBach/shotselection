@@ -22,7 +22,7 @@ export function prepareRoundAsync(scenario: Scenario, options: { signal?: AbortS
 }
 
 export function analyzeRoundAsync(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions & { signal?: AbortSignal } = {}): Promise<RoundAnalysis> {
-  return runWorker({ method: 'analyze', prepared, selection, options: { samples: options.samples } }, options.signal);
+  return runWorker({ method: 'analyze', prepared, selection, options: { samples: options.samples, talents: options.talents } }, options.signal);
 }
 
 /** A separate worker keeps sensitivity calculations independent of round scores. */

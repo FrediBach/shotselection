@@ -1,12 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
-import { startLevel } from './helpers'
+import { startLevel, chooseDefaultCharacter } from './helpers'
+import { DEFAULT_CHARACTER } from '../src/engine/characters'
 
 async function seedLesson(page: Page, level: number, fallback = true, course: 'current' | 'banks' | 'legacy' = 'current') {
-  await page.addInitScript(({ level, fallback, course }) => {
+  await page.addInitScript(({ level, fallback, course, character }) => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     if (!localStorage.getItem('shot-selection-session')) localStorage.setItem('shot-selection-session', JSON.stringify({
-      scoringVersion: 2, ...(course === 'legacy' ? {} : { courseVersion: course === 'banks' ? 2 : 3 }), completedLessons: level - 1, level, score: (level - 1) * 50,
+      ...(level === 1 ? { character } : {}), scoringVersion: 2, ...(course === 'legacy' ? {} : { courseVersion: course === 'banks' ? 2 : 3 }), completedLessons: level - 1, level, score: (level - 1) * 50,
       rounds: level - 1, perfect: 0, seed: 71431,
     }))
     if (fallback) {
@@ -16,7 +17,7 @@ async function seedLesson(page: Page, level: number, fallback = true, course: 'c
         return original.call(this, type as '2d', ...args)
       } as typeof original
     }
-  }, { level, fallback, course })
+  }, { level, fallback, course, character: DEFAULT_CHARACTER })
 }
 
 async function chooseFirstOption(page: Page, mode: 'finish' | 'stroke' = 'finish') {
@@ -321,6 +322,7 @@ test('the final lesson reaches 100% and reloads its summary without scoring twic
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toEqual(saved)
   }
   await page.getByRole('button', { name: 'Start a new course', exact: true }).click()
+  await chooseDefaultCharacter(page)
   await expect(page.getByRole('dialog', { name: 'Your first pot', exact: true })).toContainText('New scenario')
   await startLevel(page, 1)
   await expect(page.getByRole('progressbar', { name: 'Game completion' })).toHaveAttribute('aria-valuetext', '0 of 80 levels complete')

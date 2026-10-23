@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { startLevel } from './helpers'
+import { startLevel, chooseDefaultCharacter } from './helpers'
+import { DEFAULT_CHARACTER } from '../src/engine/characters'
 
 const visualViewports = [
   { name: 'desktop', width: 1440, height: 1050 },
@@ -86,10 +87,10 @@ function statValue(page: Page, label: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.addInitScript(character => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
-    if (!localStorage.getItem('shot-selection-session')) localStorage.setItem('shot-selection-session', JSON.stringify({ level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
-  })
+    if (!localStorage.getItem('shot-selection-session')) localStorage.setItem('shot-selection-session', JSON.stringify({ character, level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
+  }, DEFAULT_CHARACTER)
 })
 
 for (const viewport of visualViewports) {
@@ -289,7 +290,7 @@ test('legacy session points migrate once and retain progress and correct stats',
   await expect(page.getByRole('button', { name: 'View session stats, 0 points', exact: true })).toBeVisible()
   const legacy = { level: 3, score: 1.5, rounds: 2, perfect: 1, seed: 71431 }
   await page.evaluate(saved => localStorage.setItem('shot-selection-session', JSON.stringify(saved)), legacy)
-  const migrated = { ...legacy, score: 150, scoringVersion: 2, courseVersion: 3, completedLessons: 2 }
+  const migrated = { ...legacy, score: 150, scoringVersion: 2, courseVersion: 3, completedLessons: 2, character: DEFAULT_CHARACTER }
   for (let reload = 0; reload < 2; reload++) {
     await page.reload()
     await startLevel(page, 3)
@@ -331,6 +332,7 @@ test('360px mobile wizard works with keyboard, help and reset in the overhead vi
   await expect(finishC).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: 'Restart session' }).click()
   await page.getByRole('button', { name: 'Start fresh' }).click()
+  await chooseDefaultCharacter(page)
   await startLevel(page, 1)
   await expect(page.getByRole('button', { name: 'Choose a finish', exact: true })).toBeDisabled()
   await expect(page.locator('.finish-option')).toHaveCount(0)

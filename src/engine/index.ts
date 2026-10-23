@@ -1,4 +1,5 @@
 export * from './types';
+export { DEFAULT_CHARACTER, PREMADE_CHARACTERS, TALENT_DEFINITIONS, normalizePlayerCharacter, talentNoiseMultiplier } from './characters';
 export { TABLE, POCKETS, PHYSICS_NOTES, positionToleranceForLevel } from './constants';
 export { CUSHIONS, POCKET_GEOMETRY, RAILS, cushionJawOffset } from './table-geometry';
 export { generateScenario } from './scenarios';

@@ -1,16 +1,21 @@
 import { TABLE } from './constants';
+import { DEFAULT_CHARACTER, talentNoiseMultiplier } from './characters';
 import { clamp, distance, normalRandom, seededRandom } from './math';
 import { simulateShot } from './physics';
 import { scoreSelection } from './scoring';
 import { evaluateShotObjective, positionToleranceForScenario } from './objectives';
 export { pointsFor } from './scoring';
-import type { AnalyzeOptions, ObjectBallTrial, PreparedRound, RoundAnalysis, Scenario, Selection, ShotAnalysis, ShotPlan, SimulationBall, Vec2 } from './types';
+import type { AnalyzeOptions, CharacterTalents, ObjectBallTrial, PreparedRound, RoundAnalysis, Scenario, Selection, ShotAnalysis, ShotPlan, SimulationBall, Vec2 } from './types';
 
-export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): ShotAnalysis {
+export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, talents: CharacterTalents = DEFAULT_CHARACTER.talents): ShotAnalysis {
   const count = clamp(Math.floor(samples), 8, 128);
   const tolerance = positionToleranceForScenario(scenario);
   const random = seededRandom(scenario.seed ^ 0x3A7B91);
   const nominal = simulateShot(scenario, plan);
+  const angleNoise = talentNoiseMultiplier(talents.anglePrecision);
+  const englishNoise = talentNoiseMultiplier(talents.englishPrecision);
+  const strengthNoise = talentNoiseMultiplier(talents.strengthPrecision);
+  const spinNoise = talentNoiseMultiplier(talents.spinPrecision);
   const endpoints: Vec2[] = [];
   const samplePaths: Vec2[][] = [];
   const sampleObjectPaths: ObjectBallTrial[] = [];
@@ -27,10 +32,10 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): S
   for (let index = 0; index < count; index++) {
     const perturbed: ShotPlan = {
       ...plan,
-      angle: plan.angle + normalRandom(random) * (0.0044 + Math.abs(plan.sideSpin) * 0.000025),
-      speed: plan.speed * (1 + normalRandom(random) * 0.035),
-      topSpin: plan.topSpin + normalRandom(random) * 0.085,
-      sideSpin: plan.sideSpin + normalRandom(random) * 3,
+      angle: plan.angle + normalRandom(random) * (0.0044 + Math.abs(plan.sideSpin) * 0.000025) * angleNoise,
+      speed: plan.speed * (1 + normalRandom(random) * 0.035 * strengthNoise),
+      topSpin: plan.topSpin + normalRandom(random) * 0.085 * spinNoise,
+      sideSpin: plan.sideSpin + normalRandom(random) * 3 * englishNoise,
     };
     const simulation = simulateShot(scenario, perturbed, { record: false, recordPaths: true });
     sampleBallEnds.push(simulation.finalBalls);
@@ -87,7 +92,7 @@ export function analyzeRound(prepared: PreparedRound, selection: Selection, opti
   const { scenario } = prepared;
   // Each fixed plan is evaluated exactly once. No target optimization or unseen
   // alternatives are introduced after the player has made their decision.
-  const candidates = offered.map(option => analyzeShot(scenario, option.plan, options.samples ?? 48));
+  const candidates = offered.map(option => analyzeShot(scenario, option.plan, options.samples ?? 48, options.talents));
   const selected = candidates.find(candidate => candidate.plan.id === chosen.id)!;
   candidates.sort((a, b) => b.score - a.score);
   const best = candidates[0];

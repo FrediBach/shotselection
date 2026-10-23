@@ -1,9 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TOTAL_LEVELS } from '../engine/course'
+import { DEFAULT_CHARACTER, PREMADE_CHARACTERS } from '../engine/characters'
+import type { PlayerCharacter } from '../engine/types'
 import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY } from './session'
 
 const legacySession = { level: 8, score: 4.5, rounds: 7, perfect: 3, seed: 91822 }
-const currentSession = { ...legacySession, scoringVersion: 2, courseVersion: 3, completedLessons: 7, score: 450 }
+const currentSession = { ...legacySession, scoringVersion: 2, courseVersion: 3, completedLessons: 7, score: 450, character: DEFAULT_CHARACTER }
+const customCharacter: PlayerCharacter = {
+  id: 'custom', name: 'Custom player',
+  talents: { anglePrecision: 100, englishPrecision: 35, strengthPrecision: 0, spinPrecision: 80 },
+}
 
 function storedSession(value: unknown) {
   const getItem = vi.fn().mockReturnValue(JSON.stringify(value))
@@ -14,16 +20,93 @@ function storedSession(value: unknown) {
 function expectFresh() {
   expect(loadSession()).toEqual({
     scoringVersion: 2, courseVersion: 3, completedLessons: 0, level: 1, score: 0, rounds: 0, perfect: 0,
-    seed: expect.any(Number),
+    seed: expect.any(Number), character: null,
   })
 }
 
 afterEach(() => { vi.unstubAllGlobals() })
 
+describe('playthrough characters', () => {
+  it.each(PREMADE_CHARACTERS)('keeps the $name preset after reloading', character => {
+    const selected = freshSession(character)
+    storedSession(selected)
+    expect(loadSession()).toEqual(selected)
+    expect(selected.character).toEqual(character)
+    expect(selected.character).not.toBe(character)
+    expect(selected.character?.talents).not.toBe(character.talents)
+  })
+
+  it('keeps custom talents, score, progress, and seed across lessons and reloads', () => {
+    const initial = freshSession(customCharacter)
+    const played = completeLesson(initial, 1, 80)
+    expect(played).toMatchObject({ character: customCharacter, completedLessons: 1, level: 2, rounds: 1, score: 80, seed: initial.seed })
+    storedSession(played)
+    const reloaded = loadSession()
+    expect(reloaded).toEqual(played)
+    const next = completeLesson(reloaded, 2, 100)
+    expect(next).toMatchObject({ character: customCharacter, completedLessons: 2, level: 3, rounds: 2, score: 180, perfect: 1, seed: initial.seed })
+  })
+
+  it('copies selected talents so editing a draft cannot change the playthrough', () => {
+    const draft = { ...customCharacter, talents: { ...customCharacter.talents } }
+    const selected = freshSession(draft)
+    draft.talents.anglePrecision = 5
+    expect(selected.character).toEqual(customCharacter)
+  })
+
+  it('starts a new character selection when resetting a playthrough', () => {
+    const played = completeLesson(freshSession(customCharacter), 1, 100)
+    expect(played.character).toEqual(customCharacter)
+    expect(freshSession()).toMatchObject({ character: null, completedLessons: 0, level: 1, score: 0, rounds: 0, perfect: 0 })
+  })
+
+  it('keeps fresh sessions without characters ready for selection', () => {
+    const { character: _character, ...saved } = freshSession()
+    storedSession(saved)
+    expect(loadSession()).toEqual({ ...saved, character: null })
+  })
+
+  it('assigns the original precision to existing progress without a character', () => {
+    const { character: _character, ...saved } = currentSession
+    storedSession(saved)
+    expect(loadSession()).toEqual({ ...saved, character: DEFAULT_CHARACTER })
+  })
+
+  it.each([
+    ['absent', undefined],
+    ['null', null],
+    ['string', 'custom'],
+    ['array', []],
+    ['missing name', { ...customCharacter, name: undefined }],
+    ['blank name', { ...customCharacter, name: '   ' }],
+    ['overlong name', { ...customCharacter, name: 'x'.repeat(41) }],
+    ['unknown id', { ...customCharacter, id: 'unknown' }],
+    ['missing talents', { ...customCharacter, talents: undefined }],
+    ['missing angle precision', { ...customCharacter, talents: { ...customCharacter.talents, anglePrecision: undefined } }],
+    ['negative angle precision', { ...customCharacter, talents: { ...customCharacter.talents, anglePrecision: -1 } }],
+    ['English precision above maximum', { ...customCharacter, talents: { ...customCharacter.talents, englishPrecision: 101 } }],
+    ['string strength precision', { ...customCharacter, talents: { ...customCharacter.talents, strengthPrecision: '50' } }],
+    ['nonfinite spin precision', { ...customCharacter, talents: { ...customCharacter.talents, spinPrecision: Infinity } }],
+  ])('recovers from %s character data without losing earned progress', (_label, character) => {
+    storedSession({ ...currentSession, character })
+    expect(loadSession()).toEqual(currentSession)
+    const unplayed = { ...freshSession(), character }
+    storedSession(unplayed)
+    expect(loadSession()).toEqual({ ...unplayed, character: null })
+  })
+
+  it('rejects numeric overflow in saved talents without resetting earned stats', () => {
+    const serialized = JSON.stringify({ ...currentSession, character: customCharacter })
+      .replace('"anglePrecision":100', '"anglePrecision":1e400')
+    vi.stubGlobal('localStorage', { getItem: () => serialized })
+    expect(loadSession()).toEqual(currentSession)
+  })
+})
+
 describe('session scoring migration', () => {
   it('starts a fresh session on the 100-point scale', () => {
     const session = freshSession()
-    expect(session).toMatchObject({ scoringVersion: 2, courseVersion: 3, level: 1, score: 0, rounds: 0, perfect: 0 })
+    expect(session).toMatchObject({ scoringVersion: 2, courseVersion: 3, level: 1, score: 0, rounds: 0, perfect: 0, character: null })
     expect(Number.isInteger(session.seed)).toBe(true)
     expect(session.seed).toBeGreaterThanOrEqual(0)
     expect(session.seed).toBeLessThan(1000000)
@@ -122,7 +205,7 @@ describe('session scoring migration', () => {
 
 describe('course progression', () => {
   it('awards a lesson once and preserves the next unfinished level', () => {
-    const initial = freshSession()
+    const initial = freshSession(DEFAULT_CHARACTER)
     const completed = completeLesson(initial, 1, 80)
     expect(completed).toMatchObject({ completedLessons: 1, level: 2, rounds: 1, score: 80, perfect: 0 })
     expect(completeLesson(completed, 1, 100)).toBe(completed)
@@ -131,7 +214,7 @@ describe('course progression', () => {
   })
 
   it('keeps completed courses complete after reloading', () => {
-    let session = freshSession()
+    let session = freshSession(DEFAULT_CHARACTER)
     for (let level = 1; level <= TOTAL_LEVELS; level++) session = completeLesson(session, level, 100)
     expect(session).toMatchObject({ level: 81, completedLessons: 80, score: 8000, rounds: 80, perfect: 80 })
     expect(completeLesson(session, TOTAL_LEVELS + 1, 100)).toBe(session)
@@ -143,24 +226,24 @@ describe('course progression', () => {
     const saved = { scoringVersion: 2, completedLessons: 18, level: 19, rounds: 18, score: 1260, perfect: 4, seed: 100 }
     storedSession(saved)
     const resumed = loadSession()
-    expect(resumed).toEqual({ ...saved, courseVersion: 3 })
+    expect(resumed).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER })
     expect(completeLesson(resumed, 18, 100)).toBe(resumed)
     const next = completeLesson(resumed, 19, 80)
-    expect(next).toEqual({ ...saved, courseVersion: 3, completedLessons: 19, level: 20, rounds: 19, score: 1340 })
+    expect(next).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 19, level: 20, rounds: 19, score: 1340 })
     storedSession(next)
     expect(loadSession()).toEqual(next)
   })
 
   it('resumes legacy endless sessions at the new banks while keeping tournament credit and earned scores', () => {
     storedSession({ scoringVersion: 2, level: 91, rounds: 90, score: 6300, perfect: 12, seed: 100 })
-    expect(loadSession()).toEqual({ scoringVersion: 2, courseVersion: 3, completedLessons: 50, level: 51, carriedTournamentLessons: 10, score: 6300, rounds: 90, perfect: 12, seed: 100 })
+    expect(loadSession()).toEqual({ scoringVersion: 2, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 50, level: 51, carriedTournamentLessons: 10, score: 6300, rounds: 90, perfect: 12, seed: 100 })
   })
 
   it.each([50, 54, 60])('inserts banks and plants after %s original completed levels without losing tournament credit', completedLessons => {
     const saved = { scoringVersion: 2, completedLessons, level: completedLessons + 1, rounds: completedLessons, score: completedLessons * 80, perfect: 4, seed: 100 }
     storedSession(saved)
     let session = loadSession()
-    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: 50, level: 51,
+    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 50, level: 51,
       ...(completedLessons > 50 ? { carriedTournamentLessons: completedLessons - 50 } : {}) })
     storedSession(session)
     expect(loadSession()).toEqual(session)
@@ -175,7 +258,7 @@ describe('course progression', () => {
     session = loadSession()
     expect(session).toMatchObject({ completedLessons: 69, level: 70, rounds: completedLessons + 19 })
     session = completeLesson(session, 70, 100)
-    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: completedLessons + 20,
+    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: completedLessons + 20,
       level: completedLessons + 21, rounds: completedLessons + 20, score: saved.score + 1640, perfect: 6 })
     expect(completeLesson(session, 70, 100)).toBe(session)
     storedSession(session)
@@ -187,7 +270,7 @@ describe('course progression', () => {
       rounds: completedLessons, score: completedLessons * 80, perfect: 4, seed: 100 }
     storedSession(saved)
     let session = loadSession()
-    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: 60, level: 61,
+    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 60, level: 61,
       ...(completedLessons > 60 ? { carriedTournamentLessons: completedLessons - 60 } : {}) })
     storedSession(session)
     expect(loadSession()).toEqual(session)
@@ -196,7 +279,7 @@ describe('course progression', () => {
     session = loadSession()
     expect(session).toMatchObject({ completedLessons: 69, level: 70, rounds: completedLessons + 9 })
     session = completeLesson(session, 70, 100)
-    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: completedLessons + 10,
+    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: completedLessons + 10,
       level: completedLessons + 11, rounds: completedLessons + 10, score: saved.score + 820, perfect: 5 })
     storedSession(session)
     expect(loadSession()).toEqual(session)
@@ -208,32 +291,32 @@ describe('course progression', () => {
       carriedTournamentLessons: 4, rounds: 60, score: 4800, perfect: 4, seed: 100 }
     storedSession(saved)
     let session = loadSession()
-    expect(session).toEqual({ ...saved, courseVersion: 3 })
+    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER })
     for (let level = 57; level <= 60; level++) session = completeLesson(session, level, 80)
     expect(session).toMatchObject({ completedLessons: 60, level: 61, carriedTournamentLessons: 4, rounds: 64 })
     storedSession(session)
     expect(loadSession()).toEqual(session)
     for (let level = 61; level <= 70; level++) session = completeLesson(session, level, 80)
-    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: 74, level: 75,
+    expect(session).toEqual({ ...saved, courseVersion: 3, character: DEFAULT_CHARACTER, completedLessons: 74, level: 75,
       carriedTournamentLessons: undefined, rounds: 74, score: 5920 })
     storedSession(session)
     expect(loadSession()).toEqual(session)
   })
 
   it.each([7, 50, 56, 59])('preserves v2 progress before plants at %s completed lessons', completedLessons => {
-    const saved = { ...freshSession(), courseVersion: 2, completedLessons, level: completedLessons + 1, rounds: completedLessons }
+    const saved = { ...freshSession(DEFAULT_CHARACTER), courseVersion: 2, completedLessons, level: completedLessons + 1, rounds: completedLessons }
     storedSession(saved)
     expect(loadSession()).toEqual({ ...saved, courseVersion: 3 })
   })
 
   it.each([60, 64, 69, 74])('keeps current progress at %s completed lessons without repeating the insertion', completedLessons => {
-    const saved = { ...freshSession(), completedLessons, level: completedLessons + 1, rounds: completedLessons }
+    const saved = { ...freshSession(DEFAULT_CHARACTER), completedLessons, level: completedLessons + 1, rounds: completedLessons }
     storedSession(saved)
     expect(loadSession()).toEqual(saved)
   })
 
   it('keeps current bank progress on reload without applying the insertion migration again', () => {
-    const saved = { ...freshSession(), completedLessons: 56, level: 57, rounds: 56, score: 4480, perfect: 4 }
+    const saved = { ...freshSession(DEFAULT_CHARACTER), completedLessons: 56, level: 57, rounds: 56, score: 4480, perfect: 4 }
     storedSession(saved)
     expect(loadSession()).toEqual(saved)
   })

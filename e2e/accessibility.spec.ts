@@ -1,16 +1,17 @@
 import { expect, test } from '@playwright/test'
 import { startLevel } from './helpers'
+import { DEFAULT_CHARACTER } from '../src/engine/characters'
 
 test.beforeEach(async ({ page }) => {
   // These keyboard and screen-reader behaviors do not need a graphics context.
-  await page.addInitScript(() => {
+  await page.addInitScript(character => {
     const original = HTMLCanvasElement.prototype.getContext
     HTMLCanvasElement.prototype.getContext = function(type: string, ...args: unknown[]) {
       if (type === 'webgl2') return null
       return original.call(this, type as '2d', ...args)
     } as typeof original
-    localStorage.setItem('shot-selection-session', JSON.stringify({ level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
-  })
+    localStorage.setItem('shot-selection-session', JSON.stringify({ character, level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
+  }, DEFAULT_CHARACTER)
 })
 
 test('help leads to a focused briefing and both dialogs restore keyboard focus when reopened', async ({ page }) => {

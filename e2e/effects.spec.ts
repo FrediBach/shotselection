@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { startLevel } from './helpers'
+import { DEFAULT_CHARACTER } from '../src/engine/characters'
 import { generateScenario } from '../src/engine/scenarios'
 import { prepareRound } from '../src/engine/preparation'
 import { analyzeRound } from '../src/engine/analysis'
@@ -23,9 +24,9 @@ test.beforeAll(() => {
 })
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.addInitScript(character => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
-    if (!localStorage.getItem('shot-selection-session')) localStorage.setItem('shot-selection-session', JSON.stringify({ scoringVersion: 2, level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
+    if (!localStorage.getItem('shot-selection-session')) localStorage.setItem('shot-selection-session', JSON.stringify({ character, scoringVersion: 2, level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
     // Count real Web Audio starts without replacing browser audio behavior.
     const log = { starts: 0, states: [] as string[] }
     Object.assign(window, { soundLog: log })
@@ -40,7 +41,7 @@ test.beforeEach(async ({ page }) => {
       }
       return oscillator
     }
-  })
+  }, DEFAULT_CHARACTER)
 })
 
 async function soundStarts(page: Page) {

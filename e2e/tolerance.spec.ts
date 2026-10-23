@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { startLevel } from './helpers'
+import { DEFAULT_CHARACTER } from '../src/engine/characters'
 import type { PreparedRound, RoundAnalysis, ShotTolerance, ToleranceAxis } from '../src/engine/types'
 
 interface WorkerObservation {
@@ -24,10 +25,10 @@ const marginRows: { label: string; axis: ToleranceAxis; side: 'negative' | 'posi
 ]
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.addInitScript(character => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
-    localStorage.setItem('shot-selection-session', JSON.stringify({ scoringVersion: 2, level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
+    localStorage.setItem('shot-selection-session', JSON.stringify({ character, scoringVersion: 2, level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
     // The table's existing fallback makes these CPU-worker tests independent of
     // software WebGL performance. The volume remains fully interactive SVG.
     const originalContext = HTMLCanvasElement.prototype.getContext
@@ -68,7 +69,7 @@ test.beforeEach(async ({ page }) => {
       }
     }
     Object.assign(window, { Worker: ObservedWorker, toleranceWorkers: observations })
-  })
+  }, DEFAULT_CHARACTER)
 })
 
 function panel(page: Page) {

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
-import { startLevel } from './helpers'
+import { startLevel, chooseDefaultCharacter } from './helpers'
+import { DEFAULT_CHARACTER } from '../src/engine/characters'
 
 test.beforeEach(async ({ page }) => {
   // Onboarding behavior does not depend on a graphics context.
@@ -12,11 +13,12 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('first visit shows help, remembers dismissal and supports manual reopening', async ({ page }) => {
+test('first visit chooses a character before help, remembers dismissal and supports manual reopening', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
+  await chooseDefaultCharacter(page)
   await expect(page.getByRole('dialog')).toContainText('Play the percentages.')
   await expect(page.locator('.intro')).toHaveCount(0)
   await expect(page.getByText('Good players make shots.', { exact: false })).toHaveCount(0)
@@ -47,9 +49,9 @@ test('first visit shows help, remembers dismissal and supports manual reopening'
 
 for (const dismissal of ['Escape', 'close button', 'outside click'] as const) {
   test(`help also remembers ${dismissal} dismissal for a visitor with saved progress`, async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('shot-selection-session', JSON.stringify({ level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
-    })
+    await page.addInitScript(character => {
+      localStorage.setItem('shot-selection-session', JSON.stringify({ character, level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431 }))
+    }, DEFAULT_CHARACTER)
     await page.goto('/')
     await expect(page.getByRole('dialog')).toContainText('Play the percentages.')
     if (dismissal === 'Escape') await page.keyboard.press('Escape')
@@ -75,6 +77,7 @@ test('blocked browser storage leaves help and shot selection usable', async ({ p
     Storage.prototype.setItem = blocked
   })
   await page.goto('/')
+  await chooseDefaultCharacter(page)
   await expect(page.getByRole('dialog')).toContainText('Play the percentages.')
   await page.getByRole('button', { name: 'Let’s read the table' }).click()
   await startLevel(page, 1)

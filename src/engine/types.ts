@@ -1,5 +1,18 @@
 import type { RoundScore } from './scoring';
 
+/** Stroke consistency from 0 (least precise) to 100 (most precise). */
+export interface CharacterTalents {
+  anglePrecision: number;
+  englishPrecision: number;
+  strengthPrecision: number;
+  spinPrecision: number;
+}
+export interface PlayerCharacter {
+  id: string;
+  name: string;
+  talents: CharacterTalents;
+}
+
 /** All positions are in metres; x: 0..2.54, y: 0..1.27; cue ball id is 0. */
 export interface Vec2 { x: number; y: number }
 export interface Ball { id: number; position: Vec2 }
@@ -141,7 +154,7 @@ export interface RoundAnalysis {
   samples: number;
   positionTolerance: number;
 }
-export interface AnalyzeOptions { samples?: number }
+export interface AnalyzeOptions { samples?: number; talents?: CharacterTalents }
 /** Deltas from the fixed nominal stroke: degrees, rad/s, and percent of speed. */
 export type ToleranceAxis = 'angle' | 'sideSpin' | 'speed';
 export interface ToleranceBound {
