@@ -127,7 +127,8 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       recordImpact('ball', `ball:${body.id}:${event.body.id}`, event.contact.getImpactVelocityAlongNormal());
     });
   }
-  const object = bodies.find(ball => ball.id === plan.ballId);
+  const potBallId = plan.potBallId ?? plan.ballId;
+  const object = bodies.find(ball => ball.id === potBallId);
   const appendPathPoint = (path: Vec2[], body: Body) => {
     const previous = path.at(-1);
     // Suppress stationary repetitions, including after a ball has dropped.
@@ -170,7 +171,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
         // Save the exact physics capture location on the actual drop step. The
         // next 30 Hz snapshot may be later; never extend paths to pocket centers.
         if (ball.id === 0) appendPathPoint(simulation.cuePath, ball.body);
-        if (ball.id === plan.ballId) appendPathPoint(simulation.objectPath, ball.body);
+        if (ball.id === potBallId) appendPathPoint(simulation.objectPath, ball.body);
       }
     }
     simulation.duration = step * TABLE.step;

@@ -16,6 +16,7 @@ interface Lesson {
   layout: readonly (readonly [number, number])[];
   position?: { radius: number; maxCutAngle: number };
   bank?: { ballId: number; minCushions: number };
+  plant?: { ballId: number; targetBallId: number; pocketId: number };
 }
 
 /** Authored layouts keep the teaching problem intact. Seeded reflections vary
@@ -725,6 +726,97 @@ const LESSONS: readonly Lesson[] = [
     layout: [[1.7, 0.9], [0.22, 0.16], [1.72541, 0.99154], [1.62389, 0.95685], [1.61943, 0.84967], [1.71772, 0.80667], [1.79355, 0.88344]],
     bank: { ballId: 1, minCushions: 3 },
   },
+  // Plants: read the line through two object balls and compare it with a demanding direct pot.
+  {
+    title: 'Two balls, one pocket',
+    description: 'Compare the 1–2 plant with a long cut on the free 3.',
+    lesson: 'A plant uses one object ball to pot another: the cue ball hits the 1, which sends the 2 toward the pocket. Read the line through both balls, then compare it with the free ball and its cue-ball finish.',
+    takeaway: 'Two contacts can be a sensible choice when the pair points naturally into the pocket.',
+    briefing: { focus: 'Read through the pair', gotcha: 'Select the 1 to play the plant. The 2 is its potting target; a direct pot on the free 3 is the alternative.' },
+    layout: [[1.00, 1.05], [1.27, 0.37], [1.27, 0.30], [1.85, 0.85]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
+  {
+    title: 'Check the natural line',
+    description: 'A tempting pair competes with another demanding free-ball cut.',
+    lesson: 'Extend the line between the centers of the 1 and 2 all the way to the pocket. Decide whether that natural plant line has room to enter, then compare the longer shot on the 3.',
+    takeaway: 'A ball near a pocket does not make a plant work; the line between the pair decides its direction.',
+    briefing: { focus: 'Extend the line to the pocket', gotcha: 'Two nearby balls can look aligned at a glance. Check where their line reaches the pocket mouth.' },
+    layout: [[0.70, 1.02], [1.288, 0.37], [1.27, 0.30], [1.55, 0.97]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
+  {
+    title: 'A pocket has edges',
+    description: 'Read a less generous plant line against a long free-ball route.',
+    lesson: 'Judge how much space the 2 has on either side of its intended path. A plant that can drop on one exact stroke may have less margin than a longer direct pot.',
+    takeaway: 'A playable plant still needs enough pocket margin to survive a small contact error.',
+    briefing: { focus: 'Judge the spare pocket width', gotcha: 'Seeing a line into the pocket is only the start. A line near a facing can turn a small error into a miss.' },
+    layout: [[0.67, 1.02], [1.274, 0.39], [1.27, 0.32], [1.70, 0.85]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
+  {
+    title: 'Approach the pair from an angle',
+    description: 'A wider cue-ball approach changes the plant without moving its pocket.',
+    lesson: 'Read the contact on the 1 as well as the line from the 1 through the 2. Compare how much precision the angled first contact needs with the available direct pot.',
+    takeaway: 'A useful pair alignment still depends on delivering the first ball along that line.',
+    briefing: { focus: 'Include the first contact', gotcha: 'The pair can point toward a pocket while the approach to the first ball remains demanding.' },
+    layout: [[0.40, 0.98], [1.27, 0.41], [1.27, 0.34], [1.55, 0.97]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
+  {
+    title: 'Distance after the transfer',
+    description: 'A corner-pocket plant sends the 2 farther after the transfer.',
+    lesson: 'Compare the whole plant: cue-ball approach, transfer between the pair, and the 2’s run to the pocket. Then trace the free-ball pot using the same checks.',
+    takeaway: 'A longer journey after the second contact magnifies a small directional error in the plant.',
+    briefing: { focus: 'Follow the second ball to the pocket', gotcha: 'A short gap between the pair does not make the final pot short. Include the distance beyond the 2.' },
+    layout: [[1.00, 1.05], [0.91068, 0.51490], [0.85, 0.48], [1.70, 0.85]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 0 },
+  },
+  {
+    title: 'Separate closeness from alignment',
+    description: 'A close pair and a difficult free ball call for a careful line check.',
+    lesson: 'Check the plant’s direction before comparing its stroke settings. Weigh the available margin on the 2 against the distance and angle of the 3, then include the cue-ball finish.',
+    takeaway: 'When the natural plant line misses, a demanding direct pot can still be the better investment.',
+    briefing: { focus: 'Verify the pair before choosing pace', gotcha: 'More speed does not automatically repair a plant line that reaches the pocket facing.' },
+    layout: [[0.49, 1.08], [1.281, 0.50], [1.27, 0.43], [1.92, 0.79]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
+  {
+    title: 'Give the gap its due',
+    description: 'More space between the pair makes the transfer another precision task.',
+    lesson: 'Trace the first ball across the gap before judging the final pot. Compare that extra contact demand with the free-ball cut, including how each stroke controls the cue ball.',
+    takeaway: 'A gap between the pair gives a small error more room to change the second contact.',
+    briefing: { focus: 'Budget margin for both contacts', gotcha: 'The plant has two aiming demands. A clear first contact does not guarantee the second contact repeats.' },
+    layout: [[0.48, 1.06], [1.27, 0.53], [1.27, 0.40], [1.55, 0.97]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
+  {
+    title: 'The tempting transfer',
+    description: 'A narrow plant and a severe direct pot offer competing risks.',
+    lesson: 'Make a complete comparison: pair alignment, first-contact angle, potting distance, and finish. Decide which route has more room for the same small stroke errors.',
+    takeaway: 'A narrow plant can be playable without being the most repeatable complete shot.',
+    briefing: { focus: 'Compare two demanding routes', gotcha: 'One successful replay cannot settle this choice. Consider how nearby strokes change both the pot and the finish.' },
+    layout: [[0.60, 1.07], [1.27, 0.50], [1.27, 0.40], [1.85, 0.85]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
+  {
+    title: 'A small difference in margin',
+    description: 'Weigh a delicate plant alignment against a long cut on the free ball.',
+    lesson: 'Use the same routine on both candidates without assuming that the direct pot is safer. Compare the contact margins first, then use the cue-ball travel to distinguish their best strokes.',
+    takeaway: 'When the potting chances are close, the cue-ball finish can decide which complete shot repeats.',
+    briefing: { focus: 'Let the finish break a close decision', gotcha: 'The best plant stroke and best free-ball stroke may use different pace and spin. Compare the strongest case for each route.' },
+    layout: [[0.70, 1.02], [1.276, 0.41], [1.27, 0.32], [1.70, 0.85]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
+  {
+    title: 'Choose the better risk',
+    description: 'Finish with a close decision between a sensitive plant and a hard free ball.',
+    lesson: 'Build your own comparison of the two complete shots. Read both contacts of the plant, the free-ball cut, and all three finishes before committing. Use the ensemble afterward to test your reasoning.',
+    takeaway: 'The better risk is the complete shot with more room for error, even when neither option feels comfortable.',
+    briefing: { focus: 'Commit to a complete comparison', gotcha: 'Neither the shorter pot nor the simpler-looking route wins automatically. Include every contact and the final cue-ball control.' },
+    layout: [[0.70, 1.02], [1.274, 0.41], [1.27, 0.32], [1.85, 0.85]],
+    plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
+  },
   // Tournament table: introduce one idea, develop it, then combine it with tighter demands.
   {
     title: 'The pressure pot',
@@ -873,6 +965,10 @@ export function generateScenario(level: number, seed = 71431 + level * 919): Sce
   const { chapter, chapterIndex, lessonIndex, lessonCount } = getCourseProgress(safeLevel - 1);
   const mirrorX = safeLevel > 1 && random() > 0.5;
   const mirrorY = safeLevel > 1 && random() > 0.5;
+  const reflectedPocket = (id: number) => {
+    const x = mirrorX ? [2, 1, 0, 5, 4, 3][id] : id;
+    return mirrorY ? [5, 4, 3, 2, 1, 0][x] : x;
+  };
   const balls: Ball[] = lesson.layout.map(([x, y], id) => ({
     id,
     position: { x: mirrorX ? TABLE.length - x : x, y: mirrorY ? TABLE.width - y : y },
@@ -890,5 +986,6 @@ export function generateScenario(level: number, seed = 71431 + level * 919): Sce
     },
     ...(lesson.position ? { objective: { kind: 'position' as const, ballId: 1, nextBallId: 2, ...lesson.position } } : {}),
     ...(lesson.bank ? { bank: { ...lesson.bank } } : {}),
+    ...(lesson.plant ? { plant: { ...lesson.plant, pocketId: reflectedPocket(lesson.plant.pocketId) } } : {}),
   };
 }

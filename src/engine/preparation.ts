@@ -4,6 +4,7 @@ import { clamp, distance, dot, normalize, segmentDistance, subtract } from './ma
 import { simulateShot } from './physics';
 import { hasProvenNextShot } from './objectives';
 import { bankPlanForStroke, bankRoutesFor } from './bank-routes';
+import { plantRoutesFor } from './plant-routes';
 import { generateScenario } from './scenarios';
 import type { BallFinishOptions, FinishOption, PreparedRound, Scenario, ShotPlan, Simulation, Vec2 } from './types';
 
@@ -35,15 +36,19 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
 
 function scenarioFingerprint(scenario: Scenario): string {
   let hash = 2166136261;
-  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
 }
 
-function isFeasible(simulation: Simulation, ballId: number): boolean {
+function isSafeFinish(simulation: Simulation, ballId: number): boolean {
   const p = simulation.cueEnd;
-  return simulation.stopped && !simulation.scratch && simulation.firstContact === ballId && simulation.potted.includes(ballId)
+  return simulation.stopped && !simulation.scratch && simulation.firstContact === ballId
     && p.x >= TABLE.ballRadius && p.x <= TABLE.length - TABLE.ballRadius
     && p.y >= TABLE.ballRadius && p.y <= TABLE.width - TABLE.ballRadius;
+}
+
+function isFeasible(simulation: Simulation, ballId: number): boolean {
+  return isSafeFinish(simulation, ballId) && simulation.potted.includes(ballId);
 }
 
 /** Distinct endpoints alone are insufficient: every pair also changes strength
@@ -90,6 +95,31 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     return result;
   };
   let triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
+  const isPlant = scenario.plant?.ballId === ballId;
+  if (isPlant) {
+    const targetBallId = scenario.plant!.targetBallId;
+    const targetStart = scenario.balls.find(ball => ball.id === targetBallId)!.position;
+    for (const route of plantRoutesFor(scenario, ballId)) {
+      for (const multiplier of [0.8, 0.95, 1.15, 1.4, 1.7, 2.1, 2.6]) {
+        for (const topSpin of [-1.1, 0, 1.05]) {
+          const plan: ShotPlan = { id: '', ballId, potBallId: targetBallId, pocketId: route.pocketId,
+            angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin: 0,
+            target: { x: 0, y: 0 }, label: '' };
+          const simulation = simulateShot(scenario, plan, { record: false });
+          const targetEnd = simulation.finalBalls.find(ball => ball.id === targetBallId);
+          if (!isSafeFinish(simulation, ballId) || !targetEnd || distance(targetStart, targetEnd.position) < 0.01) continue;
+          plan.target = { ...simulation.cueEnd };
+          feasible.push({ plan, simulation });
+        }
+      }
+    }
+    const pots = feasible.filter(entry => entry.simulation.potted.includes(targetBallId));
+    // Successful plants receive proven nominal pots, just like direct shots.
+    // A misaligned plant remains selectable with honest simulated miss paths.
+    // This checks nominal feasibility only; ensemble quality never picks labels.
+    triple = chooseTriple(pots, qualifies)
+      ?? chooseTriple(feasible, entry => !pots.length || entry.simulation.potted.includes(targetBallId));
+  }
   if (scenario.bank) {
     for (const route of bankRoutesFor(scenario, ballId)) {
       for (const speed of [1.3, 1.6, 1.95, 2.35, 2.8, 3.3, 3.45, 3.6, 3.8]) {
@@ -110,7 +140,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
       if (triple) break;
     }
   }
-  for (const route of scenario.bank ? [] : routesFor(scenario, ballId)) {
+  for (const route of scenario.bank || isPlant ? [] : routesFor(scenario, ballId)) {
     for (const multiplier of [0.95, 1.2, 1.5, 1.85, 2.3]) {
       for (const topSpin of [-1.1, 0, 1.05]) {
         const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin: 0, target: { x: 0, y: 0 }, label: '' };
@@ -133,12 +163,22 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     const label = (['A', 'B', 'C'] as const)[index];
     const id = `${fingerprint}-ball-${ballId}-${label}`;
     const stroke = entry.plan.topSpin < -0.1 ? 'draw' : entry.plan.topSpin > 0.1 ? 'follow' : 'center';
-    return { id, label, plan: { ...entry.plan, id, label: `Ball ${ballId} · ${label} · ${stroke}` } };
+    const shot = isPlant ? `Plant ${ballId} → ${entry.plan.potBallId}` : `Ball ${ballId}`;
+    return { id, label, plan: { ...entry.plan, id, label: `${shot} · ${label} · ${stroke}` } };
   }) as [FinishOption, FinishOption, FinishOption];
   return { ball: { ballId, options }, target };
 }
 
 function prepareLayout(scenario: Scenario): PreparedRound {
+  if (scenario.plant) {
+    const plant = prepareBall(scenario, scenario.plant.ballId);
+    const freeBalls = scenario.balls.filter(ball => ball.id !== 0 && ball.id !== scenario.plant!.ballId
+      && ball.id !== scenario.plant!.targetBallId).flatMap(ball => {
+      const prepared = prepareBall(scenario, ball.id);
+      return prepared ? [prepared.ball] : [];
+    });
+    return { scenario, balls: plant && freeBalls.length ? [plant.ball, ...freeBalls] : [] };
+  }
   if (scenario.bank) {
     const prepared = prepareBall(scenario, scenario.bank.ballId);
     return { scenario, balls: prepared ? [prepared.ball] : [] };
@@ -155,15 +195,25 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }) };
 }
 
-/** Direct search tries at most 30 nominal strokes per object ball. Bank search
- * tries 12 routes, nine speeds and five spins with bounded angle calibration.
+/** Direct search tries at most 30 nominal strokes per object ball. Plant search
+ * tries 21 strokes on the fixed pair line, retaining physically simulated misses.
+ * Bank search tries 12 routes, nine speeds and five spins with angle calibration.
  * Authored lessons can try three replacement layouts of the same lesson;
  * fixed objectives never fall back to an unrelated easier layout. */
 export function prepareRound(scenario: Scenario): PreparedRound {
   if (!scenario.balls.some(ball => ball.id === 0)) throw new Error('The table needs a cue ball.');
   const objective = scenario.objective;
   const bank = scenario.bank;
+  const plant = scenario.plant;
   if (bank && objective) throw new Error('A bank lesson cannot also define a position objective.');
+  if (plant && (bank || objective)) throw new Error('A plant decision cannot also define a bank or position objective.');
+  if (plant && (!Number.isInteger(plant.ballId) || !Number.isInteger(plant.targetBallId)
+    || plant.ballId <= 0 || plant.targetBallId <= 0 || plant.ballId === plant.targetBallId
+    || !POCKET_GEOMETRY.some(pocket => pocket.id === plant.pocketId)
+    || !scenario.balls.some(ball => ball.id === plant.ballId) || !scenario.balls.some(ball => ball.id === plant.targetBallId)
+    || !scenario.balls.some(ball => ball.id !== 0 && ball.id !== plant.ballId && ball.id !== plant.targetBallId))) {
+    throw new Error('The plant decision needs two distinct object balls, a pocket and at least one free ball.');
+  }
   if (bank && (!Number.isInteger(bank.ballId) || bank.ballId <= 0 || !Number.isInteger(bank.minCushions)
     || bank.minCushions < 1 || bank.minCushions > 3 || !scenario.balls.some(ball => ball.id === bank.ballId))) {
     throw new Error('The bank lesson needs an object ball on the table and one to three required cue-ball cushions.');
@@ -180,15 +230,17 @@ export function prepareRound(scenario: Scenario): PreparedRound {
   if (objective && (!scenario.balls.some(ball => ball.id === objective.ballId) || !scenario.balls.some(ball => ball.id === objective.nextBallId))) {
     throw new Error('The position lesson needs both its first object ball and its reserved next ball on the table.');
   }
-  const attempts = (objective || bank) && !scenario.curriculum ? 1 : 4;
+  const attempts = (objective || bank || plant) && !scenario.curriculum ? 1 : 4;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const generated = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
-    // Regeneration changes only the layout; a lesson's objective is never lost.
-    const layout = { ...scenario, seed: generated.seed, balls: generated.balls };
+    // Regeneration keeps the lesson and its objective; a plant's pocket follows
+    // the regenerated table reflection along with the paired balls.
+    const layout = { ...scenario, seed: generated.seed, balls: generated.balls,
+      ...(plant ? { plant: { ...plant, pocketId: generated.plant?.pocketId ?? plant.pocketId } } : {}) };
     const prepared = prepareLayout(layout);
     if (prepared.balls.length) return prepared;
   }
-  if (scenario.curriculum || objective || bank) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
+  if (scenario.curriculum || objective || bank || plant) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
   const openLayout: Scenario = { ...scenario, seed: 72350, balls: generateScenario(1, 72350).balls };
   const prepared = prepareLayout(openLayout);
   if (!prepared.balls.length) throw new Error('No feasible three-finish layout could be prepared.');

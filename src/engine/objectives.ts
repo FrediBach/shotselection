@@ -89,8 +89,12 @@ export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simula
   const error = distance(simulation.cueEnd, target);
   const banksSatisfied = !scenario.bank || (plan.ballId === scenario.bank.ballId
     && (simulation.cueBanksBeforeContact ?? 0) >= scenario.bank.minCushions);
+  const potBallId = plan.potBallId ?? plan.ballId;
+  const plantSatisfied = !scenario.plant || (plan.ballId === scenario.plant.ballId
+    ? potBallId === scenario.plant.targetBallId && plan.pocketId === scenario.plant.pocketId
+    : plan.ballId !== scenario.plant.targetBallId && potBallId === plan.ballId);
   const legalPot = simulation.stopped && !simulation.scratch && simulation.firstContact === plan.ballId
-    && simulation.potted.includes(plan.ballId) && (!objective || plan.ballId === objective.ballId) && banksSatisfied;
+    && simulation.potted.includes(potBallId) && (!objective || plan.ballId === objective.ballId) && banksSatisfied && plantSatisfied;
   const positioned = simulation.stopped && !simulation.scratch && error <= radius;
   const nextShotAvailable = !objective || directNextShotRoutes(scenario, simulation).length > 0;
   return { legalPot, positioned, nextShotAvailable, success: legalPot && positioned && nextShotAvailable, error, radius };

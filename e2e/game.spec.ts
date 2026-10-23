@@ -289,7 +289,7 @@ test('legacy session points migrate once and retain progress and correct stats',
   await expect(page.getByRole('button', { name: 'View session stats, 0 points', exact: true })).toBeVisible()
   const legacy = { level: 3, score: 1.5, rounds: 2, perfect: 1, seed: 71431 }
   await page.evaluate(saved => localStorage.setItem('shot-selection-session', JSON.stringify(saved)), legacy)
-  const migrated = { ...legacy, score: 150, scoringVersion: 2, courseVersion: 2, completedLessons: 2 }
+  const migrated = { ...legacy, score: 150, scoringVersion: 2, courseVersion: 3, completedLessons: 2 }
   for (let reload = 0; reload < 2; reload++) {
     await page.reload()
     await startLevel(page, 3)

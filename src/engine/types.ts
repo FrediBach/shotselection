@@ -41,11 +41,16 @@ export interface Scenario {
   objective?: PositionObjective;
   /** Cue-ball cushions required before the first contact with this object ball. */
   bank?: { ballId: number; minCushions: number };
+  /** Contact the first ball to send its paired target towards this pocket. */
+  plant?: { ballId: number; targetBallId: number; pocketId: number };
 }
 export interface Selection { ballId: number; optionId: string }
 export interface ShotPlan {
   id: string;
+  /** Ball selected by the player and required at the cue ball's first contact. */
   ballId: number;
+  /** Ball to pot; defaults to the first-contact ball for ordinary shots. */
+  potBallId?: number;
   pocketId: number;
   target: Vec2;
   angle: number;
@@ -87,6 +92,7 @@ export interface Simulation {
   /** Physical impacts for full replays; empty for ensemble trials. */
   soundEvents: SimulationSoundEvent[];
   cuePath: Vec2[];
+  /** Actual trajectory of plan.potBallId (or plan.ballId for a direct shot). */
   objectPath: Vec2[];
   cueEnd: Vec2;
   potted: number[];

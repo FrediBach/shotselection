@@ -263,7 +263,7 @@ svg { flex-shrink: 0; }
 .course-completion > span { max-width: 100px; color: var(--muted); font-size: .75rem; line-height: 1.5; }
 .course-track { background: #ffffff0b; height: 4px; border-radius: 4px; overflow: hidden; margin: 17px 0; }
 .course-track > span { display: block; height: 100%; background: var(--gold); transition: width .4s ease; }
-.course-chapters { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.course-chapters { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(var(--course-chapter-count, 8), minmax(0, 1fr)); gap: 10px; }
 .course-chapters > li { display: flex; align-items: flex-start; gap: 8px; padding: 8px; border: 1px solid transparent; border-radius: 6px; color: var(--muted); }
 .chapter-number { display: grid; place-items: center; height: 24px; min-width: 24px; border: 1px solid #ffffff20; border-radius: 50%; font-size: .65rem; }
 .course-chapters strong { font-size: .75rem; font-weight: 500; line-height: 1.35; display: block; }

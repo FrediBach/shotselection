@@ -3,7 +3,7 @@ import { TOTAL_LEVELS } from '../engine/course'
 import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY } from './session'
 
 const legacySession = { level: 8, score: 4.5, rounds: 7, perfect: 3, seed: 91822 }
-const currentSession = { ...legacySession, scoringVersion: 2, courseVersion: 2, completedLessons: 7, score: 450 }
+const currentSession = { ...legacySession, scoringVersion: 2, courseVersion: 3, completedLessons: 7, score: 450 }
 
 function storedSession(value: unknown) {
   const getItem = vi.fn().mockReturnValue(JSON.stringify(value))
@@ -13,7 +13,7 @@ function storedSession(value: unknown) {
 
 function expectFresh() {
   expect(loadSession()).toEqual({
-    scoringVersion: 2, courseVersion: 2, completedLessons: 0, level: 1, score: 0, rounds: 0, perfect: 0,
+    scoringVersion: 2, courseVersion: 3, completedLessons: 0, level: 1, score: 0, rounds: 0, perfect: 0,
     seed: expect.any(Number),
   })
 }
@@ -23,7 +23,7 @@ afterEach(() => { vi.unstubAllGlobals() })
 describe('session scoring migration', () => {
   it('starts a fresh session on the 100-point scale', () => {
     const session = freshSession()
-    expect(session).toMatchObject({ scoringVersion: 2, courseVersion: 2, level: 1, score: 0, rounds: 0, perfect: 0 })
+    expect(session).toMatchObject({ scoringVersion: 2, courseVersion: 3, level: 1, score: 0, rounds: 0, perfect: 0 })
     expect(Number.isInteger(session.seed)).toBe(true)
     expect(session.seed).toBeGreaterThanOrEqual(0)
     expect(session.seed).toBeLessThan(1000000)
@@ -58,7 +58,7 @@ describe('session scoring migration', () => {
     ['unsupported version', { ...currentSession, scoringVersion: 3 }],
     ['null version', { ...currentSession, scoringVersion: null }],
     ['string version', { ...currentSession, scoringVersion: '2' }],
-    ['unsupported course version', { ...currentSession, courseVersion: 3 }],
+    ['unsupported course version', { ...currentSession, courseVersion: 4 }],
     ['null course version', { ...currentSession, courseVersion: null }],
     ['string course version', { ...currentSession, courseVersion: '2' }],
     ['negative score', { ...currentSession, score: -10 }],
@@ -91,7 +91,13 @@ describe('session scoring migration', () => {
     ['tournament carry before bank chapter', { ...currentSession, carriedTournamentLessons: 1 }],
     ['tournament carry beyond chapter size', { ...currentSession, completedLessons: 50, level: 51, rounds: 61, carriedTournamentLessons: 11 }],
     ['tournament carry ahead of scored rounds', { ...currentSession, completedLessons: 50, level: 51, rounds: 50, carriedTournamentLessons: 1 }],
-    ['tournament carry after bank chapter', { ...currentSession, completedLessons: 60, level: 61, rounds: 61, carriedTournamentLessons: 1 }],
+    ['tournament carry after plant chapter', { ...currentSession, completedLessons: 70, level: 71, rounds: 71, carriedTournamentLessons: 1 }],
+    ['null tournament carry', { ...currentSession, carriedTournamentLessons: null }],
+    ['string tournament carry', { ...currentSession, carriedTournamentLessons: '1' }],
+    ['carry unsupported in original course', { ...currentSession, courseVersion: undefined, completedLessons: 50, level: 51, rounds: 51, carriedTournamentLessons: 1 }],
+    ['v2 carry after bank chapter', { ...currentSession, courseVersion: 2, completedLessons: 60, level: 61, rounds: 61, carriedTournamentLessons: 1 }],
+    ['v2 completion beyond original length', { ...currentSession, courseVersion: 2, completedLessons: 71, level: 72, rounds: 71 }],
+    ['legacy completion beyond original length', { ...currentSession, courseVersion: undefined, completedLessons: 61, level: 62, rounds: 61 }],
   ])('resets safely for %s', (_label, saved) => {
     storedSession(saved)
     expectFresh()
@@ -127,7 +133,7 @@ describe('course progression', () => {
   it('keeps completed courses complete after reloading', () => {
     let session = freshSession()
     for (let level = 1; level <= TOTAL_LEVELS; level++) session = completeLesson(session, level, 100)
-    expect(session).toMatchObject({ level: 71, completedLessons: 70, score: 7000, rounds: 70, perfect: 70 })
+    expect(session).toMatchObject({ level: 81, completedLessons: 80, score: 8000, rounds: 80, perfect: 80 })
     expect(completeLesson(session, TOTAL_LEVELS + 1, 100)).toBe(session)
     storedSession(session)
     expect(loadSession()).toEqual(session)
@@ -137,24 +143,24 @@ describe('course progression', () => {
     const saved = { scoringVersion: 2, completedLessons: 18, level: 19, rounds: 18, score: 1260, perfect: 4, seed: 100 }
     storedSession(saved)
     const resumed = loadSession()
-    expect(resumed).toEqual({ ...saved, courseVersion: 2 })
+    expect(resumed).toEqual({ ...saved, courseVersion: 3 })
     expect(completeLesson(resumed, 18, 100)).toBe(resumed)
     const next = completeLesson(resumed, 19, 80)
-    expect(next).toEqual({ ...saved, courseVersion: 2, completedLessons: 19, level: 20, rounds: 19, score: 1340 })
+    expect(next).toEqual({ ...saved, courseVersion: 3, completedLessons: 19, level: 20, rounds: 19, score: 1340 })
     storedSession(next)
     expect(loadSession()).toEqual(next)
   })
 
   it('resumes legacy endless sessions at the new banks while keeping tournament credit and earned scores', () => {
     storedSession({ scoringVersion: 2, level: 91, rounds: 90, score: 6300, perfect: 12, seed: 100 })
-    expect(loadSession()).toEqual({ scoringVersion: 2, courseVersion: 2, completedLessons: 50, level: 51, carriedTournamentLessons: 10, score: 6300, rounds: 90, perfect: 12, seed: 100 })
+    expect(loadSession()).toEqual({ scoringVersion: 2, courseVersion: 3, completedLessons: 50, level: 51, carriedTournamentLessons: 10, score: 6300, rounds: 90, perfect: 12, seed: 100 })
   })
 
-  it.each([50, 54, 60])('inserts bank lessons after %s earlier completed levels without losing earned tournament progress', completedLessons => {
+  it.each([50, 54, 60])('inserts banks and plants after %s original completed levels without losing tournament credit', completedLessons => {
     const saved = { scoringVersion: 2, completedLessons, level: completedLessons + 1, rounds: completedLessons, score: completedLessons * 80, perfect: 4, seed: 100 }
     storedSession(saved)
     let session = loadSession()
-    expect(session).toEqual({ ...saved, courseVersion: 2, completedLessons: 50, level: 51,
+    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: 50, level: 51,
       ...(completedLessons > 50 ? { carriedTournamentLessons: completedLessons - 50 } : {}) })
     storedSession(session)
     expect(loadSession()).toEqual(session)
@@ -163,11 +169,67 @@ describe('course progression', () => {
     session = loadSession()
     expect(session).toMatchObject({ completedLessons: 59, level: 60, rounds: completedLessons + 9 })
     session = completeLesson(session, 60, 100)
-    expect(session).toEqual({ ...saved, courseVersion: 2, completedLessons: completedLessons + 10,
-      level: completedLessons + 11, rounds: completedLessons + 10, score: saved.score + 820, perfect: 5 })
-    expect(completeLesson(session, 60, 100)).toBe(session)
+    expect(session).toMatchObject({ completedLessons: 60, level: 61, rounds: completedLessons + 10 })
+    for (let level = 61; level <= 69; level++) session = completeLesson(session, level, 80)
+    storedSession(session)
+    session = loadSession()
+    expect(session).toMatchObject({ completedLessons: 69, level: 70, rounds: completedLessons + 19 })
+    session = completeLesson(session, 70, 100)
+    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: completedLessons + 20,
+      level: completedLessons + 21, rounds: completedLessons + 20, score: saved.score + 1640, perfect: 6 })
+    expect(completeLesson(session, 70, 100)).toBe(session)
     storedSession(session)
     expect(loadSession()).toEqual(session)
+  })
+
+  it.each([60, 64, 70])('inserts plants after %s v2 completed levels while retaining banks and tournament credit', completedLessons => {
+    const saved = { scoringVersion: 2, courseVersion: 2, completedLessons, level: completedLessons + 1,
+      rounds: completedLessons, score: completedLessons * 80, perfect: 4, seed: 100 }
+    storedSession(saved)
+    let session = loadSession()
+    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: 60, level: 61,
+      ...(completedLessons > 60 ? { carriedTournamentLessons: completedLessons - 60 } : {}) })
+    storedSession(session)
+    expect(loadSession()).toEqual(session)
+    for (let level = 61; level <= 69; level++) session = completeLesson(session, level, 80)
+    storedSession(session)
+    session = loadSession()
+    expect(session).toMatchObject({ completedLessons: 69, level: 70, rounds: completedLessons + 9 })
+    session = completeLesson(session, 70, 100)
+    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: completedLessons + 10,
+      level: completedLessons + 11, rounds: completedLessons + 10, score: saved.score + 820, perfect: 5 })
+    storedSession(session)
+    expect(loadSession()).toEqual(session)
+    expect(completeLesson(session, 70, 100)).toBe(session)
+  })
+
+  it('preserves v2 bank progress and carried tournament credit until both new chapters are finished', () => {
+    const saved = { scoringVersion: 2, courseVersion: 2, completedLessons: 56, level: 57,
+      carriedTournamentLessons: 4, rounds: 60, score: 4800, perfect: 4, seed: 100 }
+    storedSession(saved)
+    let session = loadSession()
+    expect(session).toEqual({ ...saved, courseVersion: 3 })
+    for (let level = 57; level <= 60; level++) session = completeLesson(session, level, 80)
+    expect(session).toMatchObject({ completedLessons: 60, level: 61, carriedTournamentLessons: 4, rounds: 64 })
+    storedSession(session)
+    expect(loadSession()).toEqual(session)
+    for (let level = 61; level <= 70; level++) session = completeLesson(session, level, 80)
+    expect(session).toEqual({ ...saved, courseVersion: 3, completedLessons: 74, level: 75,
+      carriedTournamentLessons: undefined, rounds: 74, score: 5920 })
+    storedSession(session)
+    expect(loadSession()).toEqual(session)
+  })
+
+  it.each([7, 50, 56, 59])('preserves v2 progress before plants at %s completed lessons', completedLessons => {
+    const saved = { ...freshSession(), courseVersion: 2, completedLessons, level: completedLessons + 1, rounds: completedLessons }
+    storedSession(saved)
+    expect(loadSession()).toEqual({ ...saved, courseVersion: 3 })
+  })
+
+  it.each([60, 64, 69, 74])('keeps current progress at %s completed lessons without repeating the insertion', completedLessons => {
+    const saved = { ...freshSession(), completedLessons, level: completedLessons + 1, rounds: completedLessons }
+    storedSession(saved)
+    expect(loadSession()).toEqual(saved)
   })
 
   it('keeps current bank progress on reload without applying the insertion migration again', () => {

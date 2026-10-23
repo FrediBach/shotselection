@@ -9,7 +9,7 @@ for (const [level, cushions] of [[51, 1], [57, 2], [60, 3]]) test(`bank lesson $
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     localStorage.setItem('shot-selection-session', JSON.stringify({
-      scoringVersion: 2, courseVersion: 2, completedLessons: level - 1,
+      scoringVersion: 2, courseVersion: 3, completedLessons: level - 1,
       level, score: 0, rounds: level - 1, perfect: 0, seed: 71431,
     }))
     const originalContext = HTMLCanvasElement.prototype.getContext
@@ -59,6 +59,6 @@ for (const [level, cushions] of [[51, 1], [57, 2], [60, 3]]) test(`bank lesson $
   await page.screenshot({ path: `/tmp/shot-selection-bank-${level}.png`, fullPage: true })
   await testInfo.attach(`Bank lesson ${level}`, { path: `/tmp/shot-selection-bank-${level}.png`, contentType: 'image/png' })
   await page.getByRole('button', { name: 'Next level', exact: true }).click()
-  await expect(page.getByRole('dialog')).toContainText(level === 60 ? 'Tournament table' : 'Bank shots')
+  await expect(page.getByRole('dialog')).toContainText(level === 60 ? 'Plants' : 'Bank shots')
   await expect(page.getByRole('button', { name: `Start level ${level + 1}`, exact: true })).toBeVisible()
 })

@@ -34,7 +34,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): S
     };
     const simulation = simulateShot(scenario, perturbed, { record: false, recordPaths: true });
     sampleBallEnds.push(simulation.finalBalls);
-    const dropped = simulation.potted.includes(plan.ballId);
+    const dropped = simulation.potted.includes(plan.potBallId ?? plan.ballId);
     const potted = dropped && simulation.firstContact === plan.ballId;
     sampleObjectPaths.push({ path: simulation.objectPath, outcome: potted ? 'pot' : dropped ? 'foul' : 'miss' });
     const { legalPot: legal, error, positioned, nextShotAvailable, success } = evaluateShotObjective(scenario, plan, simulation);
@@ -53,7 +53,18 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48): S
   const successRate = successes / count;
   // Pot AND position dominates. A missed pot or scratch never earns utility.
   const score = (0.72 * successes + 0.2 * quality + 0.08 * legalPots) / count;
-  const explanation = scenario.objective
+  const isPlant = plan.potBallId !== undefined && plan.potBallId !== plan.ballId;
+  const explanation = isPlant
+    ? sampleObjectPaths.every(trial => trial.outcome === 'miss') && !nominal.potted.includes(plan.potBallId!)
+      ? `The attempted plant does not pot ball ${plan.potBallId} in the nominal stroke or any sampled trial. Compare its line with the free ball.`
+      : successRate >= 0.8
+        ? `The plant sends ball ${plan.potBallId} into the pocket with a repeatable cue-ball finish. Small stroke errors remain manageable.`
+        : pots / count < 0.55
+          ? `The plant has little margin: errors at the first contact change how ball ${plan.ballId} reaches ball ${plan.potBallId}. A difficult free ball can still be the better choice.`
+          : scratches / count > 0.12
+            ? 'The plant can pot, but the cue ball runs close to a pocket. Scratch risk weakens this choice.'
+            : 'The plant can pot, but speed and spin need care to hold the chosen cue-ball finish. Compare that control with the free ball.'
+    : scenario.objective
     ? successRate >= 0.8
       ? `A reliable pot and a controlled finish in the landing zone leave ball ${scenario.objective.nextBallId} available.`
       : nextShots / count < 0.55
