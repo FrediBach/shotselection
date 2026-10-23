@@ -480,28 +480,12 @@ class CanvasBoundary extends Component<{ children: ReactNode; fallback: ReactNod
   render() { return this.state.failed ? this.props.fallback : this.props.children }
 }
 
-/** Fully interactive 2D fallback for browsers without WebGL. */
-function FlatTable(props: PoolTableProps) {
-  const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, interactive, playing, playbackKey, onPlaybackEnd, onPlaybackSound } = props
-  const selectableBalls = new Set(props.selectableBallIds)
-  const objective = scenario.objective
+function useFlatTablePlayback({ scenario, analysis, playing, playbackKey, onPlaybackEnd, onPlaybackSound }: PoolTableProps) {
   const [frame, setFrame] = useState<SimulationBall[] | null>(null)
-  const svgRef = useRef<SVGSVGElement>(null)
-  const [svgScale, setSvgScale] = useState(2)
-  useEffect(() => {
-    const svg = svgRef.current
-    if (!svg) return
-    const update = () => { const box = svg.getBoundingClientRect(); setSvgScale(Math.max(0.1, Math.min(box.width / 298, box.height / 175))) }
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(svg)
-    return () => observer.disconnect()
-  }, [])
   const callback = useRef(onPlaybackEnd)
   const soundCallback = useRef(onPlaybackSound)
   useEffect(() => { callback.current = onPlaybackEnd }, [onPlaybackEnd])
   useEffect(() => { soundCallback.current = onPlaybackSound }, [onPlaybackSound])
-  useEffect(() => { setFrame(null) }, [scenario, analysis])
   useEffect(() => {
     if (!playing || !analysis?.nominal.frames.length) return
     let request = 0
@@ -525,6 +509,26 @@ function FlatTable(props: PoolTableProps) {
     request = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(request)
   }, [playing, playbackKey, scenario, analysis])
+  return frame
+}
+
+/** Fully interactive 2D fallback for browsers without WebGL. */
+function FlatTable(props: PoolTableProps) {
+  const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, interactive, playing } = props
+  const selectableBalls = new Set(props.selectableBallIds)
+  const objective = scenario.objective
+  const frame = useFlatTablePlayback(props)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [svgScale, setSvgScale] = useState(2)
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const update = () => { const box = svg.getBoundingClientRect(); setSvgScale(Math.max(0.1, Math.min(box.width / 298, box.height / 175))) }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(svg)
+    return () => observer.disconnect()
+  }, [])
   const balls = frame || scenario.balls.map(ball => ({ ...ball, pocketed: false }))
   const nominalObjectPotted = Boolean(analysis && analysis.nominal.potted.includes(analysis.plan.potBallId ?? analysis.plan.ballId) && analysis.nominal.firstContact === analysis.plan.ballId)
   const badgePositions = separateBadges(props.finishOptions.map(option => ({ x: option.plan.target.x * 100, y: option.plan.target.y * 100 })), 42 / svgScale, { left: -22 + 19 / svgScale, right: 276 - 19 / svgScale, top: -24 + 19 / svgScale, bottom: 151 - 19 / svgScale })
@@ -613,7 +617,9 @@ export default function PoolTable(props: PoolTableProps) {
       return true
     } catch { return false }
   })
-  const fallback = <FlatTable {...props} />
+  // A new scenario, inspected shot or replay starts with the initial ball layout.
+  // Keying the fallback discards the previous animation before the next paint.
+  const fallback = <FlatTable key={`${props.scenario.level}:${props.scenario.seed}:${props.analysis?.plan.id ?? 'setup'}:${props.playbackKey}`} {...props} />
   return <div className="pool-table-scene" role={props.scenario.objective || props.scenario.plant ? 'group' : undefined} aria-label={props.scenario.objective ? `Pool table. Pot ball ${props.scenario.objective.ballId} and leave the cue ball in the cyan position zone to play ball ${props.scenario.objective.nextBallId} next.` : props.scenario.plant ? `Pool table. For the plant, hit ball ${props.scenario.plant.ballId} first to pot ball ${props.scenario.plant.targetBallId}, or choose a free ball.` : undefined} style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
     {available ? <CanvasBoundary fallback={fallback}>
       <Canvas orthographic camera={{ position: [0, 6, 0.001], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08 }} style={{ touchAction: 'none' }}>

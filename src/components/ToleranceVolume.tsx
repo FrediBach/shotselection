@@ -42,6 +42,24 @@ function strengthLabel(value: number) {
   return value === 0 ? 'Nominal strength' : `${signed(value, '%')} · ${value < 0 ? 'softer' : 'harder'}`;
 }
 
+type VolumePoint = ShotTolerance['volume']['points'][number];
+
+function sampleAppearance(point: VolumePoint, depth: number) {
+  if (!point.available) return { className: 'tolerance-volume-point-unavailable', radius: 2.3, outcome: 'Outside modeled speed range; not simulated', opacity: undefined };
+  if (point.success) return { className: 'tolerance-volume-point-success', radius: 3.5 + (depth + 1.75) * 0.35, outcome: 'Pot + target reached', opacity: 0.6 + (depth + 1.75) * 0.1 };
+  if (point.pot) return { className: 'tolerance-volume-point-pot', radius: 2.3, outcome: 'Potted, outside target', opacity: undefined };
+  return { className: 'tolerance-volume-point-miss', radius: 1.8, outcome: 'Unsuccessful pot', opacity: undefined };
+}
+
+function VolumeSample({ point, projection }: { point: VolumePoint; projection: Projection }) {
+  const appearance = sampleAppearance(point, projection.depth);
+  return (
+    <circle className={appearance.className} cx={projection.x} cy={projection.y} r={appearance.radius} opacity={appearance.opacity}>
+      <title>{`Angle ${signed(point.angle, '°')}; English ${signed(point.sideSpin)} rad/s; strength ${signed(point.speed, '%')}. ${appearance.outcome}.`}</title>
+    </circle>
+  );
+}
+
 export default function ToleranceVolume({ tolerance, label }: ToleranceVolumeProps) {
   const descriptionId = useId();
   const [view, setView] = useState(INITIAL_VIEW);
@@ -177,18 +195,7 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
             const end = project({ x: axis.vector.x * 1.12, y: axis.vector.y * 1.12, z: axis.vector.z * 1.12 }, view.yaw, view.pitch);
             return <line className={`tolerance-volume-axis tolerance-axis-${axis.key}`} key={axis.key} x1={start.x} y1={start.y} x2={end.x} y2={end.y} />;
           })}
-          {projected.map(({ point, projection }) => (
-            <circle
-              key={`${point.angle}-${point.sideSpin}-${point.speed}`}
-              className={!point.available ? 'tolerance-volume-point-unavailable' : point.success ? 'tolerance-volume-point-success' : point.pot ? 'tolerance-volume-point-pot' : 'tolerance-volume-point-miss'}
-              cx={projection.x}
-              cy={projection.y}
-              r={!point.available ? 2.3 : point.success ? 3.5 + (projection.depth + 1.75) * 0.35 : point.pot ? 2.3 : 1.8}
-              opacity={point.success ? 0.6 + (projection.depth + 1.75) * 0.1 : undefined}
-            >
-              <title>{`Angle ${signed(point.angle, '°')}; English ${signed(point.sideSpin)} rad/s; strength ${signed(point.speed, '%')}. ${!point.available ? 'Outside modeled speed range; not simulated' : point.success ? 'Pot + target reached' : point.pot ? 'Potted, outside target' : 'Unsuccessful pot'}.`}</title>
-            </circle>
-          ))}
+          {projected.map(({ point, projection }) => <VolumeSample key={`${point.angle}-${point.sideSpin}-${point.speed}`} point={point} projection={projection} />)}
           <g className="tolerance-volume-origin" aria-label="Nominal shot at zero deviation">
             <circle cx={CENTER.x} cy={CENTER.y} r="8" />
             <path d={`M${CENTER.x - 13},${CENTER.y}h26 M${CENTER.x},${CENTER.y - 13}v26`} />
