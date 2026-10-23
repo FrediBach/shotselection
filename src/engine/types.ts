@@ -28,6 +28,8 @@ export interface CurriculumLesson {
   chapterIndex: number;
   lessonIndex: number;
   lessonCount: number;
+  /** Offer one English stroke alongside two without it; magnitude in rad/s. */
+  englishPractice?: number;
   lesson: string;
   takeaway: string;
   /** Pre-level coaching, progressing from introduction to independent practice. */

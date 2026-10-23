@@ -36,7 +36,7 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
 
 function scenarioFingerprint(scenario: Scenario): string {
   let hash = 2166136261;
-  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  for (const char of JSON.stringify([scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant, scenario.curriculum?.englishPractice])) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
 }
 
@@ -59,7 +59,7 @@ function pairIsDistinct(a: FeasiblePlan, b: FeasiblePlan): boolean {
     && distance(a.simulation.cueEnd, b.simulation.cueEnd) >= MIN_FINISH_SEPARATION;
 }
 
-function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => boolean): [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null {
+function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => boolean, englishPractice = false): [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null {
   let chosen: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
   let bestCost = Infinity;
   for (let a = 0; a < plans.length - 2; a++) {
@@ -68,6 +68,7 @@ function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => 
       for (let c = b + 1; c < plans.length; c++) {
         if (!pairIsDistinct(plans[a], plans[c]) || !pairIsDistinct(plans[b], plans[c])) continue;
         const triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] = [plans[a], plans[b], plans[c]];
+        if (englishPractice && triple.filter(entry => entry.plan.sideSpin !== 0).length !== 1) continue;
         if (!triple.some(qualifies)) continue;
         // Prefer comfortable strokes and visually separate endpoints. This is
         // geometry/nominal feasibility only, never a hidden ensemble ranking.
@@ -96,6 +97,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
   };
   let triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
   const isPlant = scenario.plant?.ballId === ballId;
+  const english = scenario.curriculum?.englishPractice;
   if (isPlant) {
     const targetBallId = scenario.plant!.targetBallId;
     const targetStart = scenario.balls.find(ball => ball.id === targetBallId)!.position;
@@ -143,15 +145,17 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
   for (const route of scenario.bank || isPlant ? [] : routesFor(scenario, ballId)) {
     for (const multiplier of [0.95, 1.2, 1.5, 1.85, 2.3]) {
       for (const topSpin of [-1.1, 0, 1.05]) {
-        const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin: 0, target: { x: 0, y: 0 }, label: '' };
-        const simulation = simulateShot(scenario, plan, { record: false });
-        if (isFeasible(simulation, ballId)) {
-          plan.target = { ...simulation.cueEnd };
-          feasible.push({ plan, simulation });
+        for (const sideSpin of english ? [0, -english, english] : [0]) {
+          const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
+          const simulation = simulateShot(scenario, plan, { record: false });
+          if (isFeasible(simulation, ballId)) {
+            plan.target = { ...simulation.cueEnd };
+            feasible.push({ plan, simulation });
+          }
         }
       }
     }
-    triple = chooseTriple(feasible, qualifies);
+    triple = chooseTriple(feasible, qualifies, Boolean(english));
     if (triple) break; // Prefer three strokes to the same pocket when possible.
   }
   if (!triple) return null;
@@ -197,7 +201,8 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }) };
 }
 
-/** Direct search tries at most 30 nominal strokes per object ball. Plant search
+/** Direct search tries at most 30 nominal strokes per object ball, or 90 when
+ * an authored English lesson compares both side-spin directions with zero. Plant search
  * tries 21 strokes on the fixed pair line, retaining physically simulated misses.
  * Bank search tries 12 routes, nine speeds and five spins with angle calibration.
  * Authored lessons can try three replacement layouts of the same lesson;

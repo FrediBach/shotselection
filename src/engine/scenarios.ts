@@ -11,6 +11,7 @@ interface Lesson {
   description: string;
   lesson: string;
   takeaway: string;
+  englishPractice?: number;
   briefing: Omit<LessonBriefing, 'stage'>;
   /** Cue ball first, then object balls in numbered order. */
   layout: readonly (readonly [number, number])[];
@@ -112,9 +113,10 @@ const LESSONS: readonly Lesson[] = [
     layout: [[0.26, 1.10], [1.18, 0.31]],
   },
   {
+    englishPractice: 12,
     title: 'Keep the long pot simple',
     description: 'Choose a controlled finish after a demanding cross-table approach.',
-    lesson: 'Apply your line, spin and cushion checks to this longer pot. Favor a finish you can explain from the contact and stroke settings before looking at the replay.',
+    lesson: 'English means side spin, separate from draw and follow. On this longer pot, compare one English option with two strokes without it. Read the contact line, pace and any cushion rebound all the way to the finish.',
     takeaway: 'A reliable long pot starts with a clear contact line and an understandable cue-ball route.',
     briefing: {
       focus: 'Combine line and pace',
@@ -123,9 +125,10 @@ const LESSONS: readonly Lesson[] = [
     layout: [[0.39, 1.08], [1.55, 0.48]],
   },
   {
+    englishPractice: 18,
     title: 'Let the cue ball travel',
     description: 'A long approach brings the contact line, pace and cue-ball route together.',
-    lesson: 'Put the potting line and cue-ball finish together. On this cut shot, picture the cue ball moving across the potting line, including any cushion rebounds.',
+    lesson: 'Put the potting line, pace and cue-ball finish together. Read the left or right English setting alongside draw and follow, and picture the cue ball crossing the potting line and rebounding before it stops.',
     takeaway: 'An easy pot can still send the cue ball a long way. Read its route before choosing the finish.',
     briefing: {
       focus: 'Follow the whole route',
@@ -223,9 +226,10 @@ const LESSONS: readonly Lesson[] = [
     layout: [[0.46, 1.02], [1.16, 0.33], [1.84, 0.39], [1.88, 0.95]],
   },
   {
+    englishPractice: 18,
     title: 'Shortlist four open balls',
     description: 'Four open candidates test your table-reading routine.',
-    lesson: 'Scan all four balls, narrow the choice to two promising pots, and compare their three finishes. Use angle and travel to explain why your final choice survives the shortlist.',
+    lesson: 'Scan all four balls and narrow the choice to two promising pots. Each offers an English stroke and two without side spin. Compare angle, pace and the full cue-ball route before choosing your finish.',
     takeaway: 'A deliberate shortlist keeps a larger table from turning into a rushed guess.',
     briefing: {
       focus: 'Narrow the field deliberately',
@@ -234,9 +238,10 @@ const LESSONS: readonly Lesson[] = [
     layout: [[0.73, 0.80], [1.16, 0.33], [1.84, 0.39], [1.88, 0.95], [0.41, 0.38]],
   },
   {
+    englishPractice: 18,
     title: 'Choose the comfortable stroke',
     description: 'Read four open balls and choose a dependable pot and finish.',
-    lesson: 'Apply your comparison to four balls. Shortlist a comfortable pot, then compare its finishes against the other balls before locking in your shot.',
+    lesson: 'Shortlist a comfortable pot, then compare its finishes against the other balls. Weigh the English option against the two no-English strokes: added side spin is useful only when the complete stroke leaves a finish you can control.',
     takeaway: 'Choose the finish you can reproduce, then judge it against the other available strokes.',
     briefing: {
       focus: 'Choose a repeatable finish',
@@ -342,9 +347,10 @@ const LESSONS: readonly Lesson[] = [
     position: { radius: 0.186, maxCutAngle: 60 },
   },
   {
+    englishPractice: 18,
     title: 'Hold a useful side',
     description: 'The next ball requires a more deliberate angle from the zone.',
-    lesson: 'Picture the shot on the 2 from both sides of your predicted finish. Use the tighter cut limit to distinguish a useful landing from one that merely looks close.',
+    lesson: 'Picture the shot on the 2 from both sides of your predicted finish. One option adds English: read its route alongside pace and draw or follow, then check whether it leaves a cut inside the tighter limit.',
     takeaway: 'Good position respects the next shot even when the cue ball is already inside the landing area.',
     briefing: {
       focus: 'Check the angle from the finish',
@@ -354,9 +360,10 @@ const LESSONS: readonly Lesson[] = [
     position: { radius: 0.184, maxCutAngle: 60 },
   },
   {
+    englishPractice: 18,
     title: 'Complete the two-ball plan',
     description: 'Combine a longer first pot, a smaller zone and the next-ball check.',
-    lesson: 'Make the full two-ball plan before committing: contact on the 1, cue-ball route, stopping point, then a playable 2. Compare the result with each part of that prediction.',
+    lesson: 'Make the full two-ball plan before committing: contact on the 1, cue-ball route, stopping point, then a playable 2. Include English alongside pace and draw or follow; a different rebound still has to deliver the shared zone and next shot.',
     takeaway: 'A two-ball plan succeeds only when potting, stopping and next-shot access all work together.',
     briefing: {
       focus: 'Make all three checks agree',
@@ -462,9 +469,10 @@ const LESSONS: readonly Lesson[] = [
     position: { radius: 0.168, maxCutAngle: 54 },
   },
   {
+    englishPractice: 18,
     title: 'Choose a sequence with margin',
     description: 'A tighter zone asks you to evaluate the reliability of the connection.',
-    lesson: 'Predict which stroke gives the most room around its intended finish while leaving the 2 playable. After committing, compare the spread with the route you expected.',
+    lesson: 'Compare the English stroke with the no-English alternatives, tracing each full route through the layout. Choose the sequence that leaves room for error in the landing zone and a clear approach to the next ball.',
     takeaway: 'A good connection remains usable across a range of small stroke errors.',
     briefing: {
       focus: 'Leave margin in the connection',
@@ -474,9 +482,10 @@ const LESSONS: readonly Lesson[] = [
     position: { radius: 0.166, maxCutAngle: 53 },
   },
   {
+    englishPractice: 18,
     title: 'Keep the next lane open',
     description: 'A nearby ball makes the route to the 2 part of the decision.',
-    lesson: 'Test your two-ball plan against the nearby blocker. Picture both the cue-ball approach to the 2 and the 2-to-pocket route before predicting your finish.',
+    lesson: 'Plan the pot, stopping point and next lane together. Account for English when tracing any cushion rebound, and compare the complete strokes for a finish that keeps the route to the 2 open.',
     takeaway: 'A visible target can still be blocked at the contact point or on its way to the pocket.',
     briefing: {
       focus: 'Check both halves of the next shot',
@@ -582,9 +591,10 @@ const LESSONS: readonly Lesson[] = [
     position: { radius: 0.150, maxCutAngle: 48 },
   },
   {
+    englishPractice: 18,
     title: 'Hold position in company',
     description: 'A longer first approach must finish accurately among five object balls.',
-    lesson: 'Use the full routine while traffic competes for your attention. Predict the pot, route, stopping point and next-shot lane before choosing the stroke, then inspect all four in the result.',
+    lesson: 'Compare the English option with the two strokes without side spin. Read each full route past the traffic, then check the landing zone and next-ball angle; a different rebound is useful only if the complete position survives.',
     takeaway: 'Crowding is a reason to keep every part of the routine, not to abandon the stopping-point check.',
     briefing: {
       focus: 'Keep the stopping point in the plan',
@@ -594,9 +604,10 @@ const LESSONS: readonly Lesson[] = [
     position: { radius: 0.148, maxCutAngle: 47 },
   },
   {
+    englishPractice: 18,
     title: 'A smaller window',
     description: 'Find a precise finish that leaves the 2 clear of surrounding balls.',
-    lesson: 'Apply your route and stopping-distance checks to a smaller window. Predict the best stroke, then inspect the finish spread after committing to see how often it holds position.',
+    lesson: 'Read English, pace and draw or follow together. Compare the complete strokes for a safe route through traffic, a finish in the smaller zone and a clear next shot. Predict all three before checking the replay.',
     takeaway: 'Reliable position means landing inside a useful window despite small stroke errors.',
     briefing: {
       focus: 'Leave room for a small error',
@@ -982,6 +993,7 @@ export function generateScenario(level: number, seed = 71431 + level * 919): Sce
     curriculum: {
       chapterId: chapter.id, chapterTitle: chapter.title, chapterIndex, lessonIndex, lessonCount,
       lesson: lesson.lesson, takeaway: lesson.takeaway,
+      ...(lesson.englishPractice ? { englishPractice: lesson.englishPractice } : {}),
       briefing: { ...lesson.briefing, stage: lessonIndex === 0 ? 'introduce' : lessonIndex < 6 ? 'develop' : 'apply' },
     },
     ...(lesson.position ? { objective: { kind: 'position' as const, ballId: 1, nextBallId: 2, ...lesson.position } } : {}),

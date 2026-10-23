@@ -4,7 +4,7 @@ import { TABLE, positionToleranceForLevel } from './constants';
 import { clamp, distance, dot, normalize, subtract } from './math';
 import { evaluateShotObjective } from './objectives';
 import { simulateShot } from './physics';
-import { prepareRound } from './preparation';
+import { MIN_FINISH_SEPARATION, prepareRound } from './preparation';
 import { POCKET_GEOMETRY } from './table-geometry';
 import { COURSE_CHAPTERS, generateScenario, getCourseProgress, LEVELS_PER_CHAPTER, TOTAL_LEVELS } from './scenarios';
 
@@ -32,6 +32,8 @@ describe('authored pool curriculum', () => {
         expect(briefing.gotcha.trim().length).toBeGreaterThan(0);
       }
     }
+    expect(scenarios.filter(scenario => scenario.curriculum?.englishPractice).map(scenario => scenario.level))
+      .toEqual([9, 10, 19, 20, 29, 30, 39, 40, 49, 50]);
     expect(scenarios.slice(0, 10).every(scenario => scenario.balls.length === 2 && !scenario.objective)).toBe(true);
     expect(scenarios.slice(10, 20).every(scenario => scenario.balls.length >= 3 && !scenario.objective)).toBe(true);
     expect(scenarios.slice(20, 30).every(scenario => scenario.objective)).toBe(true);
@@ -98,6 +100,32 @@ describe('authored pool curriculum', () => {
     expect(prepared.balls.length).toBeGreaterThan(0);
     expect(prepared.balls.flatMap(ball => ball.options).some(option => analyzeShot(prepared.scenario, option.plan, 32).successRate > 0)).toBe(true);
     if (level <= 20) expect(prepared.balls.map(ball => ball.ballId)).toEqual(scenario.balls.filter(ball => ball.id !== 0).map(ball => ball.id));
+    if (scenario.curriculum?.englishPractice) {
+      const englishEffects: number[] = [];
+      expect(scenario.curriculum.lesson).toMatch(/English/);
+      for (const ball of prepared.balls) {
+        expect(ball.options.filter(option => option.plan.sideSpin !== 0)).toHaveLength(1);
+        const finishes = ball.options.map(option => {
+          const nominal = simulateShot(prepared.scenario, option.plan, { record: false });
+          expect(nominal.stopped).toBe(true);
+          expect(nominal.scratch).toBe(false);
+          expect(nominal.firstContact).toBe(ball.ballId);
+          expect(nominal.potted).toContain(ball.ballId);
+          expect(option.plan.target).toEqual(nominal.cueEnd);
+          if (option.plan.sideSpin !== 0) {
+            expect(Math.abs(option.plan.sideSpin)).toBe(scenario.curriculum!.englishPractice);
+            const withoutEnglish = simulateShot(prepared.scenario, { ...option.plan, sideSpin: 0 }, { record: false });
+            englishEffects.push(distance(nominal.cueEnd, withoutEnglish.cueEnd));
+          }
+          return nominal.cueEnd;
+        });
+        for (let a = 0; a < finishes.length; a++) for (let b = a + 1; b < finishes.length; b++) {
+          expect(distance(finishes[a], finishes[b])).toBeGreaterThanOrEqual(MIN_FINISH_SEPARATION);
+        }
+      }
+      // English should visibly affect a finish, not merely decorate a label.
+      expect(Math.max(...englishEffects)).toBeGreaterThan(0.01);
+    }
     if (scenario.bank) {
       expect(prepared.scenario.bank).toEqual(scenario.bank);
       expect(prepared.balls.map(ball => ball.ballId)).toEqual([scenario.bank.ballId]);
