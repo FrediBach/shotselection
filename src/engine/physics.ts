@@ -106,9 +106,14 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   cue.body.angularVelocity.set(-Math.sin(plan.angle) * speed / R * plan.topSpin, Math.cos(plan.angle) * speed / R * plan.topSpin, plan.sideSpin);
   let firstContact: number | null = null;
   cue.body.addEventListener('collide', (event: { body: Body }) => {
-    if (firstContact === null) firstContact = bodyIds.get(event.body.id) ?? null;
+    if (firstContact === null) {
+      firstContact = bodyIds.get(event.body.id) ?? null;
+      // Cannon emits this before resolving the collision and advancing bodies.
+      // Preserve the contact point without revealing the post-contact finish.
+      if (recordPaths) appendPathPoint(simulation.cueApproachPath, cue.body);
+    }
   });
-  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, duration: 0, stopped: false };
+  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, duration: 0, stopped: false };
   let lastCueBankTime = -Infinity;
   let soundTime = 0;
   const lastSoundTimes = record ? new Map<string, number>() : null;
@@ -138,6 +143,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     if (record && simulation.frames.at(-1)?.time !== time) simulation.frames.push({ time, balls: bodies.map(({ id, body, pocketed }) => ({ id, position: { x: body.position.x, y: body.position.y }, pocketed })) });
     if (recordPaths) {
       if (!cue.pocketed) appendPathPoint(simulation.cuePath, cue.body);
+      if (!cue.pocketed && firstContact === null) appendPathPoint(simulation.cueApproachPath, cue.body);
       if (object && !object.pocketed) appendPathPoint(simulation.objectPath, object.body);
     }
   };
@@ -154,6 +160,11 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       ball.body.position.z = 0;
       ball.body.velocity.z = 0;
       const cushionImpact = resolveRails(ball.body);
+      if (ball.id === 0 && firstContact === null && cushionImpact > 0 && recordPaths) {
+        // A regular 30 Hz path sample can cut across a rebound. Keep its exact
+        // corrected center position so even multiple banks show every turn.
+        appendPathPoint(simulation.cueApproachPath, ball.body);
+      }
       if (ball.id === 0 && firstContact === null && cushionImpact > 0.035 && soundTime - lastCueBankTime >= 0.045) {
         simulation.cueBanksBeforeContact!++;
         lastCueBankTime = soundTime;
@@ -171,6 +182,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
         // Save the exact physics capture location on the actual drop step. The
         // next 30 Hz snapshot may be later; never extend paths to pocket centers.
         if (ball.id === 0) appendPathPoint(simulation.cuePath, ball.body);
+        if (ball.id === 0 && firstContact === null) appendPathPoint(simulation.cueApproachPath, ball.body);
         if (ball.id === potBallId) appendPathPoint(simulation.objectPath, ball.body);
       }
     }

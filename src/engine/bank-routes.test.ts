@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bankPlanForStroke, bankRoutesFor } from './bank-routes';
+import { TABLE } from './constants';
+import { distance } from './math';
 import { simulateShot } from './physics';
 import type { Scenario } from './types';
 
@@ -27,11 +29,16 @@ describe('physical bank aim calibration', () => {
     expect(Math.abs(plan.angle - route.angle)).toBeGreaterThan(0.01);
     const uncorrected = simulateShot(scenario, { ...plan, angle: route.angle }, { record: false });
     expect(uncorrected.potted).not.toContain(1);
-    const calibrated = simulateShot(scenario, plan, { record: false });
+    const calibrated = simulateShot(scenario, plan, { record: false, recordPaths: true });
     expect(calibrated.firstContact).toBe(1);
     expect(calibrated.cueBanksBeforeContact).toBe(1);
     expect(calibrated.potted).toContain(1);
     expect(calibrated.scratch).toBe(false);
+    const approach = calibrated.cueApproachPath;
+    expect(approach[0]).toEqual(scenario.balls[0].position);
+    expect(Math.max(...approach.map(point => point.y))).toBeCloseTo(TABLE.width - TABLE.ballRadius - 1e-6, 10);
+    expect(distance(approach.at(-1)!, scenario.balls[1].position)).toBeLessThanOrEqual(TABLE.ballDiameter);
+    expect(approach.at(-1)).not.toEqual(calibrated.cueEnd);
   });
 
   it('rejects a calibrated route when another ball occupies its approach', () => {
@@ -60,10 +67,20 @@ describe('physical bank aim calibration', () => {
       const plan = bankPlanForStroke(reflected, route, 2.8, -1.1)!;
       expect(plan).not.toBeNull();
       angles.push(plan.angle);
-      const simulation = simulateShot(reflected, plan, { record: false });
+      const simulation = simulateShot(reflected, plan, { record: false, recordPaths: true });
       expect(simulation.firstContact).toBe(1);
       expect(simulation.cueBanksBeforeContact).toBe(3);
       expect(simulation.potted).toContain(1);
+      const path = simulation.cueApproachPath;
+      // Every rebound has a vertex at the physical cushion offset, even when
+      // the impact falls between the ordinary 30 Hz path samples.
+      const bottom = path.findIndex(point => Math.abs(point.y - (TABLE.width - TABLE.ballRadius - 1e-6)) < 1e-10);
+      const top = path.findIndex(point => Math.abs(point.y - TABLE.ballRadius - 1e-6) < 1e-10);
+      const side = path.findIndex(point => Math.abs(point.x - (reflection & 1 ? TABLE.ballRadius + 1e-6 : TABLE.length - TABLE.ballRadius - 1e-6)) < 1e-10);
+      expect(reflection & 2 ? top : bottom).toBeGreaterThan(0);
+      expect(side).toBeGreaterThan(reflection & 2 ? top : bottom);
+      expect(reflection & 2 ? bottom : top).toBeGreaterThan(side);
+      expect(distance(path.at(-1)!, reflected.balls[1].position)).toBeLessThanOrEqual(TABLE.ballDiameter);
     }
     expect(angles[1]).toBeCloseTo(Math.PI - angles[0], 9);
     expect(angles[2]).toBeCloseTo(-angles[0], 9);

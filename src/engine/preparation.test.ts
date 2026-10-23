@@ -19,6 +19,8 @@ function verifyPrepared(prepared: PreparedRound) {
       expect(option.plan.id).toBe(option.id);
       expect(option.plan.ballId).toBe(ball.ballId);
       const nominal = simulateShot(prepared.scenario, option.plan);
+      expect(option.cueApproachPath).toEqual(nominal.cueApproachPath);
+      expect(option.cueApproachPath[0]).toEqual(prepared.scenario.balls.find(ball => ball.id === 0)!.position);
       expect(nominal.firstContact).toBe(ball.ballId);
       expect(nominal.potted).toContain(ball.ballId);
       expect(nominal.scratch).toBe(false);

@@ -164,7 +164,9 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     const id = `${fingerprint}-ball-${ballId}-${label}`;
     const stroke = entry.plan.topSpin < -0.1 ? 'draw' : entry.plan.topSpin > 0.1 ? 'follow' : 'center';
     const shot = isPlant ? `Plant ${ballId} → ${entry.plan.potBallId}` : `Ball ${ballId}`;
-    return { id, label, plan: { ...entry.plan, id, label: `${shot} · ${label} · ${stroke}` } };
+    // Record only the three offered routes, after feasibility has chosen them.
+    const { cueApproachPath } = simulateShot(scenario, entry.plan, { record: false, recordPaths: true });
+    return { id, label, cueApproachPath, plan: { ...entry.plan, id, label: `${shot} · ${label} · ${stroke}` } };
   }) as [FinishOption, FinishOption, FinishOption];
   return { ball: { ballId, options }, target };
 }

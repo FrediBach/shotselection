@@ -19,7 +19,7 @@ const scenario: Scenario = {
 };
 const plan: ShotPlan = { id: 'first', ballId: 1, pocketId: 0, target: { x: 2, y: 0.8 }, angle: 0, speed: 1.2, topSpin: 0, sideSpin: 0, label: 'A' };
 const simulation: Simulation = {
-  frames: [], finalBalls: nextBalls.map(ball => ({ ...ball, pocketed: false })), soundEvents: [], cuePath: [], objectPath: [],
+  frames: [], finalBalls: nextBalls.map(ball => ({ ...ball, pocketed: false })), soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [],
   cueEnd: nextBalls[0].position, potted: [1], scratch: false, firstContact: 1, duration: 2, stopped: true,
 };
 

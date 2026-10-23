@@ -14,7 +14,7 @@ function shot(id: string, changes: Partial<ShotAnalysis> = {}): ShotAnalysis {
     successRate: 0.75, potRate: 0.9, legalPotRate: 0.9, targetQuality: 0.7, scratchRate: 0, positionRate: 0.8,
     score: 0.752, spread: 0.1, meanEnd: point, samples: 64, explanation: '',
     samplePaths: [], sampleObjectPaths: [], sampleEnds: [point, point], sampleBallEnds: [],
-    nominal: { frames: [], finalBalls: [], soundEvents: [], cuePath: [], objectPath: [], cueEnd: point, potted: [1], scratch: false, firstContact: 1, duration: 1, stopped: true },
+    nominal: { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: point, potted: [1], scratch: false, firstContact: 1, duration: 1, stopped: true },
     ...changes,
   }
 }

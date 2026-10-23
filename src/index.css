@@ -63,6 +63,7 @@ svg { flex-shrink: 0; }
 .legend-cue { background: #eeeae0; }
 .legend-target { outline: 1px dashed #ddbb83; outline-offset: 2px; }
 .table-legend .legend-cue-path { height: 1px; width: 12px; background: #dbecb3; border-radius: 0; }
+.table-legend .legend-approach-path { height: 0; width: 12px; border-top: 1.5px dashed #e1e9cd; border-radius: 0; }
 .table-legend .legend-object-pot { height: 2px; width: 12px; background: #78d9ec; border-radius: 0; }
 .table-legend .legend-object-miss { height: 0; width: 12px; border-top: 2px dashed #f49b85; border-radius: 0; }
 .interactive-hint { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }

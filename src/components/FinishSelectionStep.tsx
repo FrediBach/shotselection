@@ -41,6 +41,6 @@ export default function FinishSelectionStep({ scenario, selectedBall, finishOpti
     <div className="finish-options" role="group" aria-label={objective ? "Stroke options" : "Cue-ball finish options"}>
       {finishOptions.map(option => <StrokeOption key={option.id} option={option} scenario={scenario} selected={selectedOptionId === option.id} busy={busy} onSelect={onSelect} />)}
     </div>
-    <p className="finish-assurance">{objective ? "All three can pot the first ball. Predict the cue-ball travel; finishes and paths are revealed after you lock in." : bank ? `All three bank at least ${bank.minCushions} time${bank.minCushions === 1 ? "" : "s"} before reaching the target. Choose the most forgiving finish.` : plant ? "A plant may work, miss, or offer very little margin. Compare its alignment and cue-ball finish with the difficult free ball before committing." : "All three are playable. Choose the most forgiving."}</p>
+    <p className="finish-assurance">{objective ? "All three can pot the first ball. The guide shows the approach; predict the travel after contact and the finish, revealed after you lock in." : bank ? `All three bank at least ${bank.minCushions} time${bank.minCushions === 1 ? "" : "s"} before reaching the target. Choose the most forgiving finish.` : plant ? "A plant may work, miss, or offer very little margin. Compare its alignment and cue-ball finish with the difficult free ball before committing." : "All three are playable. Choose the most forgiving."}</p>
   </>
 }

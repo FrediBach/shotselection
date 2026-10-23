@@ -14,6 +14,48 @@ const straight: Scenario = {
 };
 const stroke: ShotPlan = { id: 'straight', ballId: 1, pocketId: 1, target: { x: 1.27, y: 0.38 }, angle: -Math.PI / 2, speed: 1.35, topSpin: 0, sideSpin: 0, label: 'Straight pot' };
 
+describe('cue-ball approach preview', () => {
+  it.each([1.27, 1.0])('stops a direct route from x=%s at the actual first contact', cueX => {
+    const scenario = { ...straight, balls: straight.balls.map(ball => ball.id === 0
+      ? { ...ball, position: { ...ball.position, x: cueX } } : ball) };
+    const cue = scenario.balls[0].position;
+    const object = scenario.balls[1].position;
+    const plan = { ...stroke, angle: Math.atan2(object.y + TABLE.ballDiameter - cue.y, object.x - cue.x) };
+    const result = simulateShot(scenario, plan);
+    const path = result.cueApproachPath;
+    const contact = path.at(-1)!;
+    expect(result.firstContact).toBe(1);
+    expect(path[0]).toEqual(cue);
+    expect(distance(contact, object)).toBeLessThanOrEqual(TABLE.ballDiameter);
+    expect(distance(contact, object)).toBeGreaterThan(TABLE.ballDiameter - plan.speed * TABLE.step);
+    expect(contact).not.toEqual(result.cueEnd);
+    expect(path.length).toBeLessThan(result.cuePath.length);
+    // The first impact is reported before the solver advances the cue ball;
+    // independently stopping on the preceding step recovers that exact point.
+    const contactTime = result.soundEvents.find(event => event.type === 'ball')!.time;
+    const beforeContact = simulateShot(scenario, plan, { maxTime: contactTime - TABLE.step - 1e-10 });
+    expect(beforeContact.firstContact).toBeNull();
+    expect(contact).toEqual(beforeContact.cueEnd);
+    for (const point of path) {
+      const acrossLine = (point.x - cue.x) * Math.sin(plan.angle) - (point.y - cue.y) * Math.cos(plan.angle);
+      expect(Math.abs(acrossLine)).toBeLessThan(1e-10);
+    }
+  });
+
+  it('ends at the first-contact ball rather than the second ball in a plant', () => {
+    const scenario = { ...straight, balls: [
+      { id: 0, position: { x: 1.27, y: 0.9 } },
+      { id: 1, position: { x: 1.27, y: 0.55 } },
+      { id: 2, position: { x: 1.27, y: 0.3 } },
+    ] };
+    const result = simulateShot(scenario, { ...stroke, potBallId: 2, speed: 1.5 });
+    const contact = result.cueApproachPath.at(-1)!;
+    expect(result.firstContact).toBe(1);
+    expect(distance(contact, scenario.balls[1].position)).toBeLessThanOrEqual(TABLE.ballDiameter);
+    expect(distance(contact, scenario.balls[2].position)).toBeGreaterThan(0.25);
+  });
+});
+
 describe('object-ball ensemble trajectories', () => {
   it('exports every exact trial and makes the pot count agree with potRate', () => {
     // Keep the mix of pots and misses independent of curriculum layout changes.
@@ -64,8 +106,10 @@ describe('object-ball ensemble trajectories', () => {
     const neither = simulateShot(straight, stroke, { record: false });
     expect(paths.frames).toEqual([]);
     expect(paths.cuePath).toEqual(full.cuePath);
+    expect(paths.cueApproachPath).toEqual(full.cueApproachPath);
     expect(paths.objectPath).toEqual(full.objectPath);
     expect(neither.cuePath).toEqual([]);
+    expect(neither.cueApproachPath).toEqual([]);
     expect(neither.objectPath).toEqual([]);
     for (const result of [paths, neither]) {
       expect(result.potted).toEqual(full.potted);

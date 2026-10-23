@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test'
 import { startLevel } from './helpers'
+import { expectIdealApproach, observePreparedRound } from './ideal-approach'
 import type { RoundAnalysis } from '../src/engine/types'
 
 for (const [level, cushions] of [[51, 1], [57, 2], [60, 3]]) test(`bank lesson ${level} restricts the target and completes a ${cushions}-cushion shot`, async ({ page }, testInfo) => {
   test.setTimeout(120_000)
   if (level === 57) await page.setViewportSize({ width: 390, height: 844 })
+  await observePreparedRound(page)
   await page.addInitScript(({ level }) => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
@@ -38,13 +40,24 @@ for (const [level, cushions] of [[51, 1], [57, 2], [60, 3]]) test(`bank lesson $
   expect(await blockers.evaluateAll(buttons => buttons.slice(1).every(button => (button as HTMLButtonElement).disabled))).toBe(true)
   await expect(page.locator('.unavailable-note')).toContainText('Dimmed balls are blockers')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await expect(page.getByTestId('ideal-approach-path')).toHaveCount(0)
   await ball.click()
+  await expectIdealApproach(page, 'A')
+  await expect(page.getByRole('button', { name: /^Table finish [ABC]$/ })).toHaveCount(0)
+  const previewPath = `/tmp/shot-selection-bank-${level}-preview.png`
+  await page.locator('.table-panel').screenshot({ path: previewPath, animations: 'disabled' })
+  await testInfo.attach(`Bank lesson ${level}: ideal ${cushions}-cushion approach before choosing a finish`, { path: previewPath, contentType: 'image/png' })
   await page.getByRole('button', { name: 'Choose a finish', exact: true }).click()
   await expect(page.getByRole('button', { name: /^Choose finish [ABC]$/ })).toHaveCount(3)
   await expect(page.locator('.finish-assurance')).toContainText(`bank at least ${cushions} time`)
-  await page.getByRole('button', { name: 'Choose finish A', exact: true }).click()
+  for (const label of ['B', 'C', 'A'] as const) {
+    await page.getByRole('button', { name: `Choose finish ${label}`, exact: true }).click()
+    await expectIdealApproach(page, label)
+  }
   await page.getByRole('button', { name: 'Lock in your shot', exact: true }).click()
   await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 60_000 })
+  await expect(page.getByTestId('ideal-approach-path')).toHaveCount(0)
+  await expect(page.getByLabel('Table legend', { exact: true })).not.toContainText('Ideal path')
   const result = await page.evaluate(() => (window as Window & { bankResult: RoundAnalysis }).bankResult)
   expect(result.candidates).toHaveLength(3)
   for (const candidate of result.candidates) {

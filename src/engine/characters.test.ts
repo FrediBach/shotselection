@@ -106,9 +106,9 @@ describe('character-aware physical ensembles', () => {
       { ...plan, id: 'follow', topSpin: 0.7 },
     ].map(stroke => ({ ...stroke, target: physics.simulateShot(scenario, stroke).cueEnd }));
     const prepared: PreparedRound = { scenario, balls: [{ ballId: 1, options: [
-      { id: strokes[0].id, label: 'A', plan: strokes[0] },
-      { id: strokes[1].id, label: 'B', plan: strokes[1] },
-      { id: strokes[2].id, label: 'C', plan: strokes[2] },
+      { id: strokes[0].id, label: 'A', plan: strokes[0], cueApproachPath: [] },
+      { id: strokes[1].id, label: 'B', plan: strokes[1], cueApproachPath: [] },
+      { id: strokes[2].id, label: 'C', plan: strokes[2], cueApproachPath: [] },
     ] }] };
     const selection = { ballId: 1, optionId: 'stun' };
     const talents: CharacterTalents = { anglePrecision: 80, englishPrecision: 20, strengthPrecision: 5, spinPrecision: 95 };

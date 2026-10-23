@@ -1,8 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
 import { startLevel, chooseDefaultCharacter } from './helpers'
+import { expectIdealApproach, observePreparedRound } from './ideal-approach'
 import { DEFAULT_CHARACTER } from '../src/engine/characters'
 
 async function seedLesson(page: Page, level: number, fallback = true, course: 'current' | 'banks' | 'legacy' = 'current') {
+  await observePreparedRound(page)
   await page.addInitScript(({ level, fallback, course, character }) => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
@@ -124,22 +126,29 @@ test('position lesson hides stroke outcomes until commitment and keeps its label
   const readZone = () => zone.evaluate(element => ['cx', 'cy', 'r'].map(name => element.getAttribute(name)))
   const fixedZone = await readZone()
   await page.getByRole('button', { name: 'Select ball 1', exact: true }).click()
+  await expectIdealApproach(page, 'A')
   await page.getByRole('button', { name: 'Choose a stroke', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Choose your stroke.', exact: true })).toBeVisible()
   await expect(page.getByRole('group', { name: 'Stroke options', exact: true }).getByRole('button')).toHaveCount(3)
   await expect(page.locator('.shot-progress [aria-current="step"]')).toHaveText(/Stroke/)
   await expect(page.getByRole('button', { name: /^Table finish [ABC]$/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Lock in your shot', exact: true })).toBeDisabled()
-  const unchangedTable = await table.evaluate(element => element.outerHTML)
+  const readPuzzle = () => table.evaluate(element => {
+    const puzzle = element.cloneNode(true) as SVGSVGElement
+    puzzle.querySelector('[data-testid="ideal-approach"]')?.remove()
+    return puzzle.outerHTML
+  })
+  const unchangedPuzzle = await readPuzzle()
   const beforePath = '/tmp/shot-selection-position-mobile-before-stroke.png'
   await page.locator('.table-panel').screenshot({ path: beforePath, animations: 'disabled' })
   await testInfo.attach('Mobile position puzzle before choosing a stroke', { path: beforePath, contentType: 'image/png' })
-  for (const label of ['A', 'B', 'C']) {
+  for (const label of ['A', 'B', 'C'] as const) {
     const stroke = page.getByRole('button', { name: `Choose stroke ${label}`, exact: true })
     await stroke.click()
     await expect(stroke).toHaveAttribute('aria-pressed', 'true')
+    await expectIdealApproach(page, label)
     expect(await readZone()).toEqual(fixedZone)
-    expect(await table.evaluate(element => element.outerHTML)).toBe(unchangedTable)
+    expect(await readPuzzle(), 'Only the cue-ball approach may change before commitment').toBe(unchangedPuzzle)
     await expect(page.getByRole('button', { name: /^Table finish [ABC]$/ })).toHaveCount(0)
     await expect(page.getByTestId('nominal-cue-finish')).toHaveCount(0)
     await expect(page.getByTestId('ensemble-paths')).toHaveCount(0)
@@ -151,6 +160,8 @@ test('position lesson hides stroke outcomes until commitment and keeps its label
   await testInfo.attach('Mobile position puzzle after choosing a stroke', { path, contentType: 'image/png' })
   await page.getByRole('button', { name: 'Lock in your shot', exact: true }).click()
   await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 45_000 })
+  await expect(page.getByTestId('ideal-approach')).toHaveCount(0)
+  await expect(legend).not.toContainText('Ideal path')
   await expect(page.getByTestId('nominal-cue-finish')).toBeVisible()
   await expect(legend).toContainText('Planned finish')
   await expect(page.locator('.analysis-rate')).toHaveCount(3)
@@ -196,7 +207,7 @@ test('position lesson hides stroke outcomes until commitment and keeps its label
   expect(errors).toEqual([])
 })
 
-test('WebGL position table keeps the same puzzle visible across stroke choices', async ({ page }, testInfo) => {
+test('WebGL position table previews the approach without revealing stroke outcomes', async ({ page }, testInfo) => {
   await seedLesson(page, 21, false)
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
@@ -210,6 +221,8 @@ test('WebGL position table keeps the same puzzle visible across stroke choices',
   const legend = page.getByLabel('Table legend', { exact: true })
   await expect(legend).toContainText('Position zone')
   await expect(legend).toContainText('Next ball 2')
+  await expect(legend).toContainText('Ideal path · A')
+  await expect(page.getByRole('img', { name: 'Ideal cue-ball path to ball 1, stroke A', exact: true })).toHaveCount(1)
   await expect(legend).not.toContainText('Planned finish')
   await expect(page.locator('.analysis-rate')).toHaveCount(0)
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
@@ -219,8 +232,10 @@ test('WebGL position table keeps the same puzzle visible across stroke choices',
   const beforePath = '/tmp/shot-selection-position-webgl-before-stroke.png'
   const before = await page.locator('.pool-table-scene').screenshot({ path: beforePath, animations: 'disabled', style: screenshotStyle })
   await testInfo.attach('WebGL position table before choosing a stroke', { path: beforePath, contentType: 'image/png' })
-  await page.getByRole('button', { name: 'Choose stroke B', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Choose stroke B', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  // A is already previewed when the ball is selected. Selecting it explicitly
+  // must not reveal its post-contact path or predicted finish.
+  await page.getByRole('button', { name: 'Choose stroke A', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Choose stroke A', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
   const path = '/tmp/shot-selection-position-webgl-selected-stroke.png'
   const selected = await page.locator('.pool-table-scene').screenshot({ path, animations: 'disabled', style: screenshotStyle })
@@ -247,6 +262,14 @@ test('WebGL position table keeps the same puzzle visible across stroke choices',
   // Software WebGL redraws can round a few RGB channels by one level. Compare
   // every pixel, allowing only that rounding; a drawn endpoint still fails.
   expect(comparison.maxChannelDifference, 'Choosing a stroke must not draw its predicted endpoint on the table').toBeLessThanOrEqual(1)
+  await page.getByRole('button', { name: 'Choose stroke B', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Choose stroke B', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('img', { name: 'Ideal cue-ball path to ball 1, stroke B', exact: true })).toHaveCount(1)
+  await expect(page.getByRole('img', { name: 'Ideal cue-ball path to ball 1, stroke A', exact: true })).toHaveCount(0)
+  await expect(legend).toContainText('Ideal path · B')
+  const changedApproachPath = '/tmp/shot-selection-position-webgl-stroke-b.png'
+  await page.locator('.table-panel').screenshot({ path: changedApproachPath, animations: 'disabled' })
+  await testInfo.attach('WebGL position table with stroke B approach and hidden outcomes', { path: changedApproachPath, contentType: 'image/png' })
   await expect(legend).not.toContainText('Planned finish')
   await expect(page.locator('.analysis-rate')).toHaveCount(0)
   expect(errors).toEqual([])
@@ -333,6 +356,7 @@ test('reviewing a briefing preserves the selected ball and finish', async ({ pag
   await page.goto('/')
   await startLevel(page, 11)
   await chooseFirstOption(page)
+  await expectIdealApproach(page, 'A')
   await page.getByRole('button', { name: 'Review level briefing', exact: true }).click()
   await expect(page.getByRole('dialog', { name: 'Two balls, one decision', exact: true })).toContainText('New scenario')
   await page.getByRole('dialog').getByRole('button', { name: 'Back to the table', exact: true }).click()
@@ -340,8 +364,13 @@ test('reviewing a briefing preserves the selected ball and finish', async ({ pag
   await expect(page.getByRole('button', { name: 'Review level briefing', exact: true })).toBeFocused()
   await expect(page.getByRole('button', { name: 'Choose finish A', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('button', { name: 'Lock in your shot', exact: true })).toBeEnabled()
+  await expectIdealApproach(page, 'A')
   await page.getByRole('button', { name: 'Back to balls', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expectIdealApproach(page, 'A')
+  await page.getByRole('button', { name: 'Table ball 2', exact: true }).click()
+  await expectIdealApproach(page, 'A', 2)
+  await expect(page.getByRole('button', { name: /^Table finish [ABC]$/ })).toHaveCount(0)
 })
 
 test('the tenth encounter brings previous skills together with a specific cue-ball tip', async ({ page }, testInfo) => {

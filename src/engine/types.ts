@@ -78,6 +78,8 @@ export interface FinishOption {
   id: string;
   label: 'A' | 'B' | 'C';
   plan: ShotPlan;
+  /** Nominal cue-ball route, ending at its first object-ball contact. */
+  cueApproachPath: Vec2[];
 }
 export interface BallFinishOptions {
   ballId: number;
@@ -105,6 +107,8 @@ export interface Simulation {
   /** Physical impacts for full replays; empty for ensemble trials. */
   soundEvents: SimulationSoundEvent[];
   cuePath: Vec2[];
+  /** Cue-ball route through the first contact, including exact cushion turns. */
+  cueApproachPath: Vec2[];
   /** Actual trajectory of plan.potBallId (or plan.ballId for a direct shot). */
   objectPath: Vec2[];
   cueEnd: Vec2;

@@ -16,6 +16,7 @@ export interface PoolTableProps {
   target: Vec2 | null
   onSelectBall: (id: number) => void
   finishOptions: FinishOption[]
+  approachOption: FinishOption | null
   selectedOptionId: string | null
   onSelectOption: (id: string) => void
   selectableBallIds: number[]
@@ -37,6 +38,8 @@ const BALL_Y = CLOTH_Y + RADIUS
 const ENSEMBLE_COLORS = { cue: '#dbecb3', pot: '#78d9ec', miss: '#f49b85' } as const
 const POSITION_COLOR = '#8ce6df'
 const NOMINAL_FINISH_COLOR = '#f8dfb3'
+const APPROACH_COLOR = '#e1e9cd'
+const approachLabel = (option: FinishOption) => `Ideal cue-ball path to ball ${option.plan.ballId}, stroke ${option.label}`
 const COLORS: Record<number, string> = {
   0: '#f5f1df', 1: '#e7af12', 2: '#174593', 3: '#b6251d', 4: '#4c207d',
   5: '#e36a16', 6: '#076342', 7: '#681e27', 8: '#11161a', 9: '#e7af12',
@@ -469,16 +472,15 @@ function Scene(props: PoolTableProps) {
   const selectableBalls = new Set(props.selectableBallIds)
   const objective = scenario.objective
   const runtime = useMemo<Runtime>(() => ({ balls: new Map(), elapsed: 0, active: false, complete: false }), [])
-  const selected = scenario.balls.find(b => b.id === selectedBall)
-  const cue = scenario.balls.find(b => b.id === 0)
-  const aimPath = useMemo(() => cue && selected ? [[cue.position, selected.position]] : [], [cue, selected])
+  const approach = props.approachOption
+  const approachPaths = useMemo(() => approach ? [approach.cueApproachPath] : [], [approach])
   return <>
     <TopDownCamera />
     <TableLighting />
     <TableFurniture />
     <PlaybackDriver {...props} runtime={runtime} />
     {scenario.balls.map(ball => <PoolBall key={`${scenario.seed}-${ball.id}`} {...ball} selected={selectedBall === ball.id && !playing} isNext={objective?.nextBallId === ball.id} interactive={interactive && !playing && selectableBalls.has(ball.id)} onSelect={props.onSelectBall} runtime={runtime} />)}
-    {selected && cue && !scenario.bank && !analysis && !playing && <PathLines paths={aimPath} color="#e1e9cd" opacity={0.38} dashed height={BALL_Y} />}
+    {approach && !analysis && !playing && <PathLines paths={approachPaths} color={APPROACH_COLOR} opacity={0.85} dashed />}
     {!objective && !analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
     {objective?.target && <PositionZone target={objective.target} radius={objective.radius} />}
     {!objective && target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
@@ -596,6 +598,9 @@ function FlatTable(props: PoolTableProps) {
     <g pointerEvents="none" fill="none"><rect x="-16.8" y="-16.8" width="287.6" height="160.6" rx="5.2" stroke="#c09c68" strokeOpacity=".4" strokeWidth=".25" /></g>
     {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x, i) => [-1, 1].map(sign => <rect key={`${i}-${sign}`} x={(x + WIDTH / 2) * 100 - .6} y={(sign * .772 + DEPTH / 2) * 100 - .6} width="1.2" height="1.2" fill="#bfb9a7" transform={`rotate(45 ${(x + WIDTH / 2) * 100} ${(sign * .772 + DEPTH / 2) * 100})`} />))}
     {analysis && <FlatAnalysisOverlay analysis={analysis} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} />}
+    {props.approachOption && !analysis && !playing && <g data-testid="ideal-approach" pointerEvents="none" role="img" aria-label={approachLabel(props.approachOption)}>
+      <polyline data-testid="ideal-approach-path" data-option-id={props.approachOption.id} data-ball-id={props.approachOption.plan.ballId} points={props.approachOption.cueApproachPath.map(point => `${point.x * 100},${point.y * 100}`).join(' ')} fill="none" stroke={APPROACH_COLOR} opacity=".85" strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeDasharray="2.5 1.8" />
+    </g>}
     {objective?.target && <g data-testid="position-objective" pointerEvents="none" role="img" aria-label={`Position zone: leave the cue ball inside this circle for ball ${objective.nextBallId}`}>
       <circle data-testid="position-zone" cx={objective.target.x * 100} cy={objective.target.y * 100} r={objective.radius * 100} fill={POSITION_COLOR} fillOpacity=".13" stroke={POSITION_COLOR} strokeOpacity=".9" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
     </g>}
@@ -650,6 +655,7 @@ export default function PoolTable(props: PoolTableProps) {
         <Suspense fallback={null}><Scene {...props} /></Suspense>
       </Canvas>
     </CanvasBoundary> : fallback}
+    {available && props.approachOption && !props.analysis && !props.playing && <span className="sr-only" role="img" aria-label={approachLabel(props.approachOption)} />}
     {!available && <span style={{ position: 'absolute', bottom: 8, right: 16, fontSize: 10, color: '#88978b' }}>2D view · WebGL unavailable</span>}
   </div>
 }
