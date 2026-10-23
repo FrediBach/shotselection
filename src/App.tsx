@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDownRight, ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Crosshair, Flag, FlaskConical, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDownRight, ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Crosshair, Flag, Focus, Layers3, LoaderCircle, MousePointer2, Play, RotateCcw, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Switch } from '@/components/ui/switch'
+import BallIcon from '@/components/BallIcon'
+import EnsembleResults from '@/components/EnsembleResults'
+import { percent, strokeDescription } from '@/lib/shot-presentation'
 import PoolTable from '@/components/PoolTable'
 import PerfectCelebration from '@/components/PerfectCelebration'
 import ShotTolerancePanel from '@/components/ShotTolerancePanel'
@@ -11,7 +13,7 @@ import GameDialogBody, { type Modal } from '@/components/GameDialogBody'
 import CharacterSelection from '@/components/CharacterSelection'
 import type { PlayerCharacter } from '@/engine/characters'
 import { TOTAL_LEVELS } from '@/engine/scenarios'
-import { analyzeRoundAsync, evaluateShotObjective, generateScenario, POCKETS, prepareRoundAsync, scoreSelection } from '@/engine'
+import { analyzeRoundAsync, generateScenario, POCKETS, prepareRoundAsync } from '@/engine'
 import type { PreparedRound, RoundAnalysis, ShotAnalysis, ShotPlan } from '@/engine/types'
 import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY, type Session } from '@/lib/session'
 import { createGameAudio } from '@/lib/sound'
@@ -26,22 +28,6 @@ function initialModal(courseComplete: boolean): Modal {
   try { return localStorage.getItem(HELP_DISMISSED_KEY) === 'true' ? courseComplete ? null : 'lesson' : 'help' }
   catch { return 'help' }
 }
-const colors: Record<number, string> = { 1: '#e9b14e', 2: '#6594d2', 3: '#db7466', 4: '#a68cce', 5: '#e59857', 6: '#71aa89', 7: '#b7747d', 8: '#787e79' }
-const percent = (value: number) => `${Math.round(value * 100)}%`
-function strokeDescription(plan: ShotPlan) {
-  const spin = plan.topSpin < -0.1 ? 'Backspin' : plan.topSpin > 0.1 ? 'Topspin' : 'Center ball'
-  const amount = Math.abs(plan.topSpin) > 0.1 ? ` ${Math.round(Math.abs(plan.topSpin) * 100)}%` : ''
-  const side = Math.abs(plan.sideSpin) > 0.1 ? ` · ${plan.sideSpin > 0 ? 'Left' : 'Right'} spin` : ''
-  return `${spin}${amount}${side}`
-}
-function BallIcon({ id, small = false }: { id: number; small?: boolean }) {
-  return <span className={`ball-icon ${small ? 'ball-small' : ''}`} style={{ '--ball-color': colors[id] || '#939f8b' } as React.CSSProperties}><span>{id}</span></span>
-}
-function ScorePlacement({ shot, candidates }: { shot: ShotAnalysis; candidates: ShotAnalysis[] }) {
-  const scoring = scoreSelection(shot, candidates)
-  return <p className="analysis-placement"><span>{scoring.tiedCount > 1 ? 'Joint rank' : 'Rank'} {scoring.rank} of {scoring.candidateCount}</span><strong>{scoring.points} / 100</strong></p>
-}
-
 export default function App() {
   const [session, setSession] = useState<Session>(loadSession)
   const [showCourseSummary, setShowCourseSummary] = useState(() => session.completedLessons === TOTAL_LEVELS)
@@ -122,7 +108,6 @@ export default function App() {
   const ballChoiceLabel = (ballId: number) => plant ? ballId === plant.ballId ? `Plant ${ballId} → ${plant.targetBallId}` : ballId === plant.targetBallId ? `Target ${ballId}` : `Free ball ${ballId}` : `Ball ${ballId}`
   const shotLabel = (plan: ShotPlan) => plan.potBallId !== undefined && plan.potBallId !== plan.ballId ? `Plant ${plan.ballId} → ${plan.potBallId}` : plant ? `Free ball ${plan.ballId}` : `Ball ${plan.ballId}`
   const lastLesson = scenario.level === TOTAL_LEVELS || Boolean(result && session.completedLessons === TOTAL_LEVELS)
-  const inspectedOutcome = result && objective && inspected ? evaluateShotObjective(scenario, inspected.plan, inspected.nominal) : null
   const showPlannedFinish = Boolean(result && objective && inspected?.nominal.stopped && !inspected.nominal.scratch && !playing)
   const step = result ? 3 : selectionStep === 'ball' ? 1 : 2
   useEffect(() => {
@@ -205,6 +190,10 @@ export default function App() {
     audio.current?.setEnabled(enabled)
     setSoundEnabled(enabled)
     if (enabled) { audio.current?.unlock(); audio.current?.play('select') }
+  }
+  function inspectShot(shot: ShotAnalysis) {
+    audio.current?.stop(); audio.current?.unlock(); audio.current?.play('select')
+    setInspected(shot); setPlaying(false)
   }
   function playShot(shot: ShotAnalysis) {
     audio.current?.stop()
@@ -315,7 +304,7 @@ export default function App() {
       </div>
 
       {result && <section className="lesson-review" aria-label="Lesson takeaway"><span className="lesson-goal-label"><Check size={16} /> LESSON {scenario.level} COMPLETE</span><h2>{scenario.curriculum?.takeaway}</h2><p>{objective ? `A pot only starts the pattern. Compare the zone rate and next-shot rate below: success needs both, along with a legal pot.` : "Compare your selection with the best shot, then watch the replay to connect the lesson to the cue-ball path."}</p><span>{lastLesson ? `All ${TOTAL_LEVELS} lessons completed. Your course summary is ready.` : `Up next: ${generateScenario(session.level).title}`}</span></section>}
-      {result ? <section className="ensemble-section"><div className="section-heading"><div><div className="eyebrow">A SMALL CHANGE. A DIFFERENT OUTCOME.</div><h2>The ensemble tells the story.</h2></div><div className="ensemble-controls" role="group" aria-label="Ensemble display"><label className="ensemble-switch"><Switch checked={showEnsemble} onCheckedChange={setShowEnsemble} aria-label="Show paths" /> Show paths</label><label className="ensemble-switch"><Switch checked={showFinishes} onCheckedChange={setShowFinishes} aria-label="Show finish positions" /> Show finish positions</label></div></div><p className="ensemble-player-note">These ensembles use {session.character.name}’s angle, English, strength, and draw / follow precision.</p><div className="analysis-grid">{[result.selected, ...result.candidates.filter(shot => shot.plan.id !== result.selected.plan.id)].map((shot, index) => <button key={shot.plan.id} className={`analysis-card ${inspected === shot ? 'analysis-active' : ''}`} aria-pressed={inspected === shot} onClick={() => { audio.current?.stop(); audio.current?.unlock(); audio.current?.play('select'); setInspected(shot); setPlaying(false) }}><div className="analysis-card-title"><BallIcon id={shot.plan.potBallId ?? shot.plan.ballId} small /><strong>{index === 0 ? `Your selection${plant ? ` · ${shotLabel(shot.plan)}` : ''} · ${finishLabel(shot.plan.id)}` : `${shotLabel(shot.plan)} · ${finishLabel(shot.plan.id)}`}</strong>{shot.plan.id === result.best.plan.id ? <span className="best-tag">BEST SHOT</span> : <ChevronRight size={15} />}</div><ScorePlacement shot={shot} candidates={result.candidates} /><p className="analysis-stroke">{shot.plan.speed.toFixed(2)} m/s · {strokeDescription(shot.plan)}</p><div className="analysis-rate">{percent(shot.successRate)}<span>successful outcomes</span></div><div className="rate-track"><span style={{ width: percent(shot.successRate) }} /></div><div className="analysis-metrics"><span>Pot{plant ? ` ${shot.plan.potBallId ?? shot.plan.ballId}` : ''} <strong>{percent(shot.potRate)}</strong></span><span>Scratch <strong>{percent(shot.scratchRate)}</strong></span><span>Spread <strong>{(shot.spread * 100).toFixed(1)} cm</strong></span>{objective && <><span>In zone <strong>{percent(shot.positionRate)}</strong></span><span>Next shot <strong>{percent(shot.nextShotRate ?? 0)}</strong></span></>}</div></button>)}</div>{inspectedOutcome && inspected && <div className="stroke-outcome" role="region" aria-label="Planned stroke outcome"><span className="lesson-goal-label">STROKE {finishLabel(inspected.plan.id)} · PLANNED RESULT</span><strong>{inspectedOutcome.success ? 'In the zone, with the next shot available.' : !inspectedOutcome.legalPot ? 'The planned stroke does not complete a legal pot.' : !inspectedOutcome.positioned ? 'The cue ball finishes outside the position zone.' : 'Inside the zone, but the next shot is unavailable.'}</strong><p>{showPlannedFinish ? `The pale gold cross marks the planned cue-ball finish, ${(inspectedOutcome.error * 100).toFixed(0)} cm from the zone center. ` : ''}The trial rates above show how often small stroke errors still meet the full objective.</p></div>}<div className="ensemble-explanation"><FlaskConical size={17} /><p>{inspected?.explanation} <span>{result.samples} seeded trials per shot; {showEnsemble ? `${inspected?.sampleObjectPaths.length ?? 0} object-ball paths and ${inspected?.samplePaths.length ?? 0} cue-ball paths shown.` : 'paths hidden.'} {objective ? `Success needs a legal pot, the cyan zone, and a clear route to ball ${objective.nextBallId}.` : bank ? `Success needs ${bank.minCushions} cue-ball cushion contacts before ball ${bank.ballId}, a legal pot, and a safe finish.` : plant ? `A plant must contact ball ${plant.ballId} first and pot ball ${plant.targetBallId}; a free-ball shot must pot its selected ball. Both also need a safe cue-ball finish.` : "A pot can still scratch; success also requires a safe cue-ball finish."}</span>{showFinishes && <span className="finish-explanation">{playing ? 'Finish positions return after replay.' : `Colored rings show every ball’s final position across all ${inspected?.sampleBallEnds.length ?? 0} trials for the inspected shot. Pocketed balls are omitted.`}</span>}</p><Button variant="ghost" size="sm" onClick={() => inspected && playShot(inspected)} disabled={playing}><Play size={14} /> Replay</Button></div></section> : <section className="game-principles" aria-label="How the game works"><div><span className="principle-icon"><Focus size={22} strokeWidth={1.4} /></span><div><h3>Read the possibilities</h3><p>A new layout. A few choices.<br />{' '}One shot with a little more room.</p></div><span className="principle-index">01</span></div><div><span className="principle-icon"><Layers3 size={22} strokeWidth={1.4} /></span><div><h3>Think in probabilities</h3><p>Small changes in aim, spin, and power.<br />{' '}See how every outcome unfolds.</p></div><span className="principle-index">02</span></div><div><span className="principle-icon"><Flag size={22} strokeWidth={1.4} /></span><div><h3>Build your instincts</h3><p>Earn points for the safer choice.<br />{' '}Take on a tougher table.</p></div><span className="principle-index">03</span></div></section>}
+      {result ? <EnsembleResults result={result} scenario={scenario} inspected={inspected} playerName={session.character.name} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} showPlannedFinish={showPlannedFinish} onShowEnsemble={setShowEnsemble} onShowFinishes={setShowFinishes} onInspect={inspectShot} onPlay={playShot} shotLabel={shotLabel} finishLabel={finishLabel} /> : <section className="game-principles" aria-label="How the game works"><div><span className="principle-icon"><Focus size={22} strokeWidth={1.4} /></span><div><h3>Read the possibilities</h3><p>A new layout. A few choices.<br />{' '}One shot with a little more room.</p></div><span className="principle-index">01</span></div><div><span className="principle-icon"><Layers3 size={22} strokeWidth={1.4} /></span><div><h3>Think in probabilities</h3><p>Small changes in aim, spin, and power.<br />{' '}See how every outcome unfolds.</p></div><span className="principle-index">02</span></div><div><span className="principle-icon"><Flag size={22} strokeWidth={1.4} /></span><div><h3>Build your instincts</h3><p>Earn points for the safer choice.<br />{' '}Take on a tougher table.</p></div><span className="principle-index">03</span></div></section>}
       {result && inspected && <ShotTolerancePanel key={`${scenario.level}-${scenario.seed}`} scenario={scenario} shot={inspected} best={result.best} shotLabel={`${shotLabel(inspected.plan)} · ${finishLabel(inspected.plan.id)}`} bestLabel={`${shotLabel(result.best.plan)} · ${finishLabel(result.best.plan.id)}`} isSelection={inspected.plan.id === result.selected.plan.id} />}
       </>}
       </>}
