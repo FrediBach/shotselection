@@ -30,19 +30,37 @@ async function expectStableGameFrame(page: Page, initial: Awaited<ReturnType<typ
   }, { message: `The sidebar and table should keep their bounds ${phase}` }).toBeLessThanOrEqual(1)
 }
 
-async function expectSidebarFits(page: Page) {
+async function expectSidebarFits(page: Page, startsAtTop = false) {
   const body = page.locator('.shot-panel-body')
   const actions = page.locator('.shot-panel-actions')
-  await expect.poll(() => body.evaluate(element => Math.max(
-    element.scrollHeight - element.clientHeight,
-    element.scrollWidth - element.clientWidth,
-    element.scrollTop,
-  )), { message: 'The current wizard step should fit without sidebar scrolling' }).toBeLessThanOrEqual(1)
+  await expect.poll(() => body.evaluate(element => element.scrollWidth - element.clientWidth),
+    { message: 'The current wizard step should have no horizontal overflow' }).toBeLessThanOrEqual(1)
+  if (startsAtTop) await expect.poll(() => body.evaluate(element => Math.abs(element.scrollTop)),
+    { message: 'A new wizard step should start at the top' }).toBeLessThanOrEqual(1)
   const actionBounds = await documentBounds(actions)
   const bodyBounds = await documentBounds(body)
   expect(bodyBounds.y + bodyBounds.height).toBeLessThanOrEqual(actionBounds.y + 1)
   const panelBounds = await documentBounds(page.locator('.shot-panel'))
   expect(actionBounds.y + actionBounds.height).toBeLessThanOrEqual(panelBounds.y + panelBounds.height)
+
+  // Larger text may scroll inside the fixed panel; its final content must remain reachable.
+  const hasOverflow = await body.evaluate(element => element.scrollHeight > element.clientHeight + 1)
+  if (hasOverflow) {
+    await expect(body).toHaveCSS('overflow-y', /^(auto|scroll)$/)
+    const initialFrame = await readGameFrame(page)
+    const initialScrollTop = await body.evaluate(element => element.scrollTop)
+    try {
+      await body.evaluate(element => { element.scrollTop = element.scrollHeight })
+      await expect.poll(() => body.evaluate(element =>
+        Math.abs(element.scrollHeight - element.clientHeight - element.scrollTop),
+      ), { message: 'The sidebar should scroll all the way to its final content' }).toBeLessThanOrEqual(1)
+      await expectControlInsideSidebar(body.locator(':scope > :last-child'))
+      await expectStableGameFrame(page, initialFrame, 'while reading sidebar overflow')
+    } finally {
+      await body.evaluate((element, scrollTop) => { element.scrollTop = scrollTop }, initialScrollTop)
+    }
+    await expect.poll(() => body.evaluate((element, scrollTop) => Math.abs(element.scrollTop - scrollTop), initialScrollTop)).toBeLessThanOrEqual(1)
+  }
 }
 
 async function expectWizardStep(page: Page, step: 'Ball' | 'Finish' | 'Result') {
@@ -50,7 +68,7 @@ async function expectWizardStep(page: Page, step: 'Ball' | 'Finish' | 'Result') 
   await expect(progress.getByRole('listitem')).toHaveCount(3)
   for (const label of ['Ball', 'Finish', 'Result']) await expect(progress.getByRole('listitem').filter({ hasText: label })).toBeVisible()
   await expect(progress.locator('[aria-current="step"]')).toContainText(step)
-  await expectSidebarFits(page)
+  await expectSidebarFits(page, true)
 }
 
 async function expectControlInsideSidebar(control: Locator) {
@@ -421,7 +439,7 @@ test('mobile WebGL fallback keeps the frame stable through fixed choices, replay
   await expect(finishGroup).toHaveCount(0)
 })
 
-for (const width of [860, 360]) test(`${width}px later-level wizard fits extra balls, finishes and verdict without scrolling`, async ({ page }) => {
+for (const width of [860, 360]) test(`${width}px later-level wizard keeps extra balls, finishes and verdict reachable`, async ({ page }) => {
   await page.setViewportSize({ width, height: width === 360 ? 844 : 900 })
   await page.addInitScript(() => {
     localStorage.setItem('shot-selection-session', JSON.stringify({ level: 12, score: 0, rounds: 0, perfect: 0, seed: 71431 }))

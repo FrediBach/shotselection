@@ -80,7 +80,7 @@
 
 .perfect-celebration-score {
   color: #f0d4a7;
-  font-size: 77px;
+  font-size: 4.8125rem;
   font-weight: 550;
   line-height: 1.04;
   letter-spacing: -5px;
@@ -92,16 +92,16 @@
 .perfect-celebration-label {
   margin-top: 9px;
   color: #e6bc80;
-  font-size: 9px;
+  font-size: 0.75rem;
   font-weight: 650;
-  letter-spacing: 2.25px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
 .perfect-celebration-caption {
   margin-top: 8px;
-  color: #b5c1aa;
-  font-size: 9px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
   letter-spacing: .15px;
 }
 
@@ -158,11 +158,9 @@
     z-index: 20;
   }
   .perfect-celebration-badge { width: 204px; height: 204px; }
-  .perfect-celebration-score { font-size: 67px; }
+  .perfect-celebration-score { font-size: 4.1875rem; }
   .perfect-celebration-trophy { width: 34px; height: 34px; }
   .perfect-celebration-trophy svg { width: 20px; height: 20px; }
-  .perfect-celebration-label { font-size: 8px; letter-spacing: 1.8px; }
-  .perfect-celebration-caption { font-size: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

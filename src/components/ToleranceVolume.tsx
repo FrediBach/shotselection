@@ -200,7 +200,7 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
             const dy = end.y < CENTER.y - 40 ? -8 : 12;
             return <text className={`tolerance-volume-axis-label tolerance-axis-${axis.key}`} key={`${axis.key}-${direction}`} x={end.x} y={end.y + dy} textAnchor={anchor}>
               <tspan x={end.x}>{axis.name}</tspan>
-              <tspan x={end.x} dy="16" className="tolerance-volume-axis-value">{direction < 0 ? axis.negative : axis.positive}</tspan>
+              <tspan x={end.x} dy="1.2em" className="tolerance-volume-axis-value">{direction < 0 ? axis.negative : axis.positive}</tspan>
             </text>;
           }))}
         </svg>

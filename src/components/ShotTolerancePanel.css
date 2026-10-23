@@ -1,44 +1,44 @@
 .tolerance-section { margin: 32px 0; padding-top: 28px; border-top: 1px solid var(--border); }
 .tolerance-section > .section-heading { margin-bottom: 12px; }
-.tolerance-radius { color: #b7c4a9; font-size: 11px; white-space: nowrap; border: 1px dashed #c5ad7450; border-radius: 20px; padding: 8px 11px; }
-.tolerance-intro { margin: 0 0 22px; font-size: 12px; line-height: 1.65; color: #a1ad98; max-width: 740px; }
+.tolerance-radius { color: var(--text-secondary); font-size: 0.75rem; white-space: nowrap; border: 1px dashed #c5ad7450; border-radius: 20px; padding: 8px 11px; }
+.tolerance-intro { margin: 0 0 22px; font-size: 0.875rem; line-height: 1.65; color: var(--text-secondary); max-width: 740px; }
 .tolerance-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 18px; align-items: stretch; }
 .tolerance-margins, .tolerance-combinations { min-width: 0; background: #1b211b; border: 1px solid #ffffff12; border-radius: 10px; padding: 22px; }
 .tolerance-combinations { background: radial-gradient(ellipse at 50% 55%, #25302780, transparent 70%), #191f1b; }
 .tolerance-card-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-.tolerance-card-heading h3 { font-size: 13px; font-weight: 500; color: #e4e5d8; margin: 0; }
-.tolerance-segment { display: inline-flex; border: 1px solid #ffffff18; border-radius: 5px; padding: 3px; background: #121912; gap: 3px; }
-.tolerance-segment button { border: 0; border-radius: 3px; background: transparent; color: #9ba991; padding: 7px 9px; font-size: 10px; line-height: 1.4; }
-.tolerance-segment button[aria-pressed='true'] { background: #e6ba7a1a; color: #ecd1a4; }
+.tolerance-card-heading h3 { font-size: 0.875rem; font-weight: 500; color: #e4e5d8; margin: 0; }
+.tolerance-segment { display: inline-flex; border: 1px solid var(--control-border); border-radius: 5px; padding: 3px; background: #121912; gap: 3px; }
+.tolerance-segment button { border: 0; border-radius: 3px; background: transparent; color: var(--text-secondary); padding: 7px 9px; font-size: 0.75rem; line-height: 1.4; }
+.tolerance-segment button[aria-pressed='true'] { background: #e6ba7a1a; color: #ecd1a4; box-shadow: inset 0 0 0 1px var(--control-border); }
 .tolerance-segment button:hover { color: #f1dfbf; }
-.tolerance-condition { color: #a3b098; font-size: 11px; line-height: 1.65; margin: 14px 0 18px; }
-.margin-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+.tolerance-condition { color: var(--text-secondary); font-size: 0.75rem; line-height: 1.65; margin: 14px 0 18px; }
+.margin-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.75rem; }
 .margin-table th, .margin-table td { text-align: left; padding: 14px 10px; border-bottom: 1px solid #ffffff0b; vertical-align: top; }
 .margin-table th:first-child { padding-left: 0; width: 27%; }
 .margin-table th:last-child, .margin-table td:last-child { padding-right: 0; }
-.margin-table thead th { font-weight: 400; color: #91a182; padding-top: 3px; padding-bottom: 16px; }
-.margin-table thead th > span:first-child { font-size: 9px; text-transform: uppercase; letter-spacing: .7px; }
-.margin-table thead strong { display: block; margin-top: 7px; color: #dfdfcb; font-size: 12px; font-weight: 500; }
-.margin-table thead small { display: block; margin-top: 5px; font-size: 9px; color: #a2b293; }
+.margin-table thead th { font-weight: 400; color: var(--muted); padding-top: 3px; padding-bottom: 16px; }
+.margin-table thead th > span:first-child { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .7px; }
+.margin-table thead strong { display: block; margin-top: 7px; color: #dfdfcb; font-size: 0.875rem; font-weight: 500; }
+.margin-table thead small { display: block; margin-top: 5px; font-size: 0.75rem; color: var(--muted); }
 .margin-table thead th:last-child strong { color: var(--gold); }
-.margin-table .margin-planned-stroke { display: block; margin-top: 10px; font-size: 9px; color: #93a18a; line-height: 1.7; }
+.margin-table .margin-planned-stroke { display: block; margin-top: 10px; font-size: 0.75rem; color: var(--muted); line-height: 1.7; }
 .margin-table tbody th { color: #bbc7af; font-weight: 400; line-height: 1.6; }
-.margin-value strong { display: block; color: #dde7d2; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.margin-value strong { display: block; color: #dde7d2; font-size: 0.875rem; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .margin-table td:last-child .margin-value strong { color: #e6c591; }
 .margin-track { display: block; height: 3px; background: #aabd9210; border-radius: 3px; margin-top: 9px; overflow: hidden; }
 .margin-track > span { display: block; height: 100%; background: #b0c39e; }
 .margin-table td:last-child .margin-track > span { background: #d7b478; }
-.margin-pending { color: #819176; font-size: 11px; }
-.tolerance-note { color: #99a78f; font-size: 10px; line-height: 1.7; margin: 15px 0 0; }
+.margin-pending { color: var(--muted); font-size: 0.75rem; }
+.tolerance-note { color: var(--muted); font-size: 0.75rem; line-height: 1.7; margin: 15px 0 0; }
 .tolerance-note + .tolerance-note { margin-top: 8px; }
-.tolerance-match { margin: 14px 0 0; color: #d6bc90; font-size: 10px; line-height: 1.6; }
+.tolerance-match { margin: 14px 0 0; color: #d6bc90; font-size: 0.75rem; line-height: 1.6; }
 .volume-choice { margin-bottom: 16px; }
 .tolerance-graph-placeholder { min-height: 350px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #b5c6a4; gap: 12px; }
 .tolerance-graph-placeholder > svg { color: #c7ad7f; opacity: .7; }
-.tolerance-graph-placeholder p { font-size: 12px; margin: 4px 0 0; }
-.tolerance-graph-placeholder span { color: #8ea180; font-size: 10px; }
-.tolerance-status { display: flex; align-items: center; gap: 10px; color: #acbb9d; font-size: 11px; line-height: 1.6; margin: 16px 0 0; }
-.tolerance-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #e5b49c; font-size: 12px; margin-top: 14px; }
+.tolerance-graph-placeholder p { font-size: 0.875rem; margin: 4px 0 0; }
+.tolerance-graph-placeholder span { color: var(--muted); font-size: 0.75rem; }
+.tolerance-status { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 0.75rem; line-height: 1.6; margin: 16px 0 0; }
+.tolerance-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #e5b49c; font-size: 0.75rem; margin-top: 14px; }
 @media (max-width: 1100px) {
   .tolerance-layout { grid-template-columns: 1fr 1fr; gap: 14px; }
   .tolerance-margins, .tolerance-combinations { padding: 18px; }
@@ -47,20 +47,14 @@
 @media (max-width: 900px) {
   .tolerance-layout { grid-template-columns: 1fr; }
   .tolerance-section > .section-heading { align-items: flex-start; }
-  .tolerance-radius { font-size: 10px; }
   .tolerance-combinations { padding: 22px; }
 }
 @media (max-width: 520px) {
   .tolerance-section { margin-top: 24px; padding-top: 24px; }
   .tolerance-section > .section-heading { flex-direction: column; gap: 14px; }
   .tolerance-section .section-heading h2 { max-width: 280px; line-height: 1.3; }
-  .tolerance-intro { font-size: 11px; }
   .tolerance-margins, .tolerance-combinations { padding: 16px; }
   .margin-table th, .margin-table td { padding: 13px 6px; }
   .margin-table th:first-child { width: 28%; }
-  .margin-table tbody th { font-size: 10px; }
-  .margin-value strong { font-size: 12px; }
-  .margin-table thead th > span:first-child { font-size: 8px; letter-spacing: .4px; }
-  .margin-table thead strong { font-size: 11px; }
-  .margin-table .margin-planned-stroke { font-size: 8px; }
+  .margin-table thead th > span:first-child { letter-spacing: .4px; }
 }
