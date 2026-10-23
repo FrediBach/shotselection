@@ -4,7 +4,7 @@ import { Switch } from './ui/switch'
 import BallIcon from './BallIcon'
 import { evaluateShotObjective, scoreSelection } from '@/engine'
 import type { Scenario, ShotAnalysis, RoundAnalysis, ShotPlan } from '@/engine/types'
-import { percent, strokeDescription } from '@/lib/shot-presentation'
+import { percent, englishDescription, verticalSpinDescription } from '@/lib/shot-presentation'
 
 interface Props {
   result: RoundAnalysis
@@ -40,7 +40,7 @@ function ShotComparisonCard({ shot, candidates, active, isSelection, isBest, isP
   return <button className={`analysis-card ${active ? 'analysis-active' : ''}`} aria-pressed={active} onClick={() => onInspect(shot)}>
     <div className="analysis-card-title"><BallIcon id={shot.plan.potBallId ?? shot.plan.ballId} small /><strong>{isSelection ? `Your selection${isPlant ? ` · ${shotLabel(shot.plan)}` : ''} · ${finishLabel(shot.plan.id)}` : `${shotLabel(shot.plan)} · ${finishLabel(shot.plan.id)}`}</strong>{isBest ? <span className="best-tag">BEST SHOT</span> : <ChevronRight size={15} />}</div>
     <ScorePlacement shot={shot} candidates={candidates} />
-    <p className="analysis-stroke">{shot.plan.speed.toFixed(2)} m/s · {strokeDescription(shot.plan)}</p>
+    <p className="analysis-stroke">{shot.plan.speed.toFixed(2)} m/s · {verticalSpinDescription(shot.plan)}<br />{englishDescription(shot.plan)}</p>
     <div className="analysis-rate">{percent(shot.successRate)}<span>successful outcomes</span></div>
     <div className="rate-track"><span style={{ width: percent(shot.successRate) }} /></div>
     <div className="analysis-metrics"><span>Pot{isPlant ? ` ${shot.plan.potBallId ?? shot.plan.ballId}` : ''} <strong>{percent(shot.potRate)}</strong></span><span>Scratch <strong>{percent(shot.scratchRate)}</strong></span><span>Spread <strong>{(shot.spread * 100).toFixed(1)} cm</strong></span>{hasObjective && <><span>In zone <strong>{percent(shot.positionRate)}</strong></span><span>Next shot <strong>{percent(shot.nextShotRate ?? 0)}</strong></span></>}</div>

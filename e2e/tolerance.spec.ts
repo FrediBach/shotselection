@@ -82,7 +82,7 @@ async function completeRound(page: Page) {
   await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 45_000 })
   await expect(panel(page)).toHaveCount(0)
   await page.getByRole('button', { name: 'Select ball 1', exact: true }).click()
-  await page.getByRole('button', { name: 'Choose a finish', exact: true }).click()
+  await page.getByRole('button', { name: /^Choose a (?:finish|stroke)$/, exact: true }).click()
   await page.getByRole('button', { name: 'Choose finish B', exact: true }).click()
   await page.getByRole('button', { name: 'Lock in your shot' }).click()
   await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 45_000 })

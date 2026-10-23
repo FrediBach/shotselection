@@ -101,7 +101,7 @@ test('custom slider talents drive the ensemble and survive progress until a new 
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!).character)).toEqual(character)
   await expect(page.getByRole('button', { name: 'Select ball 1', exact: true })).toBeEnabled({ timeout: 45_000 })
   await page.getByRole('button', { name: 'Select ball 1', exact: true }).click()
-  await page.getByRole('button', { name: 'Choose a finish', exact: true }).click()
+  await page.getByRole('button', { name: /^Choose a (?:finish|stroke)$/, exact: true }).click()
   await page.getByRole('button', { name: 'Choose finish A', exact: true }).click()
   await page.getByRole('button', { name: 'Lock in your shot', exact: true }).click()
   await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 45_000 })

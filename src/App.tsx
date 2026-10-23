@@ -94,7 +94,12 @@ export default function App() {
     if (session.mode === 'sandbox' || showCourseSummary || !session.character) { setPreparing(false); return () => controller.abort() }
     setPreparing(true); setPrepared(null); setError('')
     prepareRoundAsync(requestedScenario, { signal: controller.signal })
-      .then(round => { if (!controller.signal.aborted) setPrepared(round) })
+      .then(round => {
+        if (!controller.signal.aborted) {
+          setPrepared(round)
+          setSelectedBall(round.balls.length === 1 ? round.balls[0].ballId : null)
+        }
+      })
       .catch(cause => {
         if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'The finish options could not be prepared. Please try again.')
       })
@@ -172,6 +177,7 @@ export default function App() {
     resetRoundState()
     setScenario(round.scenario)
     setPrepared(round)
+    setSelectedBall(round.balls.length === 1 ? round.balls[0].ballId : null)
     setPreparing(false)
     setShowSandboxSetup(false)
     setModal('lesson')
@@ -263,7 +269,7 @@ export default function App() {
         <section className={`table-panel${objective ? " table-panel-position" : ""}`} aria-label="Interactive pool table">
           <div className="table-toolbar"><div className="level-label"><span className="level-number">{sandbox ? <FlaskConical size={21} /> : String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">{sandbox ? 'SANDBOX' : `LEVEL ${String(scenario.level).padStart(2, '0')} OF ${TOTAL_LEVELS}`} <span>·</span> {objectBalls.length} OBJECT BALL{objectBalls.length === 1 ? "" : "S"}</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>TOURNAMENT TABLE</span></span><Button variant="ghost" size="icon" aria-label={sandbox ? "Review scenario briefing" : "Review level briefing"} title={sandbox ? "Review scenario briefing" : "Review level briefing"} aria-haspopup="dialog" onClick={event => openModal('lesson', event.currentTarget)}><BookOpen size={17} /></Button><Button variant="ghost" size="icon" className="sound-toggle" aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} onClick={toggleSound}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</Button><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" aria-haspopup="dialog" onClick={event => openModal('reset', event.currentTarget)} disabled={busy}><RotateCcw size={16} /></Button></div></div>
           <div className="table-stage">
-            <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? objective ? 'Preparing stroke choices' : plant ? 'Preparing plant and free-ball choices' : 'Preparing playable finish options' : selectionStep === 'ball' ? (selectedBall === null ? plant ? 'Compare the plant with the free ball' : 'Start by selecting an object ball' : `${ballChoiceLabel(selectedBall)} selected. Choose a ${objective ? "stroke" : "finish"} next.`) : selectedOption === null ? objective ? 'Choose a stroke in the side panel' : 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
+            <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? objective ? 'Preparing stroke choices' : plant ? 'Preparing plant and free-ball choices' : 'Preparing playable finish options' : selectionStep === 'ball' ? (selectedBall === null ? plant ? 'Compare the plant with the free ball' : 'Start by selecting an object ball' : `${ballChoiceLabel(selectedBall)} selected. Choose a ${objective || selectableBallIds.length === 1 ? "stroke" : "finish"} next.`) : selectedOption === null ? objective ? 'Choose a stroke in the side panel' : 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
             <div className="pool-canvas"><PoolTable scenario={scenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : !objective && selectionStep === 'finish' ? target : null} onSelectBall={selectBall} approachOption={approachOption} finishOptions={objective || result || selectionStep !== 'finish' ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} showFinishes={Boolean(result) && showFinishes} playing={playing} playbackKey={playbackKey} onPlaybackSound={event => { if (!document.hidden) audio.current?.play(event.type === 'cue' ? 'shot' : event.type === 'ball' ? 'collision' : event.type, event.strength) }} onPlaybackEnd={() => { setPlaying(false); audio.current?.stop() }} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
             {celebrating && <PerfectCelebration onComplete={finishCelebration} />}
             <div className="table-watermark">SHOT SELECTION <span>EST. 2026</span></div>
@@ -294,7 +300,7 @@ export default function App() {
           </div>
           <div className="shot-panel-actions">
             {result ? <ResultActions playing={playing} lastLesson={lastLesson} sandbox={sandbox} onReplay={() => playShot(result.best)} onNext={advanceRound} />
-              : selectionStep === 'ball' ? <BallSelectionActions selectedBall={selectedBall} selectedBallLabel={selectedBall === null ? '' : ballChoiceLabel(selectedBall)} preparing={preparing} ready={Boolean(prepared)} positionLesson={Boolean(objective)} plantLesson={Boolean(plant)} onContinue={() => setSelectionStep('finish')} />
+              : selectionStep === 'ball' ? <BallSelectionActions selectedBall={selectedBall} selectedBallLabel={selectedBall === null ? '' : ballChoiceLabel(selectedBall)} preparing={preparing} ready={Boolean(prepared)} positionLesson={Boolean(objective)} singleChoice={selectableBallIds.length === 1} plantLesson={Boolean(plant)} onContinue={() => setSelectionStep('finish')} />
               : <FinishSelectionActions hasSelection={Boolean(selectedOption)} busy={busy} preparing={preparing} ready={Boolean(prepared)} onSubmit={submit} onBack={() => setSelectionStep('ball')} />}
           </div>
         </aside>

@@ -40,7 +40,7 @@ for (const width of [1440, 360]) test(`${width}px shot coaching explains the com
   const ball = page.getByRole('button', { name: `Select ball ${selected.plan.ballId}`, exact: true })
   await expect(ball).toBeEnabled({ timeout: 30_000 })
   await ball.click()
-  await page.getByRole('button', { name: 'Choose a finish', exact: true }).click()
+  await page.getByRole('button', { name: /^Choose a (?:finish|stroke)$/, exact: true }).click()
   await page.getByRole('button', { name: `Choose finish ${option.label}`, exact: true }).click()
   await page.getByRole('button', { name: 'Lock in your shot' }).click()
   const opener = page.getByRole('button', { name: 'Explain my shot', exact: true })

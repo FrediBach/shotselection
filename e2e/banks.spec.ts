@@ -47,7 +47,7 @@ for (const [level, cushions] of [[51, 1], [57, 2], [60, 3]]) test(`bank lesson $
   const previewPath = `/tmp/shot-selection-bank-${level}-preview.png`
   await page.locator('.table-panel').screenshot({ path: previewPath, animations: 'disabled' })
   await testInfo.attach(`Bank lesson ${level}: ideal ${cushions}-cushion approach before choosing a finish`, { path: previewPath, contentType: 'image/png' })
-  await page.getByRole('button', { name: 'Choose a finish', exact: true }).click()
+  await page.getByRole('button', { name: /^Choose a (?:finish|stroke)$/, exact: true }).click()
   await expect(page.getByRole('button', { name: /^Choose finish [ABC]$/ })).toHaveCount(3)
   await expect(page.locator('.finish-assurance')).toContainText(`bank at least ${cushions} time`)
   for (const label of ['B', 'C', 'A'] as const) {

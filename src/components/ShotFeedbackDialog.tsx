@@ -2,7 +2,7 @@ import type { RefObject } from 'react'
 import { ArrowRight, MessageCircle } from 'lucide-react'
 import type { RoundAnalysis, Scenario, ShotPlan } from '@/engine/types'
 import { buildShotFeedback } from '@/lib/shot-feedback'
-import { percent, strokeDescription } from '@/lib/shot-presentation'
+import { ENGLISH_EXPLANATION, percent, englishDescription, verticalSpinDescription } from '@/lib/shot-presentation'
 import { Button } from './ui/button'
 import { DialogDescription, DialogTitle } from './ui/dialog'
 import './ShotFeedbackDialog.css'
@@ -35,9 +35,10 @@ export default function ShotFeedbackDialog({ result, scenario, headingRef, shotL
     <div className="feedback-plans">
       {[{ label: 'Your choice', shot: selected }, { label: sameShot ? 'Best · your choice' : 'Best offered shot', shot: best }].map(({ label, shot }) => <div key={label}>
         <span>{label}</span><strong>{shotLabel(shot.plan)} · {finishLabel(shot.plan.id)}</strong>
-        <small>{strokeDescription(shot.plan)}<br />{shot.plan.speed.toFixed(2)} m/s</small>
+        <small>{verticalSpinDescription(shot.plan)}<br />{englishDescription(shot.plan)}<br />{shot.plan.speed.toFixed(2)} m/s</small>
       </div>)}
     </div>
+    <p className="feedback-evidence">{ENGLISH_EXPLANATION}</p>
     <div className="feedback-reasons">{feedback.reasons.map(reason => <section key={reason.title}>
       <h3>{reason.title}</h3><p>{reason.detail}</p>
     </section>)}</div>

@@ -14,17 +14,18 @@ export function ResultActions({ playing, lastLesson, sandbox = false, onReplay, 
   </>
 }
 
-export function BallSelectionActions({ selectedBall, selectedBallLabel, preparing, ready, positionLesson, plantLesson, onContinue }: {
+export function BallSelectionActions({ selectedBall, selectedBallLabel, preparing, ready, positionLesson, singleChoice, plantLesson, onContinue }: {
   selectedBall: number | null
   selectedBallLabel: string
   preparing: boolean
   ready: boolean
   positionLesson: boolean
+  singleChoice: boolean
   plantLesson: boolean
   onContinue: () => void
 }) {
   return <>
-    <Button className="full-width lock-button" onClick={onContinue} disabled={selectedBall === null || preparing || !ready}>{positionLesson ? "Choose a stroke" : "Choose a finish"} <ArrowRight size={17} /></Button>
+    <Button className="full-width lock-button" onClick={onContinue} disabled={selectedBall === null || preparing || !ready}>{positionLesson || singleChoice ? "Choose a stroke" : "Choose a finish"} <ArrowRight size={17} /></Button>
     <p className="lock-caption">{preparing ? plantLesson ? 'Preparing shot choices…' : 'Checking playable shots…' : selectedBall === null ? 'Select a ball to continue.' : `${selectedBallLabel} selected.`}</p>
   </>
 }

@@ -64,7 +64,7 @@ describe('evidence for the better choice', () => {
     best.plan.topSpin = -0.8
     best.nominal.cuePath = [{ x: 0, y: 0 }, { x: 1, y: 0 }]
     const feedback = buildShotFeedback(scenario, round(selected, best))
-    expect(details(feedback)).toContain('backspin 80% at 1.30 m/s')
+    expect(details(feedback)).toContain('backspin 80% · no english (no side spin) at 1.30 m/s')
     expect(details(feedback)).toContain('80% of trials, compared with 40%')
     expect(details(feedback)).toContain('1.00 m, compared with your 2.00 m')
     expect(details(feedback)).toContain('10.0 cm of spread versus 30.0 cm')

@@ -49,11 +49,12 @@ export default function BallSelectionStep({ scenario, selectedBall, selectableBa
   const objectBalls = scenario.balls.filter(ball => ball.id > 0)
   const { description, unavailable, hint } = ballSelectionCopy(scenario, objectBalls.length)
   const selectableBalls = new Set(selectableBallIds)
+  const singleChoice = ready && !preparing && selectableBallIds.length === 1
   return <>
     <h2 ref={headingRef} tabIndex={-1}>Choose your ball.</h2>
     <p className="panel-description">{description}</p>
     <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <BallChoice key={ball.id} ball={ball} scenario={scenario} selected={selectedBall === ball.id} selectable={selectableBalls.has(ball.id)} preparing={preparing} ready={ready} ballChoiceLabel={ballChoiceLabel} onSelect={onSelect} />)}</div>
     {ready && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">{unavailable}</p>}
-    <div className="wizard-hint"><MousePointer2 size={17} /><p>{hint}</p></div>
+    <div className="wizard-hint"><MousePointer2 size={17} /><p>{singleChoice ? `${ballChoiceLabel(selectableBallIds[0])} is the only playable ball and is selected automatically. Choose a stroke when you’re ready.` : hint}</p></div>
   </>
 }

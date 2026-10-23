@@ -73,14 +73,14 @@ test('keyboard users can skip navigation and hear each finish’s stroke details
 
   const ball = page.getByRole('button', { name: 'Select ball 1', exact: true })
   await expect(ball).toBeEnabled({ timeout: 30_000 })
-  await ball.focus()
-  await page.keyboard.press('Enter')
-  const nextStep = page.getByRole('button', { name: 'Choose a finish', exact: true })
+  await expect(ball).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.finish-option')).toHaveCount(0)
+  const nextStep = page.getByRole('button', { name: 'Choose a stroke', exact: true })
   await nextStep.focus()
   await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', { name: 'Choose your finish.', exact: true })).toBeFocused()
   for (const label of ['A', 'B', 'C']) {
     await expect(page.getByRole('button', { name: `Choose finish ${label}`, exact: true }))
-      .toHaveAccessibleDescription(/\d+\.\d+ m\/s\s+cue-ball speed\s*(?:Backspin|Topspin|Center ball)/)
+      .toHaveAccessibleDescription(/\d+\.\d+ m\/s\s+cue-ball speed\s*(?:Backspin|Topspin|No draw \/ follow).*English \(.*side spin\)/)
   }
 })

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { englishDescription, verticalSpinDescription } from '@/lib/shot-presentation'
 import type { Scenario, ShotAnalysis, ShotTolerance, ToleranceAxis, ToleranceBound } from '@/engine/types'
 
 interface Props {
@@ -31,8 +32,7 @@ function MarginValue({ bound, axis, unit, limit, valid }: { bound?: ToleranceBou
 }
 
 function PlannedStroke({ shot }: { shot: ShotAnalysis }) {
-  const spin = shot.plan.topSpin
-  return <span className="margin-planned-stroke">{shot.plan.speed.toFixed(2)} m/s · {Math.abs(spin) < 0.01 ? 'center ball' : `${Math.round(Math.abs(spin) * 100)}% ${spin < 0 ? 'draw' : 'follow'}`}<br />{shot.plan.sideSpin === 0 ? 'No English' : `${Math.abs(shot.plan.sideSpin).toFixed(1)} rad/s ${shot.plan.sideSpin > 0 ? 'left' : 'right'} English`}</span>
+  return <span className="margin-planned-stroke">{shot.plan.speed.toFixed(2)} m/s · {verticalSpinDescription(shot.plan)}<br />{englishDescription(shot.plan)}</span>
 }
 
 export default function ShotToleranceMargins({ scenario, shot, best, shotLabel, bestLabel, isSelection, inspected, ideal }: Props) {

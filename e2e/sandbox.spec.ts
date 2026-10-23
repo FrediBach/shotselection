@@ -92,7 +92,7 @@ test('sandbox keeps normal scoring and character ensembles without total points 
   expect(playedLayout).not.toBe(initialLayout)
   await startPreparedRound(page)
   await page.getByRole('button', { name: 'Select ball 1', exact: true }).click()
-  await page.getByRole('button', { name: 'Choose a finish', exact: true }).click()
+  await page.getByRole('button', { name: /^Choose a (?:finish|stroke)$/, exact: true }).click()
   await page.getByRole('button', { name: 'Choose finish A', exact: true }).click()
   await page.getByRole('button', { name: 'Lock in your shot', exact: true }).click()
   await expect(page.getByText('ROUND COMPLETE', { exact: true })).toBeVisible({ timeout: 45_000 })

@@ -2,7 +2,7 @@ import type { RefObject } from 'react'
 import { Check } from 'lucide-react'
 import { POCKETS } from '@/engine'
 import type { Scenario, FinishOption } from '@/engine/types'
-import { strokeDescription } from '@/lib/shot-presentation'
+import { ENGLISH_EXPLANATION, englishDescription, verticalSpinDescription } from '@/lib/shot-presentation'
 import BallIcon from './BallIcon'
 
 interface Props {
@@ -27,7 +27,7 @@ function StrokeOption({ option, scenario, selected, busy, onSelect }: Pick<Props
     onClick={() => onSelect(option.id)}
   >
     <span className="finish-letter">{option.label}</span>
-    <span className="finish-copy" id={`finish-details-${option.id}`}><strong>{option.plan.speed.toFixed(2)} m/s <span>cue-ball speed</span></strong><span title="Spin percentage is relative to natural rolling at launch, not cue-tip offset.">{strokeDescription(option.plan)}</span>{(objective || bank || plant) && <span className="stroke-pocket">{plant ? `Attempt ball ${option.plan.potBallId ?? option.plan.ballId} to` : 'Pot to'} {POCKETS.find(pocket => pocket.id === option.plan.pocketId)?.name} pocket</span>}</span>
+    <span className="finish-copy" id={`finish-details-${option.id}`}><strong>{option.plan.speed.toFixed(2)} m/s <span>cue-ball speed</span></strong><span title="Spin percentage is relative to natural rolling at launch, not cue-tip offset.">{verticalSpinDescription(option.plan)}</span><span>{englishDescription(option.plan)}</span>{(objective || bank || plant) && <span className="stroke-pocket">{plant ? `Attempt ball ${option.plan.potBallId ?? option.plan.ballId} to` : 'Pot to'} {POCKETS.find(pocket => pocket.id === option.plan.pocketId)?.name} pocket</span>}</span>
     {selected && <Check size={14} />}
   </button>
 }
@@ -41,6 +41,7 @@ export default function FinishSelectionStep({ scenario, selectedBall, finishOpti
     <div className="finish-options" role="group" aria-label={objective ? "Stroke options" : "Cue-ball finish options"}>
       {finishOptions.map(option => <StrokeOption key={option.id} option={option} scenario={scenario} selected={selectedOptionId === option.id} busy={busy} onSelect={onSelect} />)}
     </div>
+    <p className="finish-assurance">{ENGLISH_EXPLANATION}</p>
     <p className="finish-assurance">{objective ? "All three can pot the first ball. The guide shows the approach; predict the travel after contact and the finish, revealed after you lock in." : bank ? `All three bank at least ${bank.minCushions} time${bank.minCushions === 1 ? "" : "s"} before reaching the target. Choose the most forgiving finish.` : plant ? "A plant may work, miss, or offer very little margin. Compare its alignment and cue-ball finish with the difficult free ball before committing." : "All three are playable. Choose the most forgiving."}</p>
   </>
 }

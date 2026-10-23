@@ -88,7 +88,7 @@ test('blocked browser storage leaves help and shot selection usable', async ({ p
   await expect(page.locator('.ball-choice:enabled').first()).toBeVisible({ timeout: 30_000 })
   await page.locator('.ball-choice:enabled').first().click()
   await expect(page.locator('.finish-option')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Choose a finish', exact: true }).click()
+  await page.getByRole('button', { name: /^Choose a (?:finish|stroke)$/, exact: true }).click()
   await expect(page.locator('.finish-option')).toHaveCount(3)
   await page.getByRole('button', { name: 'Choose finish A', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Lock in your shot' })).toBeEnabled()
