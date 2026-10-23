@@ -78,6 +78,9 @@ describe('physical simulation', () => {
     expect(first.score).toBe(second.score);
     expect(first.spread).toBeGreaterThan(0);
     expect(first.potRate).toBeGreaterThan(0.5);
+    expect(first.legalPotRate).toBeLessThanOrEqual(first.potRate);
+    expect(first.targetQuality).toBeLessThanOrEqual(first.legalPotRate);
+    expect(first.score).toBeCloseTo(0.72 * first.successRate + 0.2 * first.targetQuality + 0.08 * first.legalPotRate, 12);
   });
 
   it('rejects a combination pot when the selected ball was not contacted first', () => {

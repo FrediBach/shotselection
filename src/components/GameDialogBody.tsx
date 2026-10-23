@@ -8,7 +8,7 @@ import { COURSE_CHAPTERS, TOTAL_LEVELS } from '@/engine/scenarios'
 import type { Scenario } from '@/engine/types'
 import type { Session } from '@/lib/session'
 
-export type Modal = 'help' | 'lesson' | 'physics' | 'stats' | 'reset' | 'character' | null
+export type Modal = 'help' | 'lesson' | 'physics' | 'stats' | 'reset' | 'character' | 'feedback' | null
 
 interface Props {
   modal: Modal

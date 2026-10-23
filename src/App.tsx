@@ -7,6 +7,7 @@ import EnsembleResults from '@/components/EnsembleResults'
 import BallSelectionStep from '@/components/BallSelectionStep'
 import FinishSelectionStep from '@/components/FinishSelectionStep'
 import RoundResultStep from '@/components/RoundResultStep'
+import ShotFeedbackDialog from '@/components/ShotFeedbackDialog'
 import { ResultActions, BallSelectionActions, FinishSelectionActions } from '@/components/ShotPanelActions'
 import PoolTable from '@/components/PoolTable'
 import PerfectCelebration from '@/components/PerfectCelebration'
@@ -253,7 +254,7 @@ export default function App() {
             </li>)}
           </ol>
           <div className="shot-panel-body" data-step={result ? 'result' : selectionStep} key={`${scenario.level}-${step}`}>
-            {result ? <RoundResultStep result={result} scenario={scenario} headingRef={sidebarHeading} shotLabel={shotLabel} finishLabel={finishLabel} /> : selectionStep === 'ball' ? <BallSelectionStep scenario={scenario} selectedBall={selectedBall} selectableBallIds={selectableBallIds} preparing={preparing} ready={Boolean(prepared)} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectBall} /> : <FinishSelectionStep scenario={scenario} selectedBall={selectedBall} finishOptions={finishOptions} selectedOptionId={selectedOptionId} busy={busy} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectOption} />}
+            {result ? <RoundResultStep result={result} scenario={scenario} headingRef={sidebarHeading} shotLabel={shotLabel} finishLabel={finishLabel} onExplain={opener => openModal('feedback', opener)} /> : selectionStep === 'ball' ? <BallSelectionStep scenario={scenario} selectedBall={selectedBall} selectableBallIds={selectableBallIds} preparing={preparing} ready={Boolean(prepared)} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectBall} /> : <FinishSelectionStep scenario={scenario} selectedBall={selectedBall} finishOptions={finishOptions} selectedOptionId={selectedOptionId} busy={busy} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectOption} />}
             {error && <div role="alert" className="error-message"><p>{error}</p>{!prepared && !preparing && <Button variant="outline" size="sm" onClick={() => setPrepareAttempt(attempt => attempt + 1)}>Retry preparation</Button>}</div>}
           </div>
           <div className="shot-panel-actions">
@@ -273,7 +274,7 @@ export default function App() {
     </main>
 
     <Dialog open={modal !== null} onOpenChange={open => { if (!open) closeModal() }}><DialogContent
-      className={modal === 'lesson' ? 'level-briefing' : undefined}
+      className={modal === 'lesson' ? 'level-briefing' : modal === 'feedback' ? 'shot-feedback-dialog' : undefined}
       onOpenAutoFocus={event => { event.preventDefault(); dialogHeading.current?.focus({ preventScroll: true }) }}
       onCloseAutoFocus={event => {
         event.preventDefault()
@@ -284,7 +285,9 @@ export default function App() {
         else sidebarHeading.current?.focus({ preventScroll: true })
       }}
     >
-      <GameDialogBody modal={modal} scenario={scenario} session={session} headingRef={dialogHeading} lessonStarted={lessonStarted} onClose={closeModal} onRestart={() => clearRound(freshSession())} />
+      {modal === 'feedback' && result
+        ? <ShotFeedbackDialog result={result} scenario={scenario} headingRef={dialogHeading} shotLabel={shotLabel} finishLabel={finishLabel} onClose={closeModal} onReplay={() => { closeModal(); playShot(result.best) }} />
+        : <GameDialogBody modal={modal} scenario={scenario} session={session} headingRef={dialogHeading} lessonStarted={lessonStarted} onClose={closeModal} onRestart={() => clearRound(freshSession())} />}
     </DialogContent></Dialog>
   </div>
 }

@@ -121,6 +121,10 @@ export interface ShotAnalysis {
   plan: ShotPlan;
   successRate: number;
   potRate: number;
+  /** Settled pots satisfying contact/route rules without scratching. */
+  legalPotRate: number;
+  /** Mean target-closeness credit; zero for illegal pots or unavailable next shots. */
+  targetQuality: number;
   scratchRate: number;
   positionRate: number;
   /** Trials leaving the reserved ball a clear direct route within the lesson's cut limit. */

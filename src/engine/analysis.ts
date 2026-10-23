@@ -82,7 +82,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
       : scratches / count > 0.12
         ? 'The cue ball runs close to a pocket. Scratch risk makes this route less dependable.'
         : 'The pot is available, but speed and spin need care to hold the chosen cue-ball position.';
-  return { plan, successRate, potRate: pots / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, score, nominal, samples: count, explanation };
+  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, score, nominal, samples: count, explanation };
 }
 
 export function analyzeRound(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions = {}): RoundAnalysis {
