@@ -20,6 +20,7 @@ async function readGameFrame(page: Page) {
     panel: await documentBounds(page.locator('.shot-panel')),
     canvas: await documentBounds(page.locator('.pool-canvas')),
     actions: await documentBounds(page.locator('.shot-panel-actions')),
+    actionStep: await page.locator('.shot-panel-actions').getAttribute('data-step'),
   }
 }
 
@@ -27,8 +28,16 @@ async function expectStableGameFrame(page: Page, initial: Awaited<ReturnType<typ
   // Document coordinates distinguish a layout shift from ordinary page scrolling.
   await expect.poll(async () => {
     const current = await readGameFrame(page)
-    return Math.max(...(['panel', 'canvas', 'actions'] as const).flatMap(part =>
-      (['x', 'y', 'width', 'height'] as const).map(key => Math.abs(current[part][key] - initial[part][key]))))
+    // Each step may use a different footer height, but it must stay anchored to the panel.
+    const actionKeys = current.actionStep === initial.actionStep
+      ? ['x', 'y', 'width', 'height'] as const
+      : ['x', 'width'] as const
+    return Math.max(
+      ...(['panel', 'canvas'] as const).flatMap(part =>
+        (['x', 'y', 'width', 'height'] as const).map(key => Math.abs(current[part][key] - initial[part][key]))),
+      ...actionKeys.map(key => Math.abs(current.actions[key] - initial.actions[key])),
+      Math.abs(current.actions.y + current.actions.height - initial.actions.y - initial.actions.height),
+    )
   }, { message: `The sidebar and table should keep their bounds ${phase}` }).toBeLessThanOrEqual(1)
 }
 
@@ -56,7 +65,12 @@ async function expectSidebarFits(page: Page, startsAtTop = false) {
       await expect.poll(() => body.evaluate(element =>
         Math.abs(element.scrollHeight - element.clientHeight - element.scrollTop),
       ), { message: 'The sidebar should scroll all the way to its final content' }).toBeLessThanOrEqual(1)
-      await expectControlInsideSidebar(body.locator(':scope > :last-child'))
+      await expect.poll(() => body.locator(':scope > :last-child').evaluate(element => {
+        const viewport = element.closest('.shot-panel-body')!.getBoundingClientRect()
+        const bounds = element.getBoundingClientRect()
+        return bounds.bottom >= viewport.top - 1 && bounds.bottom <= viewport.bottom + 1
+          && bounds.left >= viewport.left - 1 && bounds.right <= viewport.right + 1
+      }), { message: 'The sidebar should reveal the bottom of its final content' }).toBe(true)
       await expectStableGameFrame(page, initialFrame, 'while reading sidebar overflow')
     } finally {
       await body.evaluate((element, scrollTop) => { element.scrollTop = scrollTop }, initialScrollTop)

@@ -362,7 +362,7 @@ export default function App() {
             {prepared && scenario.curriculum?.learning && <LessonComparison key={`${scenario.level}-${scenario.seed}`} prepared={prepared} result={result} hidden={!result && selectionStep !== 'finish'} busy={busy} />}
             {error && <div role="alert" className="error-message"><p>{error}</p>{!prepared && !preparing && <Button variant="outline" size="sm" onClick={() => setPrepareAttempt(attempt => attempt + 1)}>Retry preparation</Button>}</div>}
           </div>
-          <div className="shot-panel-actions">
+          <div className="shot-panel-actions" data-step={result ? 'result' : selectionStep}>
             {result ? <ResultActions playing={playing} lastLesson={lastLesson} sandbox={sandbox} onReplay={() => playShot(result.best)} onNext={advanceRound} />
               : selectionStep === 'ball' ? <BallSelectionActions selectedBall={selectedBall} selectedBallLabel={selectedBall === null ? '' : ballChoiceLabel(selectedBall)} preparing={preparing} ready={Boolean(prepared) && !backwardPending && !corridorPending && !pocketPending && !nominationPending} positionLesson={predictFinish} singleChoice={selectableBallIds.length === 1} plantLesson={Boolean(plant)} onContinue={() => { if (!backwardPending && !corridorPending && !pocketPending && !nominationPending) setSelectionStep('finish') }} />
               : <FinishSelectionActions hasSelection={Boolean(selectedOption)} busy={busy} preparing={preparing} ready={Boolean(prepared) && !corridorPending && !pocketPending && !nominationPending} onSubmit={submit} onBack={() => setSelectionStep('ball')} />}

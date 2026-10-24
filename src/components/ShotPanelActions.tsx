@@ -39,7 +39,7 @@ export function FinishSelectionActions({ hasSelection, busy, preparing, ready, o
   onBack: () => void
 }) {
   return <>
-    <Button className="lock-button full-width" onClick={onSubmit} disabled={!hasSelection || busy || preparing || !ready}>{busy ? <><LoaderCircle size={17} className="spin" /> Running ensemble…</> : <>Lock in your shot <ArrowRight size={17} /></>}</Button>
-    <Button className="wizard-back full-width" variant="ghost" onClick={onBack} disabled={busy}><ArrowLeft size={14} /> Back to balls</Button>
+    <Button className="wizard-back" variant="ghost" onClick={onBack} disabled={busy}><ArrowLeft size={14} /> Back to balls</Button>
+    <Button className="lock-button" onClick={onSubmit} disabled={!hasSelection || busy || preparing || !ready}>{busy ? <><LoaderCircle size={17} className="spin" /> Running ensemble…</> : <>Lock in your shot <ArrowRight size={17} /></>}</Button>
   </>
 }

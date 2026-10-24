@@ -83,7 +83,9 @@ svg { flex-shrink: 0; }
 .shot-panel-actions { flex: 0 0 132px; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px var(--shot-panel-padding) 20px; border-top: 1px solid var(--border); }
 .shot-panel-actions .ui-button { flex-shrink: 0; }
 .shot-panel-actions .lock-caption { margin-bottom: 0; }
-.shot-panel-actions .wizard-back { margin-top: 8px; min-height: 32px; padding: 6px 10px; font-size: 0.8125rem; }
+.shot-panel-actions[data-step='ball'], .shot-panel-actions[data-step='finish'] { flex-basis: auto; padding: 12px; }
+.shot-panel-actions[data-step='finish'] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 8px; }
+.shot-panel-actions[data-step='finish'] .ui-button { min-width: 0; min-height: 44px; padding: 8px; gap: 6px; font-size: 0.8125rem; }
 .shot-panel-heading .eyebrow { font-size: 0.75rem; letter-spacing: 1px; line-height: 1.25; color: #bdc6b3; }
 .tiny-pill { font-size: 0.75rem; line-height: 1.25; white-space: nowrap; letter-spacing: .3px; color: var(--muted); border: 1px solid #9dab871f; border-radius: 3px; padding: 4px 5px; }
 .shot-panel h2 { font-size: 1.5625rem; line-height: 1.22; font-weight: 450; margin: 12px 0 8px; letter-spacing: -.8px; }
