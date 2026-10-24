@@ -46,7 +46,7 @@ type VolumePoint = ShotTolerance['volume']['points'][number];
 
 function sampleAppearance(point: VolumePoint, depth: number, noPositionTarget: boolean) {
   if (!point.available) return { className: 'tolerance-volume-point-unavailable', radius: 2.3, outcome: 'Outside modeled speed range; not simulated', opacity: undefined };
-  if (point.success) return { className: 'tolerance-volume-point-success', radius: 3.5 + (depth + 1.75) * 0.35, outcome: noPositionTarget ? 'Legal final pot without a scratch' : 'Pot + target reached', opacity: 0.6 + (depth + 1.75) * 0.1 };
+  if (point.success) return { className: 'tolerance-volume-point-success', radius: 3.5 + (depth + 1.75) * 0.35, outcome: noPositionTarget ? 'Legal pot without a scratch' : 'Pot + target reached', opacity: 0.6 + (depth + 1.75) * 0.1 };
   if (point.pot) return { className: 'tolerance-volume-point-pot', radius: 2.3, outcome: 'Potted, outside target', opacity: undefined };
   return { className: 'tolerance-volume-point-miss', radius: 1.8, outcome: 'Unsuccessful pot', opacity: undefined };
 }
@@ -233,7 +233,7 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
           onKeyDown={onKeyDown}
         >
           <title>{label}: sampled combinations of angle, English, and strength</title>
-          <desc>{successCount} of {visibleSamples.length} grid points succeed. Green dots represent {noPositionTarget ? 'a legal final pot without a scratch, wherever the cue stops' : 'a legal pot with the cue ball in the target area' }. Hollow gray dots are outside the modeled speed range and were not simulated. The gold crosshair is the nominal shot. Drag or use arrow keys to rotate; Home resets the view.</desc>
+          <desc>{successCount} of {visibleSamples.length} grid points succeed. Green dots represent {noPositionTarget ? 'a legal pot without a scratch, wherever the cue stops' : 'a legal pot with the cue ball in the target area' }. Hollow gray dots are outside the modeled speed range and were not simulated. The gold crosshair is the nominal shot. Drag or use arrow keys to rotate; Home resets the view.</desc>
           <VolumePlotContents noPositionTarget={noPositionTarget} visibleSamples={visibleSamples} limits={limits} view={view} showFailures={showFailures} slice={slice} sliceStrength={sliceStrength} />
         </svg>
         {successCount === 0 && <div className="tolerance-volume-empty">No successful samples {slice ? 'in this strength slice' : 'in this grid'}</div>}
@@ -254,7 +254,7 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
         <div><span>{signed(-limits.speed, '%')} softer</span><span>{signed(limits.speed, '%')} harder</span></div>
       </div>}
       <div className="tolerance-volume-legend">
-        <span><i className="tolerance-volume-key-success" />{noPositionTarget ? 'Final-ball win' : 'Pot + target'}</span>
+        <span><i className="tolerance-volume-key-success" />{noPositionTarget ? 'Legal pot success' : 'Pot + target'}</span>
         <span><i className="tolerance-volume-key-origin" />Nominal shot</span>
         {showFailures && <>{!noPositionTarget && <span><i className="tolerance-volume-key-pot" />Pot, outside target</span>}<span><i className="tolerance-volume-key-miss" />Miss / foul</span></>}
         {showFailures && unavailableCount > 0 && <span><i className="tolerance-volume-key-unavailable" />Outside modeled range</span>}

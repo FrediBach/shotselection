@@ -4,7 +4,7 @@ import type { RoundAnalysis, Scenario, ShotAnalysis } from '../engine/types'
 import { buildShotFeedback, shotFeedbackVerdict } from './shot-feedback'
 
 const scenario: Scenario = {
-  level: 1, seed: 42, title: 'Test', description: '',
+  level: 71, seed: 42, title: 'Test', description: '',
   balls: [{ id: 0, position: { x: 1.27, y: 0.85 } }, { id: 1, position: { x: 1.27, y: 0.3 } }],
 }
 function shot(id: string, changes: Partial<ShotAnalysis> = {}): ShotAnalysis {

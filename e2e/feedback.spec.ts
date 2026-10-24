@@ -67,15 +67,16 @@ for (const width of [1440, 360]) test(`${width}px shot coaching explains the com
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByRole('heading', { level: 2 })).toBeFocused()
   if (width === 360) await expect(dialog).toHaveAccessibleName('You picked the best shot.')
-  else await expect(dialog).toHaveAccessibleName('A very good decision.')
+  else await expect(dialog).toHaveAccessibleName('An equally strong decision.')
   await expect(dialog.locator('.feedback-plans > div').first()).toContainText(`Ball ${selected.plan.ballId} · ${option.label}`)
   await expect(dialog.locator('.feedback-reasons')).toContainText(/trials/)
   const table = dialog.getByRole('table', { name: 'Your shot compared with the best shot' })
-  for (const [label, key] of [['Full objective', 'successRate'], ['Legal pot', 'legalPotRate'], ['Scratch', 'scratchRate'], ['In intended finish', 'positionRate']] as const) {
+  for (const [label, key] of [['Full objective', 'successRate'], ['Legal pot', 'legalPotRate'], ['Scratch', 'scratchRate']] as const) {
     const row = table.getByRole('row').filter({ has: page.getByRole('rowheader', { name: label, exact: true }) })
     await expect(row.getByRole('cell').nth(0)).toHaveText(`${Math.round(selected[key] * 100)}%`)
     await expect(row.getByRole('cell').nth(1)).toHaveText(`${Math.round(result.best[key] * 100)}%`)
   }
+  await expect(table.getByRole('rowheader', { name: 'In intended finish', exact: true })).toHaveCount(0)
   expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
   const bounds = (await dialog.boundingBox())!
   expect(bounds.x).toBeGreaterThanOrEqual(0)

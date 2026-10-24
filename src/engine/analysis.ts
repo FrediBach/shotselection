@@ -16,7 +16,7 @@ import { DEFAULT_CHARACTER } from './characters';
 import { clamp, distance, seededRandom } from './math';
 import { simulateShot } from './physics';
 import { scoreSelection } from './scoring';
-import { evaluateShotObjective, positionToleranceForScenario } from './objectives';
+import { evaluateShotObjective, positionToleranceForScenario, scoresPosition } from './objectives';
 export { pointsFor } from './scoring';
 import type { AnalyzeOptions, CharacterTalents, ObjectBallTrial, PreparedRound, RoundAnalysis, Scenario, Selection, ShotAnalysis, ShotPlan, SimulationBall, Vec2 } from './types';
 
@@ -84,7 +84,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
     trialSuccesses.push(success);
     if (success) successes++;
     if (nextShotAvailable) nextShots++;
-    const credit = scenario.finalBall ? Number(legal) : legal && nextShotAvailable ? (scenario.objective?.ellipse ? Math.exp(-(zoneRatio ** 2) / 2) : Math.exp(-(error * error) / (2 * tolerance ** 2))) : 0;
+    const credit = !scoresPosition(scenario) ? Number(legal) : legal && nextShotAvailable ? (scenario.objective?.ellipse ? Math.exp(-(zoneRatio ** 2) / 2) : Math.exp(-(error * error) / (2 * tolerance ** 2))) : 0;
     quality += credit;
     trialTargetCredits?.push(credit);
     if (!simulation.scratch && simulation.stopped) endpoints.push(simulation.cueEnd);
@@ -94,9 +94,9 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const spread = endpoints.length ? Math.sqrt(endpoints.reduce((sum, p) => sum + distance(p, meanEnd) ** 2, 0) / endpoints.length) : Math.hypot(TABLE.length, TABLE.width);
   const successRate = successes / count;
   // Pot AND position dominates. A missed pot or scratch never earns utility.
-  const score = scenario.finalBall ? successRate : (0.72 * successes + 0.2 * quality + 0.08 * legalPots) / count;
+  const score = !scoresPosition(scenario) ? successRate : (0.72 * successes + 0.2 * quality + 0.08 * legalPots) / count;
   const isPlant = !scenario.trick && plan.potBallId !== undefined && plan.potBallId !== plan.ballId;
-  const explanation = scenario.finalBall ? 'Only the final pot matters: correct first contact, no scratch and all balls stopped. Cue-ball position earns no extra credit.' : scenario.trick
+  const explanation = scenario.finalBall ? 'Only the final pot matters: correct first contact, no scratch and all balls stopped. Cue-ball position earns no extra credit.' : !scoresPosition(scenario) ? 'Success means a legal pot without scratching, with all balls stopped. The cue may finish anywhere on the table; spread and finish markers do not affect the score.' : scenario.trick
     ? successRate >= 0.8
       ? 'The complete trick repeats reliably: the required balls drop, the contact and cushion sequence holds, and the cue ball finishes under control.'
       : pots / count < 0.55

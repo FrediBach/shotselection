@@ -1,3 +1,4 @@
+import { scoresPosition } from '../engine/objectives'
 import type { RefObject } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { POCKETS } from '@/engine'
@@ -54,7 +55,7 @@ export default function FinishSelectionStep({ scenario, selectedBall, finishOpti
   const { objective, bank, plant, trick, conditions, finalBall } = scenario
   return <>
     <h2 ref={headingRef} tabIndex={-1}>{objective || trick || finalBall ? "Choose your stroke." : "Choose your finish."}</h2>
-    <p className="panel-description">{finalBall ? 'Which stroke most reliably pots the final ball without scratching? The cue may stop anywhere on the table.' : trick ? 'Which aim, speed and spin can complete the trick and control the cue-ball finish?' : objective ? `Which speed and spin will land in ${objective.regions ? 'either separate region' : 'the zone'} and leave ball ${objective.nextBallId} with a cut of ${objective.maxCutAngle}° or less?` : conditions ? 'Which finish has the most room for error with this table’s faults? Compare speed, spin, and the path through the damage.' : "Pick a finish on the table or compare the strokes below."}</p>
+    <p className="panel-description">{finalBall ? 'Which stroke most reliably pots the final ball without scratching? The cue may stop anywhere on the table.' : !scoresPosition(scenario) ? 'Pot without scratching. Markers are predictions, not scoring targets.' : trick ? 'Which aim, speed and spin can complete the trick and control the cue-ball finish?' : objective ? `Which speed and spin will land in ${objective.regions ? 'either separate region' : 'the zone'} and leave ball ${objective.nextBallId} with a cut of ${objective.maxCutAngle}° or less?` : conditions ? 'Which finish has the most room for error with this table’s faults? Compare speed, spin, and the path through the damage.' : "Pick a finish on the table or compare the strokes below."}</p>
     {conditions && <p className="table-condition-hint">{conditions.cue ? 'Stroke settings are before equipment losses. ' : ''}The guides include the table’s defects; the best margin is yours to judge.</p>}
     {selectedBall !== null && <div className="selected-ball-summary"><BallIcon id={selectedBall} /><span><strong>{ballChoiceLabel(selectedBall)}</strong>{plant && selectedBall === plant.ballId && <span>Hit {plant.ballId} first · Pot {plant.targetBallId}</span>}{trick && <span>Hit {trick.ballId} first · Pot {trick.requiredPots.join(' + ')}</span>}</span></div>}
     <div className="finish-options" role="group" aria-label={objective || trick || finalBall ? "Stroke options" : "Cue-ball finish options"}>

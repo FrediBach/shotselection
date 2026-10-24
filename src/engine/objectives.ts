@@ -76,8 +76,13 @@ export function hasProvenNextShot(scenario: Scenario, simulation: Simulation): b
   return false;
 }
 
+/** First two chapters teach potting; their finish markers are predictions, not scoring zones. */
+export function scoresPosition(scenario: Scenario): boolean {
+  return !scenario.finalBall && (Boolean(scenario.objective || scenario.bank || scenario.plant || scenario.trick || scenario.conditions) || scenario.level > 20);
+}
+
 export function positionToleranceForScenario(scenario: Scenario): number {
-  return scenario.finalBall ? 0 : scenario.objective?.radius ?? positionToleranceForLevel(scenario.level);
+  return !scoresPosition(scenario) ? 0 : scenario.objective?.radius ?? positionToleranceForLevel(scenario.level);
 }
 
 export function satisfiesTrick(scenario: Scenario, plan: ShotPlan, simulation: Simulation): boolean {
@@ -122,7 +127,7 @@ export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simula
   if (objective && !objective.target) throw new Error('Position lessons need a prepared landing zone.');
   const target = objective?.target ?? plan.target;
   const radius = positionToleranceForScenario(scenario);
-  const error = scenario.finalBall ? 0 : objective?.regions ? Math.min(...objective.regions.map(center => distance(simulation.cueEnd, center))) : distance(simulation.cueEnd, target);
+  const error = !scoresPosition(scenario) ? 0 : objective?.regions ? Math.min(...objective.regions.map(center => distance(simulation.cueEnd, center))) : distance(simulation.cueEnd, target);
   const banksSatisfied = !scenario.bank || (plan.ballId === scenario.bank.ballId
     && (simulation.cueBanksBeforeContact ?? 0) >= scenario.bank.minCushions);
   const potBallId = plan.potBallId ?? plan.ballId;
@@ -133,7 +138,7 @@ export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simula
     && (!scenario.finalBall || plan.ballId === scenario.finalBall.ballId && potBallId === scenario.finalBall.ballId)
     && simulation.potted.includes(potBallId) && (!objective || plan.ballId === objective.ballId) && banksSatisfied && plantSatisfied
     && satisfiesTrick(scenario, plan, simulation);
-  const zoneRatio = scenario.finalBall ? 0 : objective ? positionRegionRatio(objective, simulation.cueEnd) : error / radius;
+  const zoneRatio = !scoresPosition(scenario) ? 0 : objective ? positionRegionRatio(objective, simulation.cueEnd) : error / radius;
   const positioned = simulation.stopped && !simulation.scratch && zoneRatio <= 1;
   const nextShotAvailable = !objective || directNextShotRoutes(scenario, simulation).length > 0;
   return { legalPot, positioned, nextShotAvailable, success: legalPot && positioned && nextShotAvailable && (!scenario.plannedMovement || plannedMovementOutcome(scenario, simulation).opened), error, radius, zoneRatio };

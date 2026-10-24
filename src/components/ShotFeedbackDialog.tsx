@@ -1,3 +1,4 @@
+import { scoresPosition } from '../engine/objectives'
 import type { RefObject } from 'react'
 import { ArrowRight, MessageCircle } from 'lucide-react'
 import type { RoundAnalysis, Scenario, ShotPlan } from '@/engine/types'
@@ -25,7 +26,7 @@ export default function ShotFeedbackDialog({ result, scenario, headingRef, shotL
     { label: 'Full objective', yours: percent(selected.successRate), best: percent(best.successRate) },
     { label: scenario.trick ? 'Legal trick' : 'Legal pot', yours: percent(selected.legalPotRate), best: percent(best.legalPotRate) },
     { label: 'Scratch', yours: percent(selected.scratchRate), best: percent(best.scratchRate) },
-    ...(!scenario.finalBall ? [{ label: scenario.objective ? 'In shared zone' : 'In intended finish', yours: percent(selected.positionRate), best: percent(best.positionRate) }] : []),
+    ...(scoresPosition(scenario) ? [{ label: scenario.objective ? 'In shared zone' : 'In intended finish', yours: percent(selected.positionRate), best: percent(best.positionRate) }] : []),
     ...(scenario.objective ? [{ label: `Next shot · ball ${scenario.objective.nextBallId}`, yours: percent(selected.nextShotRate ?? 0), best: percent(best.nextShotRate ?? 0) }] : []),
   ]
   return <>
@@ -47,7 +48,7 @@ export default function ShotFeedbackDialog({ result, scenario, headingRef, shotL
       <thead><tr><th scope="col">In the trials</th><th scope="col">Your choice</th><th scope="col">Best</th></tr></thead>
       <tbody>{rows.map(row => <tr key={row.label}><th scope="row">{row.label}</th><td>{row.yours}</td><td>{row.best}</td></tr>)}</tbody>
     </table>
-    <p className="feedback-evidence">{result.samples} trials per shot, using the same variations for your player. Rates overlap; full success requires every condition in the same trial.{!scenario.objective && !scenario.finalBall && ' Each option has its own intended finish.'}{!sameShot && ' The comparison tests the complete strokes, so the advantage cannot be assigned to spin alone.'}{feedback.kind === 'close' && ' A small sampled edge is not a guaranteed advantage on every attempt.'}</p>
+    <p className="feedback-evidence">{result.samples} trials per shot, using the same variations for your player. Rates overlap; full success requires every condition in the same trial.{!scenario.objective && scoresPosition(scenario) && ' Each option has its own intended finish.'}{!sameShot && ' The comparison tests the complete strokes, so the advantage cannot be assigned to spin alone.'}{feedback.kind === 'close' && ' A small sampled edge is not a guaranteed advantage on every attempt.'}</p>
     <p className="feedback-takeaway">{feedback.takeaway}</p>
     <div className="dialog-actions feedback-actions"><Button variant="outline" onClick={onClose}>Back to comparison</Button><Button onClick={onReplay}>Watch the best shot <ArrowRight size={15} /></Button></div>
   </>

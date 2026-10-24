@@ -144,10 +144,10 @@ describe('lesson outcome recording', () => {
   const analysis: RoundAnalysis = { selected: shot, best: shot, candidates: [shot], scoring, points: scoring.points, samples: 64, positionTolerance: .19 }
   const scenario: Scenario = { level: 1, seed: 42, title: 'Test', description: '', balls: [] }
 
-  it('stores compact measured rates, omitting inapplicable next-shot diagnostics and all simulation geometry', () => {
+  it('stores compact measured rates, omitting unscored position, next-shot diagnostics and all simulation geometry', () => {
     expect(recordLessonResult(scenario, analysis)).toEqual({
-      selected: { quality: .7, successRate: .6, potRate: .8, scratchRate: .05, positionRate: .75 },
-      best: { quality: .7, successRate: .6, potRate: .8, scratchRate: .05, positionRate: .75 },
+      selected: { quality: .7, successRate: .6, potRate: .8, scratchRate: .05 },
+      best: { quality: .7, successRate: .6, potRate: .8, scratchRate: .05 },
     })
   })
 
@@ -156,6 +156,7 @@ describe('lesson outcome recording', () => {
     expect(final.selected.positionRate).toBeUndefined()
     expect(final.best.positionRate).toBeUndefined()
     const position = recordLessonResult({ ...scenario, objective: { kind: 'position', ballId: 1, nextBallId: 2, target: point, radius: .2, maxCutAngle: 65 } }, analysis)
+    expect(position.selected.positionRate).toBe(.75)
     expect(position.selected.nextShotRate).toBe(.7)
     expect(position.best.nextShotRate).toBe(.7)
   })

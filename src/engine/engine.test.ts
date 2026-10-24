@@ -96,13 +96,13 @@ describe('physical simulation', () => {
     expect(result.score).toBe(0);
   });
 
-  it('penalizes missing the requested position even when the pot is easy', () => {
+  it('ignores an unscored finish target in early potting lessons', () => {
     const nominal = simulateShot(straight, plan);
     const near = analyzeShot(straight, { ...plan, target: nominal.cueEnd }, 8);
     const far = analyzeShot(straight, { ...plan, target: { x: 0.3, y: 1 } }, 8);
     expect(near.potRate).toBe(far.potRate);
-    expect(near.score).toBeGreaterThan(far.score);
-    expect(far.successRate).toBe(0);
+    expect(near.score).toBe(far.score);
+    expect(far.successRate).toBe(far.legalPotRate);
   });
 });
 

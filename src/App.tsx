@@ -1,3 +1,4 @@
+import { scoresPosition } from './engine/objectives'
 import CorridorDiagnosis from '@/components/CorridorDiagnosis'
 import SecondShotPractice from './components/SecondShotPractice'
 import NominatedBallPlanning from '@/components/NominatedBallPlanning'
@@ -315,7 +316,7 @@ export default function App() {
           <div className="table-footer">
             <div className="table-legend" role="group" aria-label="Table legend">
               <span title={approachOption ? 'Ideal cue-ball approach for this stroke, ending at first contact.' : undefined}><i aria-hidden="true" className={result ? "legend-cue-path" : approachOption ? "legend-approach-path" : "legend-cue"} /> {result ? 'Cue paths' : approachOption ? `Ideal path · ${approachOption.label}` : 'Cue ball'}</span>
-              {!trick && !scenario.finalBall && <span><i aria-hidden="true" className={objective ? "legend-position" : "legend-target"} /> {objective ? "Position zone" : "Desired finish"}</span>}
+              {!trick && !scenario.finalBall && <span><i aria-hidden="true" className={objective ? "legend-position" : "legend-target"} /> {objective ? "Position zone" : scoresPosition(scenario) ? "Desired finish" : "Predicted finish"}</span>}
               {objective && <span><span className="legend-next-swatch" aria-hidden="true"><BallIcon id={objective.nextBallId} small /></span> Next ball {objective.nextBallId}</span>}
               {showPlannedFinish && <span><i aria-hidden="true" className="legend-planned-finish" /> Planned finish</span>}
               {result && <><span><i aria-hidden="true" className="legend-object-pot" /> Object pots</span><span><i aria-hidden="true" className="legend-object-miss" /> Misses / fouls</span></>}

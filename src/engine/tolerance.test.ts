@@ -7,7 +7,7 @@ import { analyzeShotTolerance } from './tolerance';
 import type { Scenario, ShotPlan, Simulation, ToleranceAxis, TolerancePoint } from './types';
 
 const scenario: Scenario = {
-  level: 1, seed: 42, title: 'Straight pot', description: 'Tolerance fixture',
+  level: 21, seed: 42, title: 'Straight pot', description: 'Tolerance fixture',
   balls: [{ id: 0, position: { x: 1.27, y: 0.85 } }, { id: 1, position: { x: 1.27, y: 0.3 } }],
 };
 const plan: ShotPlan = {
@@ -78,7 +78,7 @@ describe('sampled one-sided stroke tolerances', () => {
     });
     const result = analyzeShotTolerance(scenario, plan);
     expect(result.axes.angle.pot.positive.value).toBeCloseTo(1.1, 2);
-    expect(result.axes.angle.success.positive.value).toBeCloseTo(0.38, 2);
+    expect(result.axes.angle.success.positive.value).toBeCloseTo(positionToleranceForLevel(scenario.level) * 2, 2);
     expect(result.volume.potCount).toBeGreaterThan(result.volume.successCount);
     expect(result.volume.points.every(point => !point.success || point.pot)).toBe(true);
   });

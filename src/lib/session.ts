@@ -1,3 +1,4 @@
+import { scoresPosition } from '../engine/objectives'
 import { TOTAL_LEVELS } from '../engine/course'
 import { DEFAULT_CHARACTER, normalizePlayerCharacter } from '../engine/characters'
 import type { PlayerCharacter, RoundAnalysis, Scenario } from '../engine/types'
@@ -91,7 +92,7 @@ export function normalizeLessonHistory(value: unknown, completedLessons: number)
 export function recordLessonResult(scenario: Scenario, analysis: RoundAnalysis): LessonEvidence {
   const outcome = (shot: RoundAnalysis['selected']): OutcomeRates => ({
     quality: shot.score, successRate: shot.successRate, potRate: shot.potRate, scratchRate: shot.scratchRate,
-    ...(!scenario.finalBall ? { positionRate: shot.positionRate } : {}),
+    ...(scoresPosition(scenario) ? { positionRate: shot.positionRate } : {}),
     ...(scenario.objective && shot.nextShotRate !== undefined ? { nextShotRate: shot.nextShotRate } : {}),
   })
   return { selected: outcome(analysis.selected), best: outcome(analysis.best) }

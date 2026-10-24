@@ -1,3 +1,4 @@
+import { scoresPosition } from '../engine/objectives'
 import { POCKET_GEOMETRY } from '../engine/table-geometry'
 import { clamp, distance } from '../engine/math'
 import type { RoundAnalysis, Scenario, ShotAnalysis } from '../engine/types'
@@ -96,6 +97,12 @@ export function buildShotFeedback(scenario: Scenario, result: RoundAnalysis): Sh
     summary: `Your stroke legally pots the final ball without a scratch in ${percent(result.selected.successRate)} of trials; the highest offered rate is ${percent(result.best.successRate)}.`,
     reasons: [{ title: 'No next ball, no position target', detail: 'Correct first contact, the final pot, no scratch and all balls stopped complete this objective. Where the cue stops on the table earns no extra credit.' }],
     takeaway: 'Choose the repeatable legal pot. A precise landing is unnecessary when the game is over.',
+  }
+
+  if (!scoresPosition(scenario)) return { ...verdict,
+    summary: `Your shot legally pots without scratching in ${percent(selected.successRate)} of trials; the highest offered rate is ${percent(best.successRate)}.`,
+    reasons: [{ title: 'Pot safely; no position target', detail: `Your shot makes a legal pot without scratching in ${Math.round(selected.successRate * selected.samples)} of ${selected.samples} trials, compared with ${Math.round(best.successRate * best.samples)} of ${best.samples} for the best option. Only this rate determines shot quality. Finish markers and spread describe the cue-ball movement but earn no points.` }],
+    takeaway: 'Choose the repeatable legal pot without scratching. The cue may stop anywhere on the table.',
   }
 
   if (selected.plan.id === best.plan.id) return {

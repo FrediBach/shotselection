@@ -36,7 +36,7 @@ const LESSONS: readonly Lesson[] = [
     title: 'Your first pot',
     description: 'One object ball, an open side pocket. Compare three ways to leave the cue ball.',
     lesson: 'Potting sends the object ball into a pocket. Select the ball, then compare the three cue-ball finishes and their speed and spin before choosing one.',
-    takeaway: 'A successful shot includes both the pot and a controlled cue-ball finish.',
+    takeaway: 'A successful shot legally pots the object ball without scratching. No position target applies yet.',
     briefing: {
       focus: 'Plan where both balls go',
       gotcha: 'Pocketing the white cue ball is a scratch. Even if the object ball drops, that shot fails.',
@@ -58,7 +58,7 @@ const LESSONS: readonly Lesson[] = [
     title: 'A longer direct pot',
     description: 'Keep the contact line steady over a longer approach.',
     lesson: 'With a modest cut and a longer approach, compare how center ball, draw and follow change the finish. The extra distance makes a small aim error easier to see.',
-    takeaway: 'A direct pot still needs an exact contact line and a planned stopping point.',
+    takeaway: 'A direct pot needs an exact contact line; keep the cue ball out of the pockets.',
     briefing: {
       focus: 'Hold the line over distance',
       gotcha: 'A straight-looking pot can miss when the cue ball reaches the object ball even slightly off-center.',
