@@ -300,9 +300,9 @@ test('a completed earlier course resumes at banks while retaining tournament cre
   await seedLesson(page, 61, true, 'legacy')
   await page.goto('/')
   await expect(page.getByRole('dialog')).toContainText('LEVEL 51 / 100')
-  await expect(page.getByRole('dialog')).toContainText('Bank shots')
+  await expect(page.getByRole('dialog')).toContainText('Kick shots')
   await startLevel(page, 51)
-  await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('[aria-current="step"]')).toContainText('Bank shots')
+  await expect(page.getByRole('list', { name: 'Learning scenarios' }).locator('[aria-current="step"]')).toContainText('Kick shots')
   await expect(page.getByRole('region', { name: 'Course progression' })).toContainText('Your 10 completed tournament lessons are saved')
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))
   expect(saved).toMatchObject({ courseVersion: 5, completedLessons: 50, level: 51,

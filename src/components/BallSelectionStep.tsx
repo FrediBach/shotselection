@@ -18,7 +18,7 @@ interface Props {
 function unavailableBallReason({ objective, bank, plant, trick }: Scenario, id: number) {
   if (trick) return `Part of the trick: play ball ${trick.ballId} first`
   if (objective) return id === objective.nextBallId ? 'Reserved for your next shot' : 'Traffic: read the route around this ball'
-  if (bank) return 'Blocker: bank around this ball to reach the target'
+  if (bank) return 'Blocker: take a cushion-first route around this ball to reach the target'
   if (plant) return `Plant target: pot this ball by playing ball ${plant.ballId} first`
   return 'No three playable finishes found for this ball'
 }

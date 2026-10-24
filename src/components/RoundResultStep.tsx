@@ -51,7 +51,7 @@ export default function RoundResultStep({ result, scenario, headingRef, shotLabe
       <summary>Scoring details <ChevronDown size={15} aria-hidden="true" /></summary>
       <p>{result.scoring.noSuccessfulTrials ? `No successful ${trick ? 'trick' : 'pot'} + finish in ${result.samples} trials, so both parts earn 0.` : 'Quality rewards pots, safe finishes and target accuracy. Rank rewards your place among all choices.'}</p>
       <p>{result.scoring.qualityPoints} + {result.scoring.rankPoints} = {result.points}. Each part rounds to 10 points. Similar results share a rank.</p>
-      <p>Success rate: {trick ? `complete trick + pots ${trick.requiredPots.join(' + ')} + safe finish` : objective ? `pot + zone + a clear next shot on ball ${objective.nextBallId}` : bank ? `${bank.minCushions} bank${bank.minCushions === 1 ? "" : "s"} + pot + safe finish` : "pot + safe finish"} in {result.samples} trials, {objective?.ellipse ? `inside the ${(objective.ellipse.longRadius * 200).toFixed(1)} × ${(objective.radius * 200).toFixed(1)} cm elliptical target.` : `within ${Math.round(result.positionTolerance * 100)} cm of the target.`}</p>
+      <p>Success rate: {trick ? `complete trick + pots ${trick.requiredPots.join(' + ')} + safe finish` : objective ? `pot + zone + a clear next shot on ball ${objective.nextBallId}` : bank ? `${bank.minCushions} cue-ball cushion${bank.minCushions === 1 ? "" : "s"} before contact + pot + safe finish` : "pot + safe finish"} in {result.samples} trials, {objective?.ellipse ? `inside the ${(objective.ellipse.longRadius * 200).toFixed(1)} × ${(objective.radius * 200).toFixed(1)} cm elliptical target.` : `within ${Math.round(result.positionTolerance * 100)} cm of the target.`}</p>
     </details>
   </>
 }

@@ -14,7 +14,7 @@ export const COURSE_CHAPTERS: readonly CourseChapter[] = [
   { id: 'position', title: 'Play for position', description: 'Pot one ball and leave a usable shot on the next.' },
   { id: 'patterns', title: 'Build a pattern', description: 'Practice the opening shot and the link from ball 1 to ball 2.' },
   { id: 'traffic', title: 'Navigate traffic', description: 'Protect the next shot when other balls crowd the table.' },
-  { id: 'banks', title: 'Bank shots', description: 'Reach a blocked ball with one cushion, then link multiple banks.' },
+  { id: 'banks', title: 'Kick shots', description: 'Send the cue ball to a cushion before the target, then link multiple rebounds.' },
   { id: 'plants', title: 'Plants', description: 'Compare a combination pot with a difficult free ball and choose the more reliable shot.' },
   { id: 'tournament', title: 'Tournament table', description: 'Bring potting, position and small margins together.' },
   { id: 'trick-shots', title: 'Trick shots', description: 'Learn ten classic set-up shots with combinations, kisses, spin and cushions.' },

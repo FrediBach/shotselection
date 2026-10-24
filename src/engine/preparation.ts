@@ -1,3 +1,6 @@
+import { kickSpinExperiment } from './kick-spin';
+import { kickPaceExperiment } from './kick-pace';
+import { kickContactEvidence } from './kick-contact';
 import { elongatedPositionFinder } from './elongated-position';
 import { positionRegionRatio } from './position-region';
 import { englishRoutingFinder } from './english-routing';
@@ -429,6 +432,20 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }
   if (scenario.bank) {
     const prepared = prepareBall(scenario, scenario.bank.ballId);
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-spin') {
+      const kickSpin = kickSpinExperiment(scenario, prepared.ball.options);
+      return kickSpin ? { scenario, balls: [prepared.ball], kickSpin } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-pace') {
+      const kickPace = kickPaceExperiment(scenario, prepared.ball.options);
+      return kickPace ? { scenario, balls: [prepared.ball], kickPace } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-contact') {
+      const kickContact = prepared.ball.options.map(o => kickContactEvidence(scenario, o.plan,
+        simulateShot(scenario, o.plan, { record: false, recordPaths: true })))
+        .filter(e => e !== null).sort((a, b) => b.angle - a.angle)[0];
+      return kickContact ? { scenario, balls: [prepared.ball], kickContact } : { scenario, balls: [] };
+    }
     return { scenario, balls: prepared ? [prepared.ball] : [] };
   }
   if (scenario.objective) {

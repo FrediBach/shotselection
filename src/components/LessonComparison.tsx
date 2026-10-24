@@ -1,3 +1,7 @@
+import KickSpinComparison from './KickSpinComparison'
+import KickPaceComparison from './KickPaceComparison'
+import KickContactComparison from './KickContactComparison'
+import KickIntroduction from './KickIntroduction'
 import ElongatedPositionComparison from './ElongatedPositionComparison'
 import EnglishRoutingComparison from './EnglishRoutingComparison'
 import CorridorCenterComparison from './CorridorCenterComparison'
@@ -57,6 +61,10 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'corridor-diagnosis' || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (comparison === 'kick-spin') return <KickSpinComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'kick-pace') return <KickPaceComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'kick-contact') return <KickContactComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'kick-introduction') return <KickIntroduction prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'elongated-position') return <ElongatedPositionComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'english-routing') return <EnglishRoutingComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'corridor-center') return <CorridorCenterComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />

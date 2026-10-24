@@ -657,9 +657,10 @@ const LESSONS: readonly Lesson[] = [
     layout: [[2.07, 0.83], [1.45, 0.37], [1.32, 0.25], [1.102655, 0.600895], [0.1, 0.9], [2.4, 0.8]],
     position: { radius: 0.146, maxCutAngle: 46, ellipse: { longRadius: 0.34, angle: 2.1803049464253874 } },
   },
-  // Bank shots: the cue ball must take a cushion route around a screened target.
+  // Kick shots: the cue ball must take a cushion route around a screened target.
   {
-    title: 'Your first bank route',
+    title: 'Your first kick route',
+    learning: { concept: 'The cue ball must rebound before contacting the target.', prerequisite: 'Read the approach, pot and cue-ball finish.', comparison: 'kick-introduction' },
     description: 'The 2 blocks the direct path to the 1. Reach the target off a cushion.',
     lesson: 'Send the cue ball to a cushion before it reaches the 1. This cushion-first route is also called a kick. Picture the rebound, the contact that pots the 1, and the cue-ball finish.',
     takeaway: 'A blocked contact line can open up when you approach the target from a cushion.',
@@ -672,6 +673,7 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Read the rebound angle',
+    learning: { concept: 'Reach the potting side, not just the object ball.', prerequisite: 'Trace a cushion-first approach.', comparison: 'kick-contact' },
     description: 'A wider approach changes the angle coming off the cushion.',
     lesson: 'Trace the cue ball to the rail and back toward the contact point on the 1. Compare the three finishes while keeping the rebound angle in your picture of the shot.',
     takeaway: 'The useful rebound is the one that reaches the correct side of the object ball.',
@@ -684,21 +686,23 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Carry speed through the rail',
+    learning: { concept: 'Budget pace beyond the first cushion.', prerequisite: 'Connect a rebound to the potting contact.', comparison: 'kick-pace' },
     description: 'A longer cushion route needs enough speed left for the pot.',
     lesson: 'Allow for the distance to the cushion, the rebound, and the run to the 1. Compare launch speeds against the entire route, then judge where the cue ball will stop.',
-    takeaway: 'A bank route needs pace for both the approach and the shot after the rebound.',
+    takeaway: 'A kick route needs pace for both the approach and the shot after the rebound.',
     briefing: {
       focus: 'Budget speed for the whole route',
-      gotcha: 'A cushion removes speed. A stroke that would work on a direct line can stop short on a longer bank route.',
+      gotcha: 'A cushion removes speed. A stroke that would work on a direct line can stop short on a longer kick route.',
     },
     layout: [[0.94, 0.66], [1.29, 0.27], [1.115, 0.465]],
     bank: { ballId: 1, minCushions: 1 },
   },
   {
-    title: 'Bank from a new angle',
-    description: 'The screen remains, but the approach asks for a different rebound.',
-    lesson: 'Rebuild the route from this cue-ball position. Follow the cushion exit toward the 1 and compare the finish each speed and spin combination produces.',
-    takeaway: 'A change in starting position changes the useful cushion contact point.',
+    title: 'Adjust the kick for spin',
+    learning: { concept: 'Draw and follow can require different kick aims.', prerequisite: 'Budget pace and find the potting side.', comparison: 'kick-spin' },
+    description: 'Keep launch speed fixed, change draw to follow, then adjust the aim.',
+    lesson: 'Compare a successful kick with a spin-only change at the same aim and speed. Trace the travel after the cushion, then inspect the corrected aim that restores the pot. Spin can change the effective route even when the immediate rebound direction is nearly unchanged.',
+    takeaway: 'Changing draw or follow can require a new aim and rail contact point.',
     briefing: {
       focus: 'Recalculate the cushion contact',
       gotcha: 'Copying the previous rail point can miss the target even when the pocket looks the same.',
@@ -707,9 +711,9 @@ const LESSONS: readonly Lesson[] = [
     bank: { ballId: 1, minCushions: 1 },
   },
   {
-    title: 'Clear the bank corridor',
+    title: 'Clear the kick corridor',
     description: 'Another traffic ball puts pressure on the route around the screen.',
-    lesson: 'Check the full width of the cue ball along the approach and rebound. Compare the finishes only after you have accounted for every ball beside the bank corridor.',
+    lesson: 'Check the full width of the cue ball along the approach and rebound. Compare the finishes only after you have accounted for every ball beside the kick corridor.',
     takeaway: 'A cushion route is usable only when both legs have room for a whole ball.',
     briefing: {
       focus: 'Inspect both sides of the bounce',
@@ -719,10 +723,10 @@ const LESSONS: readonly Lesson[] = [
     bank: { ballId: 1, minCushions: 1 },
   },
   {
-    title: 'Control the bank finish',
+    title: 'Control the kick finish',
     description: 'A tighter finish turns a successful rebound into a control exercise.',
-    lesson: 'Read the bank, the pot, and the cue ball after contact as one continuous route. Use the offered finishes to decide which stroke leaves the most room for a small error.',
-    takeaway: 'Controlling the cue ball after a bank is part of the shot, just as it is on a direct pot.',
+    lesson: 'Read the kick, the pot, and the cue ball after contact as one continuous route. Use the offered finishes to decide which stroke leaves the most room for a small error.',
+    takeaway: 'Controlling the cue ball after a kick is part of the shot, just as it is on a direct pot.',
     briefing: {
       focus: 'Plan beyond the first contact',
       gotcha: 'Rebound speed and spin affect the finish. A good contact on the 1 does not guarantee a safe stop.',
@@ -743,12 +747,12 @@ const LESSONS: readonly Lesson[] = [
     bank: { ballId: 1, minCushions: 2 },
   },
   {
-    title: 'Thread the double bank',
+    title: 'Thread the two-cushion kick',
     description: 'Traffic narrows the space around a two-cushion route.',
     lesson: 'Apply the two-cushion sequence while checking the traffic beside each leg. Compare the three strokes for a repeatable pot and a controlled finish.',
     takeaway: 'Each extra leg adds another corridor that must stay clear.',
     briefing: {
-      focus: 'Check every leg of the double bank',
+      focus: 'Check every leg of the two-cushion kick',
       gotcha: 'Looking only at the two rail points can hide a blocking ball between them.',
     },
     layout: [[0.65, 0.4], [1.27, 0.12], [0.96, 0.26], [0.783096, 0.253282], [0.690424, 0.596026], [0.452222, 0.370272], [0.849191, 0.382025], [0.7983, 0.5758], [0.467, 0.262], [0.9844, 0.5034]],
@@ -756,12 +760,12 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Hold the line across two rails',
-    description: 'A more demanding double bank tests pace, contact, and stopping accuracy.',
+    description: 'A more demanding two-cushion kick tests pace, contact, and stopping accuracy.',
     lesson: 'Predict the complete two-cushion journey before choosing a finish. After committing, compare the spread of the trials to see how small errors grow along the longer route.',
     takeaway: 'Longer rebound routes reward the stroke that stays reliable under small errors.',
     briefing: {
       focus: 'Choose margin over an exact replay',
-      gotcha: 'A nominal double bank can look perfect while nearby strokes miss. Judge the ensemble as well as the replay.',
+      gotcha: 'A nominal two-cushion kick can look perfect while nearby strokes miss. Judge the ensemble as well as the replay.',
     },
     layout: [[0.55, 0.4], [1.27, 0.12], [0.91, 0.26], [0.691066, 0.264776], [0.599059, 0.59308], [0.352476, 0.368627], [0.74924, 0.382582], [0.6983, 0.5758], [0.367, 0.262], [0.8844, 0.5034]],
     bank: { ballId: 1, minCushions: 2 },
@@ -769,8 +773,8 @@ const LESSONS: readonly Lesson[] = [
   {
     title: 'The three-cushion escape',
     description: 'Finish the chapter by reaching the screened 1 after three cushion rebounds.',
-    lesson: 'Plan all three banks, then the pot and the final cue-ball position. Choose the stroke with the most convincing complete route and use the trials to check your prediction.',
-    takeaway: 'A multiple-bank shot succeeds when every rebound preserves the angle and speed needed for the next.',
+    lesson: 'Plan all three cue-ball rebounds, then the pot and the final cue-ball position. Choose the stroke with the most convincing complete route and use the trials to check your prediction.',
+    takeaway: 'A multiple-cushion kick succeeds when every rebound preserves the angle and speed needed for the next.',
     briefing: {
       focus: 'Connect three rebounds into one shot',
       gotcha: 'Count only cue-ball rebounds before the first object-ball contact. Three cushions and a pot still need a safe finish.',

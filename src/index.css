@@ -406,3 +406,7 @@ svg { flex-shrink: 0; }
 .speed-probes th, .speed-probes td { padding: .3rem .2rem; border-bottom: 1px solid #ffffff18; }
 .speed-probes th:first-child { text-align: left; }
 .speed-probes tr[data-success="true"] { background: #9fe7b714; }
+
+.kick-pace-speeds { width: 100%; margin: .75rem 0; border-collapse: collapse; text-align: left; }
+.kick-pace-speeds th, .kick-pace-speeds td { padding: .4rem .25rem; border-bottom: 1px solid #ffffff18; }
+.kick-pace-speeds td, .kick-pace-speeds thead th:last-child { text-align: right; white-space: nowrap; }
