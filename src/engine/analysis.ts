@@ -1,3 +1,5 @@
+import { compareConditionRobustness } from './condition-robustness';
+import { compareEquipmentRepairs } from './equipment-repair';
 import { comparePlayerProfiles } from './player-profile';
 import { plannedMovementOutcome } from './objectives';
 import { defensiveOutcome } from './defensive-outcome';
@@ -22,7 +24,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const count = clamp(Math.floor(samples), 8, 128);
   const tolerance = positionToleranceForScenario(scenario);
   const random = seededRandom(scenario.seed ^ 0x3A7B91);
-  const nominal = simulateShot(scenario, plan, { recordContacts: scenario.curriculum?.learning?.comparison === 'carom-plant' || scenario.curriculum?.learning?.comparison === 'contact-chain' || scenario.curriculum?.learning?.comparison === 'split-paths' || scenario.curriculum?.learning?.comparison === 'kiss-path' || scenario.curriculum?.learning?.comparison === 'carom-contact' || scenario.curriculum?.learning?.comparison === 'follow-contact' || scenario.curriculum?.learning?.comparison === 'draw-return' || scenario.curriculum?.learning?.comparison === 'object-bank' || scenario.curriculum?.learning?.comparison === 'two-object-bank', recordObjectRebounds: scenario.curriculum?.learning?.comparison === 'object-bank' || scenario.curriculum?.learning?.comparison === 'two-object-bank' });
+  const nominal = simulateShot(scenario, plan, { recordContacts: scenario.curriculum?.learning?.comparison === 'dirty-contact' || scenario.curriculum?.learning?.comparison === 'patch-route' || scenario.curriculum?.learning?.comparison === 'slow-drift' || scenario.curriculum?.learning?.comparison === 'carom-plant' || scenario.curriculum?.learning?.comparison === 'contact-chain' || scenario.curriculum?.learning?.comparison === 'split-paths' || scenario.curriculum?.learning?.comparison === 'kiss-path' || scenario.curriculum?.learning?.comparison === 'carom-contact' || scenario.curriculum?.learning?.comparison === 'follow-contact' || scenario.curriculum?.learning?.comparison === 'draw-return' || scenario.curriculum?.learning?.comparison === 'object-bank' || scenario.curriculum?.learning?.comparison === 'two-object-bank', recordObjectRebounds: scenario.curriculum?.learning?.comparison === 'object-bank' || scenario.curriculum?.learning?.comparison === 'two-object-bank' });
   const endpoints: Vec2[] = [];
   const samplePaths: Vec2[][] = [];
   const sampleObjectPaths: ObjectBallTrial[] = [];
@@ -161,5 +163,7 @@ export function analyzeRound(prepared: PreparedRound, selection: Selection, opti
   const continuation = prepared.continuation ? analyzeContinuation(scenario, prepared.continuation,
     candidates.find(c => c.plan.id === prepared.continuation!.referenceId)!, options.talents) : null;
   const playerProfiles = scenario.curriculum?.learning?.comparison === 'player-profile' ? comparePlayerProfiles(scenario, offered.map(o => o.plan)) : undefined;
-  return { ...(playerProfiles ? { playerProfiles } : {}), ...(continuation ? { continuation } : {}), ...(plantSetup ? { plantSetup } : {}), ...(sequenceComparison ? { sequenceComparison } : {}), candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForScenario(scenario) };
+  const equipmentRepairs = scenario.curriculum?.learning?.comparison === 'equipment-repair' ? compareEquipmentRepairs(scenario, candidates, selected.samples, options.talents, analyzeShot) : undefined;
+  const conditionRobustness = scenario.curriculum?.learning?.comparison === 'condition-robustness' ? compareConditionRobustness(scenario, candidates, selected.samples, options.talents, analyzeShot) : undefined;
+  return { ...(conditionRobustness ? { conditionRobustness } : {}), ...(equipmentRepairs ? { equipmentRepairs } : {}), ...(playerProfiles ? { playerProfiles } : {}), ...(continuation ? { continuation } : {}), ...(plantSetup ? { plantSetup } : {}), ...(sequenceComparison ? { sequenceComparison } : {}), candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForScenario(scenario) };
 }

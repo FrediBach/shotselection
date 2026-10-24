@@ -1,3 +1,13 @@
+import ConditionRobustnessComparison from './ConditionRobustnessComparison'
+import EquipmentRepairComparison from './EquipmentRepairComparison'
+import DragDriftComparison from './DragDriftComparison'
+import SlickPatchComparison from './SlickPatchComparison'
+import DirtyContactComparison from './DirtyContactComparison'
+import HouseCueComparison from './HouseCueComparison'
+import HealthyRailComparison from './HealthyRailComparison'
+import PatchRouteComparison from './PatchRouteComparison'
+import SlowDriftComparison from './SlowDriftComparison'
+import ClothComparison from './ClothComparison'
 import TwoObjectBankComparison from './TwoObjectBankComparison'
 import DoubleKissComparison from './DoubleKissComparison'
 import ObjectBankComparison from './ObjectBankComparison'
@@ -130,6 +140,16 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   if (comparison === 'draw-return') return <DrawReturnComparison prepared={prepared} result={result} hidden={hidden} />
   if (comparison === 'kiss-path') return <KissPathComparison prepared={prepared} result={result} hidden={hidden} />
   if (comparison === 'split-paths') return <SplitPathsComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'condition-robustness') return <ConditionRobustnessComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'equipment-repair') return <EquipmentRepairComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'drag-drift') return <DragDriftComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'slick-patch') return <SlickPatchComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'dirty-contact') return <DirtyContactComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'house-cue') return <HouseCueComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'healthy-rail') return <HealthyRailComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'patch-route') return <PatchRouteComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'slow-drift') return <SlowDriftComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'cloth-drag') return <ClothComparison prepared={prepared} result={result} hidden={hidden} />
   if (comparison === 'carom-plant' || comparison === 'contact-chain' || comparison === 'carom-contact' || comparison === 'follow-contact') return <ContactChainComparison prepared={prepared} result={result} hidden={hidden} />
   if (comparison === 'landing-recovery') return <LandingRecoveryComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'final-ball') return <FinalBallComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
