@@ -2,11 +2,12 @@ import { POCKET_GEOMETRY } from '../engine/table-geometry'
 import type { Ball, Simulation, Vec2 } from '../engine/types'
 
 const points = (path: Vec2[]) => path.map(p => `${p.x},${p.y}`).join(' ')
-export default function SequenceDiagram({ balls, label, simulation, oldKey, setupPoint }: { balls: Ball[]; label: string; simulation?: Simulation; oldKey?: Vec2; setupPoint?: Vec2 }) {
+export default function SequenceDiagram({ balls, label, simulation, oldKey, setupPoint, zone }: { balls: Ball[]; label: string; simulation?: Simulation; oldKey?: Vec2; setupPoint?: Vec2; zone?: { target: Vec2; radius: number } }) {
   const key = balls.find(ball => ball.id === 2)
   return <svg viewBox="-.08 -.08 2.70 1.43" role="img" aria-label={label}>
     <rect width="2.54" height="1.27" rx=".04" fill="#143f38" />
     {POCKET_GEOMETRY.map(p => <circle key={p.id} cx={p.center.x} cy={p.center.y} r=".045" fill="#071e1b" />)}
+    {zone && <circle cx={zone.target.x} cy={zone.target.y} r={zone.radius} fill="#7de3ef" fillOpacity=".12" stroke="#7de3ef" strokeWidth=".006" strokeDasharray=".025 .02" />}
     {setupPoint && <path d={`M${setupPoint.x-.05},${setupPoint.y}h.1 M${setupPoint.x},${setupPoint.y-.05}v.1`} stroke="#ff9f98" strokeWidth=".012" />}
     {simulation && <>
       <polyline points={points(simulation.cuePath)} fill="none" stroke="#7de3ef" strokeWidth=".012" />

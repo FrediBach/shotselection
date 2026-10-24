@@ -400,3 +400,9 @@ svg { flex-shrink: 0; }
 .lesson-predictions .ui-button { height: auto; min-height: 2rem; white-space: normal; text-align: left; }
 
 .lesson-comparison svg.contact-inset { max-width: 170px; margin: .5rem auto; background: #143f38; border-radius: .4rem; }
+
+.speed-probes { width: 100%; border-collapse: collapse; font-size: .78rem; text-align: center; }
+.speed-probes caption { text-align: left; margin: .5rem 0; font-weight: 600; }
+.speed-probes th, .speed-probes td { padding: .3rem .2rem; border-bottom: 1px solid #ffffff18; }
+.speed-probes th:first-child { text-align: left; }
+.speed-probes tr[data-success="true"] { background: #9fe7b714; }

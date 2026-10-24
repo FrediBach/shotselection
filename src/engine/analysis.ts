@@ -19,6 +19,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const sampleObjectPaths: ObjectBallTrial[] = [];
   const sampleBallEnds: SimulationBall[][] = [];
   const trialSuccesses: boolean[] = [];
+  const spareContactTrials = scenario.curriculum?.learning?.comparison === 'collision-assistance' ? [] as boolean[] : undefined;
   let pots = 0;
   let scratches = 0;
   let positions = 0;
@@ -32,12 +33,13 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
     const perturbed = perturbShot(plan, random, talents);
     const simulation = simulateShot(scenario, perturbed, { record: false, recordPaths: true });
     sampleBallEnds.push(simulation.finalBalls);
+    spareContactTrials?.push(Boolean(simulation.ballContacts?.some(([a, b]) => (a === 0 && b === 3) || (a === 3 && b === 0))));
     const dropped = scenario.trick
       ? scenario.trick.requiredPots.every(ballId => simulation.potted.includes(ballId))
       : simulation.potted.includes(plan.potBallId ?? plan.ballId);
     const potted = dropped && simulation.firstContact === plan.ballId;
     sampleObjectPaths.push({ path: simulation.objectPath, outcome: potted ? 'pot' : dropped ? 'foul' : 'miss' });
-    const { legalPot: legal, error, positioned, nextShotAvailable, success } = evaluateShotObjective(scenario, plan, simulation);
+    const { legalPot: legal, error, zoneRatio, positioned, nextShotAvailable, success } = evaluateShotObjective(scenario, plan, simulation);
     if (potted) pots++;
     if (simulation.scratch) scratches++;
     if (positioned) positions++;
@@ -45,7 +47,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
     trialSuccesses.push(success);
     if (success) successes++;
     if (nextShotAvailable) nextShots++;
-    if (legal && nextShotAvailable) quality += Math.exp(-(error * error) / (2 * tolerance ** 2));
+    if (legal && nextShotAvailable) quality += scenario.objective?.ellipse ? Math.exp(-(zoneRatio ** 2) / 2) : Math.exp(-(error * error) / (2 * tolerance ** 2));
     if (!simulation.scratch && simulation.stopped) endpoints.push(simulation.cueEnd);
     if (index < 24) samplePaths.push(simulation.cuePath);
   }
@@ -94,7 +96,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
       : scratches / count > 0.12
         ? 'The cue ball runs close to a pocket. Scratch risk makes this route less dependable.'
         : 'The pot is available, but speed and spin need care to hold the chosen cue-ball position.';
-  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, trialSuccesses, score, nominal, samples: count, explanation };
+  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, trialSuccesses, ...(spareContactTrials ? { spareContactTrials } : {}), score, nominal, samples: count, explanation };
 }
 
 export function analyzeRound(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions = {}): RoundAnalysis {

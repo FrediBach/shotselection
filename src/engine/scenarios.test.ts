@@ -45,7 +45,7 @@ describe('authored pool curriculum', () => {
     expect(scenarios.slice(90).every(scenario => scenario.conditions && !scenario.trick && !scenario.objective)).toBe(true);
   });
 
-  it('tightens finishing precision throughout each scenario and next-shot requirements across position lessons', () => {
+  it('keeps precision progression with a wider zone for the controlled English experiment', () => {
     for (const chapter of COURSE_CHAPTERS) {
       for (let level = chapter.firstLevel + 1; level <= chapter.lastLevel; level++) {
         expect(positionToleranceForLevel(level)).toBeLessThan(positionToleranceForLevel(level - 1));
@@ -58,15 +58,22 @@ describe('authored pool curriculum', () => {
     expect(positionToleranceForLevel(90)).toBeCloseTo(0.12, 12);
     expect(positionToleranceForLevel(91)).toBe(0.16);
     expect(positionToleranceForLevel(TOTAL_LEVELS)).toBeCloseTo(0.10, 12);
-    // The tournament progression keeps its increasing precision; the trick-shot
-    // showcase can use more generous zones while combining earlier skills.
-    const objectives = Array.from({ length: 80 }, (_, index) => generateScenario(index + 1).objective).filter(objective => objective !== undefined);
-    expect(objectives).toHaveLength(38);
+    // Level 49 compares two fixed-control endpoints in a shared zone. Its wider
+    // experimental zone is explicit; other position lessons retain progression.
+    // The later trick-shot showcase also permits more generous zones.
+    const lessons = Array.from({ length: 80 }, (_, index) => generateScenario(index + 1));
+    const objectives = lessons.map(lesson => lesson.objective).filter(objective => objective !== undefined);
+    expect(lessons[48].curriculum?.learning?.comparison).toBe('english-routing');
+    expect(lessons[48].objective).toMatchObject({ radius: 0.22, maxCutAngle: 47 });
+    expect(objectives).toHaveLength(37);
     expect(objectives[0]).toMatchObject({ radius: 0.20, maxCutAngle: 65 });
     expect(objectives.at(-1)).toMatchObject({ radius: 0.12, maxCutAngle: 40 });
     for (let index = 1; index < objectives.length; index++) {
-      expect(objectives[index].radius).toBeLessThan(objectives[index - 1].radius);
       expect(objectives[index].maxCutAngle).toBeLessThanOrEqual(objectives[index - 1].maxCutAngle);
+    }
+    const progression = lessons.filter(lesson => lesson.level !== 49).map(lesson => lesson.objective).filter(objective => objective !== undefined);
+    for (let index = 1; index < progression.length; index++) {
+      expect(progression[index].radius).toBeLessThan(progression[index - 1].radius);
     }
   });
 

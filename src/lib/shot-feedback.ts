@@ -72,6 +72,7 @@ function potContext(scenario: Scenario, selected: ShotAnalysis, best: ShotAnalys
 }
 
 function routeContext(scenario: Scenario, selected: ShotAnalysis, best: ShotAnalysis): string {
+  if (scenario.objective?.ellipse) return ' The elongated target allows more travel along its length than across its width; the complete success rate also requires the next shot.';
   if (scenario.objective?.target && selected.nominal.stopped && best.nominal.stopped && !selected.nominal.scratch && !best.nominal.scratch) {
     const chosenError = distance(selected.nominal.cueEnd, scenario.objective.target)
     const bestError = distance(best.nominal.cueEnd, scenario.objective.target)

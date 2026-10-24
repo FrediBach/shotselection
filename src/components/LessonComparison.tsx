@@ -1,3 +1,10 @@
+import ElongatedPositionComparison from './ElongatedPositionComparison'
+import EnglishRoutingComparison from './EnglishRoutingComparison'
+import CorridorCenterComparison from './CorridorCenterComparison'
+import ReturnLaneComparison from './ReturnLaneComparison'
+import CollisionAssistanceComparison from './CollisionAssistanceComparison'
+import OpenCorridorComparison from './OpenCorridorComparison'
+import PocketChangeComparison from './PocketChangeComparison'
 import SpareGrazeComparison from './SpareGrazeComparison'
 import MovingTrafficComparison from './MovingTrafficComparison'
 import BallWidthComparison from './BallWidthComparison'
@@ -50,6 +57,13 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'corridor-diagnosis' || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (comparison === 'elongated-position') return <ElongatedPositionComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'english-routing') return <EnglishRoutingComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'corridor-center') return <CorridorCenterComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'return-lane') return <ReturnLaneComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'collision-assistance') return <CollisionAssistanceComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'open-corridor') return <OpenCorridorComparison prepared={prepared} result={result} busy={busy} />
+  if (comparison === 'pocket-change') return <PocketChangeComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'spare-graze') return <SpareGrazeComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'moving-traffic') return <MovingTrafficComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'ball-width') return <BallWidthComparison prepared={prepared} result={result} busy={busy} />

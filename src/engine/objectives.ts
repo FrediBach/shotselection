@@ -1,3 +1,4 @@
+import { positionRegionRatio } from './position-region';
 import { positionToleranceForLevel, TABLE } from './constants';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
 import { simulateShot } from './physics';
@@ -113,7 +114,8 @@ export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simula
   const legalPot = simulation.stopped && !simulation.scratch && simulation.firstContact === plan.ballId
     && simulation.potted.includes(potBallId) && (!objective || plan.ballId === objective.ballId) && banksSatisfied && plantSatisfied
     && satisfiesTrick(scenario, plan, simulation);
-  const positioned = simulation.stopped && !simulation.scratch && error <= radius;
+  const zoneRatio = objective ? positionRegionRatio(objective, simulation.cueEnd) : error / radius;
+  const positioned = simulation.stopped && !simulation.scratch && zoneRatio <= 1;
   const nextShotAvailable = !objective || directNextShotRoutes(scenario, simulation).length > 0;
-  return { legalPot, positioned, nextShotAvailable, success: legalPot && positioned && nextShotAvailable, error, radius };
+  return { legalPot, positioned, nextShotAvailable, success: legalPot && positioned && nextShotAvailable, error, radius, zoneRatio };
 }

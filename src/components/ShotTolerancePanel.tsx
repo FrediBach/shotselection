@@ -36,7 +36,7 @@ export default function ShotTolerancePanel({ scenario, shot, best, shotLabel, be
   const { inspected, ideal, loading, error, retry } = useShotTolerances(scenario, shot, best)
 
   return <section className="tolerance-section" aria-label="Shot tolerance comparison">
-    <div className="section-heading"><div><div className="eyebrow"><ArrowLeftRight size={12} /> THE MARGIN FOR ERROR</div><h2>How much room does this shot give you?</h2></div><span className="tolerance-radius">Target radius · {Math.round((inspected?.positionTolerance ?? ideal?.positionTolerance ?? 0) * 100) || '…'} cm</span></div>
+    <div className="section-heading"><div><div className="eyebrow"><ArrowLeftRight size={12} /> THE MARGIN FOR ERROR</div><h2>How much room does this shot give you?</h2></div><span className="tolerance-radius">{scenario.objective?.ellipse ? `Target ellipse · ${(scenario.objective.ellipse.longRadius * 200).toFixed(1)} × ${(scenario.objective.radius * 200).toFixed(1)} cm` : `Target radius · ${Math.round((inspected?.positionTolerance ?? ideal?.positionTolerance ?? 0) * 100) || '…'} cm`}</span></div>
     <p className="tolerance-intro">Move away from the planned stroke and see what still works. Compare the shot you’re inspecting with the best offered choice from this round.</p>
     <div className="tolerance-layout">
       <ShotToleranceMargins scenario={scenario} shot={shot} best={best} shotLabel={shotLabel} bestLabel={bestLabel} isSelection={isSelection} inspected={inspected} ideal={ideal} />

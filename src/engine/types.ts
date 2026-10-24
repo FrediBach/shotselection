@@ -45,7 +45,7 @@ export interface LessonBriefing {
 export interface LessonLearning {
   concept: string;
   prerequisite: string;
-  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze';
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position';
   /** Restrict direct choices to the authored teaching routes, reflected with the table. */
   pockets?: { ballId: number; pocketId: number }[];
 }
@@ -69,6 +69,8 @@ export interface PositionObjective {
   nextBallId: number;
   /** Shared landing-zone radius in metres, independent of the offered stroke. */
   radius: number;
+  /** Optional elongated region: radius is its short semi-axis, angle in radians. */
+  ellipse?: { longRadius: number; angle: number };
   /** Largest acceptable direct next-ball cut, in degrees. */
   maxCutAngle: number;
   /** Assigned during preparation when the lesson does not specify a fixed zone. */
@@ -146,6 +148,13 @@ export interface SignedAnglePreview {
 export interface PreparedRound {
   sequenceComparison?: { referenceId: string; orders: SequenceOrder[] };
   steppingStoneOptionId?: string;
+  elongatedPosition?: { alongId: string; acrossId: string };
+  englishRouting?: { referenceId: string };
+  corridorCenter?: { centerId: string; edgeId: string };
+  returnLane?: { riskyId: string; clearId: string };
+  collisionAssistance?: { assistedId: string; clearId: string };
+  openCorridor?: { openedId: string; blockedId: string; pocketId: number };
+  pocketChange?: { originalId: string; adaptedId: string; preferredPocketId: number; alternatePocketId: number; blockerId: number };
   spareGraze?: { grazedId: string; clearId: string };
   movingTraffic?: { blockedId: string; clearId: string; pocketId: number };
   fallbackPlan?: { narrowId: string; flexibleId: string };
@@ -227,6 +236,8 @@ export interface ShotAnalysis {
   sampleBallEnds: SimulationBall[][];
   /** Objective success in common-random-number trial order, for paired comparisons. */
   trialSuccesses?: boolean[];
+  /** Any cue/ball-3 contact in each scoring trial, including failed trials. */
+  spareContactTrials?: boolean[];
   /** Robust utility in [0,1], based on actual ensemble outcomes. */
   score: number;
   nominal: Simulation;
