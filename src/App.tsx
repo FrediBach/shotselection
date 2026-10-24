@@ -44,6 +44,7 @@ function initialModal(courseComplete: boolean): Modal {
 export default function App() {
   const [session, setSession] = useState<Session>(loadSession)
   const sandbox = session.mode === 'sandbox'
+  const courseScorePercent = session.rounds ? Math.round(session.score / (session.rounds * 100) * 100) : 0
   const [sandboxPlacement, setSandboxPlacement] = useState<'random' | 'manual'>('random')
   const [showSandboxSetup, setShowSandboxSetup] = useState(() => session.mode === 'sandbox')
   const [showCourseSummary, setShowCourseSummary] = useState(() => session.mode !== 'sandbox' && session.completedLessons === TOTAL_LEVELS)
@@ -288,7 +289,7 @@ export default function App() {
     <header className="site-header">
       <a className="brand" href="/" aria-label="Shot Selection home"><span className="brand-mark"><span /></span><span>shot<span className="brand-light">selection</span><span className="brand-period">.</span></span></a>
       <nav className="main-nav" aria-label="Main navigation"><button className="nav-active" onClick={() => closeModal()}>The game</button><button className="nav-help" aria-label="How to play" aria-haspopup="dialog" onClick={event => openModal('help', event.currentTarget)}><CircleHelp className="nav-help-icon" size={18} /><span className="nav-help-label">How to play</span><ArrowDownRight className="nav-help-arrow" size={13} /></button><button aria-haspopup="dialog" onClick={event => openModal('physics', event.currentTarget)}>Behind the physics</button></nav>
-      {sandbox ? <span className="session-score sandbox-badge"><FlaskConical size={16} /> Sandbox</span> : <button className="session-score" onClick={event => openModal('stats', event.currentTarget)} aria-haspopup="dialog" aria-label={`View session stats, ${session.score} points`}><Trophy size={15} /><span>{session.score} <span className="muted">pts</span></span><span className="score-divider" /><span className="session-label">This session</span><ChevronRight size={14} /></button>}
+      {sandbox ? <span className="session-score sandbox-badge"><FlaskConical size={16} /> Sandbox</span> : <button className="session-score" onClick={event => openModal('stats', event.currentTarget)} aria-haspopup="dialog" aria-label={`View session stats, ${session.score} points, ${courseScorePercent}% of maximum across ${session.rounds} scored levels`}><Trophy size={15} /><span>{session.score} <span className="muted">pts</span> <span className="muted" title="Percentage of the maximum score for played levels">({courseScorePercent}%)</span></span><span className="score-divider" /><span className="session-label">This session</span><ChevronRight size={14} /></button>}
     </header>
 
     <main id="main-content" tabIndex={-1}>

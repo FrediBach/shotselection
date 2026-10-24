@@ -41,9 +41,13 @@ export default function CharacterSelection({ onStart }: { onStart: (character: P
   }
 
   return <section className="character-selection" aria-labelledby="character-heading">
+    <div className="character-game-intro">
+      <p className="character-game-intro-title">Pool, with a strategic twist.</p>
+      <p id="game-introduction">Shotselection is a pool billiards game where you choose the shot instead of aiming the cue. Read the table, pick from the available shots, and compare simulated attempts to find the most reliable choice for your player.</p>
+    </div>
     <div className="character-intro">
       <span className="eyebrow"><span className="live-dot" /> {mode === 'sandbox' ? 'YOUR PRACTICE TABLE' : 'A NEW PLAYTHROUGH'}</span>
-      <h1 id="character-heading" ref={heading} tabIndex={-1}>Choose your player.</h1>
+      <h1 id="character-heading" ref={heading} tabIndex={-1} aria-describedby="game-introduction">Choose your player.</h1>
       <p>Every player has a different margin for error. Find your strengths, then learn which shots make the most of them.</p>
     </div>
     <div className="character-mode-choice">

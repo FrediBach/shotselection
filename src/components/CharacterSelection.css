@@ -1,4 +1,7 @@
 .character-selection { max-width: 1180px; margin: 22px auto 45px; }
+.character-game-intro { margin-bottom: 32px; padding: 18px 22px; border-left: 2px solid var(--gold); border-radius: 0 8px 8px 0; background: #e6ba7a08; }
+.character-game-intro p { max-width: 850px; margin: 0; color: var(--muted); font-size: .9375rem; line-height: 1.75; }
+.character-game-intro .character-game-intro-title { margin-bottom: 6px; color: var(--gold); font-size: 1rem; font-weight: 550; }
 .character-intro { max-width: 650px; margin-bottom: 38px; }
 .character-intro .eyebrow { color: var(--gold); }
 .character-intro h1 { margin: 15px 0; font-size: clamp(2rem, 4vw, 3rem); font-weight: 450; letter-spacing: -1.7px; line-height: 1.15; }
