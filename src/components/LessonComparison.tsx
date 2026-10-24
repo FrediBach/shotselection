@@ -40,7 +40,7 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const [checkingAgain, setCheckingAgain] = useState(false)
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
-  if (!comparison || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (!comparison || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
   if (prepared.signedAnglePreview) return <SignedAngleComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
   if (prepared.drawDecay) return <DrawDecayComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
   if (comparison === 'contact-access') return <ContactAccessComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
