@@ -79,7 +79,7 @@ export function prepareSandboxRound(request: SandboxRequest): PreparedRound {
     const error = validateSandboxLayout(request.scenario);
     if (error) throw new Error(error);
     try {
-      return prepareRound(clearLandingZone(request.scenario), { regenerate: false });
+      return prepareRound(clearLandingZone(request.scenario), { regenerate: false, expandDirectSearch: true });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('No feasible')) {
         throw new Error('The engine could not find three playable finishes for this setup. Move the balls and try again.');

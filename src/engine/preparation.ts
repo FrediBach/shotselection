@@ -66,8 +66,11 @@ interface Route { pocketId: number; angle: number; speed: number; difficulty: nu
 interface FeasiblePlan { plan: ShotPlan; simulation: Simulation }
 export const MIN_FINISH_SEPARATION = 0.12;
 
-function routesFor(scenario: Scenario, ballId: number): Route[] {
-  if (scenario.curriculum?.learning?.comparison === 'key-ball') return directShotRoutes(scenario.balls, ballId, 80).slice(0, 2).map(route => ({ ...route, difficulty: route.cutAngle }));
+function routesFor(scenario: Scenario, ballId: number, expanded = false): Route[] {
+  if (scenario.curriculum?.learning?.comparison === 'key-ball') {
+    const routes = directShotRoutes(scenario.balls, ballId, 80);
+    return (expanded ? routes : routes.slice(0, 2)).map(route => ({ ...route, difficulty: route.cutAngle }));
+  }
   const cue = scenario.balls.find(ball => ball.id === 0)!;
   const object = scenario.balls.find(ball => ball.id === ballId)!;
   const routes: Route[] = [];
@@ -94,7 +97,7 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
     const speed = clamp(baseSpeed * Math.sqrt(drag) / (scenario.conditions?.cue?.power ?? 1), 0.65, scenario.conditions ? 3.4 : 2.8);
     routes.push({ pocketId: pocket.id, angle: Math.atan2(aim.y, aim.x), speed, difficulty: cueDistance * 0.15 + objectDistance * 0.18 + (1 - cut) * 0.8 });
   }
-  return routes.sort((a, b) => a.difficulty - b.difficulty).slice(0, 2);
+  return routes.sort((a, b) => a.difficulty - b.difficulty).slice(0, expanded ? routes.length : 2);
 }
 
 function scenarioFingerprint(scenario: Scenario): string {
@@ -175,7 +178,7 @@ function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => 
   return chosen;
 }
 
-function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOptions; target?: Vec2; contactAccessPocket?: number; signedAnglePreview?: PreparedRound['signedAnglePreview']; lookAheadOptionIds?: string[]; steppingStoneOptionId?: string; sequenceComparison?: PreparedRound['sequenceComparison']; zoneExit?: PreparedRound['zoneExit']; fallbackPlan?: PreparedRound['fallbackPlan']; movingTraffic?: PreparedRound['movingTraffic']; spareGraze?: PreparedRound['spareGraze']; pocketChange?: PreparedRound['pocketChange']; collisionAssistance?: PreparedRound['collisionAssistance']; returnLane?: PreparedRound['returnLane']; corridorCenter?: PreparedRound['corridorCenter']; englishRouting?: PreparedRound['englishRouting']; elongatedPosition?: PreparedRound['elongatedPosition'] } | null {
+function prepareBall(scenario: Scenario, ballId: number, expanded = false): { ball: BallFinishOptions; target?: Vec2; contactAccessPocket?: number; signedAnglePreview?: PreparedRound['signedAnglePreview']; lookAheadOptionIds?: string[]; steppingStoneOptionId?: string; sequenceComparison?: PreparedRound['sequenceComparison']; zoneExit?: PreparedRound['zoneExit']; fallbackPlan?: PreparedRound['fallbackPlan']; movingTraffic?: PreparedRound['movingTraffic']; spareGraze?: PreparedRound['spareGraze']; pocketChange?: PreparedRound['pocketChange']; collisionAssistance?: PreparedRound['collisionAssistance']; returnLane?: PreparedRound['returnLane']; corridorCenter?: PreparedRound['corridorCenter']; englishRouting?: PreparedRound['englishRouting']; elongatedPosition?: PreparedRound['elongatedPosition'] } | null {
   if (!scenario.balls.some(ball => ball.id === ballId)) return null;
   const feasible: FeasiblePlan[] = [];
   const comparison = scenario.curriculum?.learning?.comparison;
@@ -389,11 +392,19 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
       if (triple) break;
     }
   }
-  for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId)) {
-    for (const multiplier of comparison === 'planned-movement' || comparison === 'disconnected-position' || comparison === 'elongated-position' || comparison === 'english-routing' || comparison === 'corridor-center' || comparison === 'return-lane' || comparison === 'collision-assistance' || comparison === 'open-corridor' || comparison === 'pocket-change' || comparison === 'spare-graze' || comparison === 'moving-traffic' || comparison === 'fallback-plan' || comparison === 'sequence-reliability' || comparison === 'stepping-stone' || comparison === 'corridor-diagnosis' || comparison === 'angle-travel' || comparison === 'zone-exit' || comparison === 'look-ahead' || comparison === 'key-ball' || comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
-      for (const topSpin of comparison === 'disconnected-position' || comparison === 'return-lane' || comparison === 'english-routing' || comparison === 'elongated-position' ? [-1.6, -1.1, -.6, 0, .5, 1.05] : comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05]) {
+  for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId, expanded)) {
+    const multipliers = comparison === 'planned-movement' || comparison === 'disconnected-position' || comparison === 'elongated-position' || comparison === 'english-routing' || comparison === 'corridor-center' || comparison === 'return-lane' || comparison === 'collision-assistance' || comparison === 'open-corridor' || comparison === 'pocket-change' || comparison === 'spare-graze' || comparison === 'moving-traffic' || comparison === 'fallback-plan' || comparison === 'sequence-reliability' || comparison === 'stepping-stone' || comparison === 'corridor-diagnosis' || comparison === 'angle-travel' || comparison === 'zone-exit' || comparison === 'look-ahead' || comparison === 'key-ball' || comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3];
+    // A short pot needs little object-ball speed, but draw may need a much
+    // stronger launch to survive the approach. Keep the original candidates
+    // and supplement their distance-based pace with a full absolute speed grid.
+    const speeds = [...new Set([...multipliers.map(multiplier => Math.min(3.6, route.speed * multiplier)),
+      ...(expanded ? Array.from({ length: 16 }, (_, index) => (6 + index * 2) / 10) : [])])];
+    const lessonSpins = comparison === 'disconnected-position' || comparison === 'return-lane' || comparison === 'english-routing' || comparison === 'elongated-position' ? [-1.6, -1.1, -.6, 0, .5, 1.05] : comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05];
+    const spins = [...new Set([...lessonSpins, ...(expanded ? [-1.6, -1.1, -.6, 0, .5, 1.05, 1.6] : [])])];
+    for (const speed of speeds) {
+      for (const topSpin of spins) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
-          const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
+          const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed, topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
           const calibrated = directStroke(scenario, plan);
           if (calibrated) {
             calibrated.plan.target = { ...calibrated.simulation.cueEnd };
@@ -445,15 +456,20 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
   })).sort((a, b) => a.label.localeCompare(b.label)) } } : {}), ...(comparison === 'contact-access' ? { contactAccessPocket: positionPair!.pocketId } : {}) };
 }
 
-function prepareLayout(scenario: Scenario): PreparedRound {
+function prepareLayout(scenario: Scenario, expandDirectSearch = false): PreparedRound {
+  // Preserve the usual choices when they work. Manual tables may need strokes
+  // outside the small course grid, while retaining all lesson/objective checks.
+  const prepare = (ballId: number) => prepareBall(scenario, ballId)
+    ?? (expandDirectSearch && !scenario.bank && !scenario.trick && scenario.plant?.ballId !== ballId
+      ? prepareBall(scenario, ballId, true) : null);
   if (scenario.curriculum?.learning?.comparison === 'ball-width' && !ballWidthEvidence(scenario)) return { scenario, balls: [] };
   if (scenario.curriculum?.learning?.comparison === 'open-corridor') {
-    const balls = [1, 3].flatMap(id => { const p = prepareBall(scenario, id); return p ? [p.ball] : []; });
+    const balls = [1, 3].flatMap(id => { const p = prepare(id); return p ? [p.ball] : []; });
     const pair = openCorridorPair(scenario, balls.flatMap(b => b.options.map(o => ({ plan: o.plan, simulation: simulateShot(scenario, o.plan, { record: false }) }))));
     return pair ? { scenario, balls, openCorridor: { openedId: pair.opened.opening.plan.id, blockedId: pair.blocked.opening.plan.id, pocketId: pair.pocketId } } : { scenario, balls: [] };
   }
   if (scenario.trick) {
-    const prepared = prepareBall(scenario, scenario.trick.ballId);
+    const prepared = prepare(scenario.trick.ballId);
     if (prepared && scenario.curriculum?.learning?.comparison === 'double-kiss') {
       const doubleKiss = doubleKissPreview(scenario, prepared.ball.options);
       return doubleKiss ? { scenario, balls: [prepared.ball], doubleKiss } : { scenario, balls: [] };
@@ -461,10 +477,10 @@ function prepareLayout(scenario: Scenario): PreparedRound {
     return { scenario, balls: prepared ? [prepared.ball] : [] };
   }
   if (scenario.plant) {
-    const plant = prepareBall(scenario, scenario.plant.ballId);
+    const plant = prepare(scenario.plant.ballId);
     const freeBalls = scenario.balls.filter(ball => ball.id !== 0 && ball.id !== scenario.plant!.ballId
       && ball.id !== scenario.plant!.targetBallId).flatMap(ball => {
-      const prepared = prepareBall(scenario, ball.id);
+      const prepared = prepare(ball.id);
       return prepared ? [prepared.ball] : [];
     });
     if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-quality') {
@@ -501,7 +517,7 @@ function prepareLayout(scenario: Scenario): PreparedRound {
     return { scenario, balls: plant && freeBalls.length ? [plant.ball, ...freeBalls] : [] };
   }
   if (scenario.bank) {
-    const prepared = prepareBall(scenario, scenario.bank.ballId);
+    const prepared = prepare(scenario.bank.ballId);
     if (prepared && scenario.curriculum?.learning?.comparison === 'kick-final') {
       const kickFinal = kickFinalPreview(scenario, prepared.ball.options);
       return kickFinal ? { scenario, balls: [prepared.ball], kickFinal } : { scenario, balls: [] };
@@ -543,7 +559,7 @@ function prepareLayout(scenario: Scenario): PreparedRound {
     return { scenario, balls: prepared ? [prepared.ball] : [] };
   }
   if (scenario.objective) {
-    const prepared = prepareBall(scenario, scenario.objective.ballId);
+    const prepared = prepare(scenario.objective.ballId);
     if (prepared && scenario.curriculum?.learning?.comparison === 'player-profile') {
       // Fixed authored adjustment, never selected using sampled profile rankings.
       const [a, b] = prepared.ball.options;
@@ -607,7 +623,7 @@ function prepareLayout(scenario: Scenario): PreparedRound {
       : { scenario, balls: [] };
   }
   return { scenario, balls: scenario.balls.filter(ball => ball.id !== 0).flatMap(ball => {
-    const prepared = prepareBall(scenario, ball.id);
+    const prepared = prepare(ball.id);
     return prepared ? [prepared.ball] : [];
   }) };
 }
@@ -626,8 +642,10 @@ function prepareLayout(scenario: Scenario): PreparedRound {
  * fixed cue bias, downhill drift and dirty contacts with up to 15 actual angles.
  * Authored lessons can try three replacement layouts of the same lesson;
  * fixed objectives never fall back to an unrelated easier layout. Passing
- * regenerate: false searches only the supplied table, as required for sandbox. */
-export function prepareRound(scenario: Scenario, options: { regenerate?: boolean } = {}): PreparedRound {
+ * regenerate: false searches only the supplied table, as required for sandbox.
+ * expandDirectSearch adds a fallback across all permitted direct pockets,
+ * absolute speeds from 0.6 to 3.6 m/s, and seven draw/follow settings. */
+export function prepareRound(scenario: Scenario, options: { regenerate?: boolean; expandDirectSearch?: boolean } = {}): PreparedRound {
   if (!scenario.balls.some(ball => ball.id === 0)) throw new Error('The table needs a cue ball.');
   const objective = scenario.objective;
   if (scenario.finalBall && (objective || scenario.bank || scenario.plant || scenario.trick || scenario.defense || scenario.plannedMovement
@@ -693,7 +711,7 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
       ...(scenario.curriculum?.learning?.pockets ? { curriculum: { ...scenario.curriculum, learning: { ...scenario.curriculum.learning, pockets: generated.curriculum?.learning?.pockets } } } : {}),
       ...(plant ? { plant: { ...plant, pocketId: generated.plant?.pocketId ?? plant.pocketId } } : {}),
       ...(trick ? { trick: generated.trick ?? trick } : {}) };
-    const prepared = prepareLayout(layout);
+    const prepared = prepareLayout(layout, options.expandDirectSearch);
     if (prepared.balls.length && supportsGeometryComparison(prepared)) {
       if (scenario.curriculum?.learning?.comparison === 'nominated-next-ball') {
         const nextBallNominations = findNominatedBallContrasts(prepared);

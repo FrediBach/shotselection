@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { TABLE } from './constants';
 import { distance } from './math';
 import { evaluateShotObjective } from './objectives';
+import { MIN_FINISH_SEPARATION, prepareRound } from './preparation';
 import { supportsGeometryComparison } from './shot-geometry';
 import { simulateShot } from './physics';
 import { SANDBOX_SCENARIOS, createSandboxScenario, prepareSandboxRound, validateSandboxLayout } from './sandbox';
@@ -39,6 +40,48 @@ describe('sandbox preparation', () => {
     expect(prepared.scenario.balls).toEqual(original.balls);
     expect(scenario).toEqual(original);
     expect(prepared.balls.length).toBeGreaterThan(0);
+    expect(prepared).toEqual(prepareRound(scenario, { regenerate: false }));
+  });
+
+  it.each([
+    [false, false, 0], [true, false, 0], [false, true, 0], [true, true, 0],
+    [false, false, -0.01], [false, false, 0.01],
+  ] as const)('finds stronger strokes near a cushion (mirror %s/%s, offset %s)', (mirrorX, mirrorY, offset) => {
+    const scenario = createSandboxScenario(1, 0);
+    // Reproduce the manual layout from the reported screenshot, plus nearby
+    // placements and reflections so recovery is not tied to one exact aim.
+    scenario.balls = [
+      { id: 0, position: { x: 0.3945, y: 0.7959 } },
+      { id: 1, position: { x: 0.076 + offset, y: 0.3667 + offset } },
+    ].map(ball => ({ ...ball, position: {
+      x: mirrorX ? TABLE.length - ball.position.x : ball.position.x,
+      y: mirrorY ? TABLE.width - ball.position.y : ball.position.y,
+    } }));
+    const original = structuredClone(scenario);
+    if (!mirrorX && !mirrorY && offset === 0) {
+      expect(() => prepareRound(scenario, { regenerate: false })).toThrow(/No feasible/);
+    }
+    const prepared = prepareSandboxRound({ scenario, placement: 'manual' });
+    expect(scenario).toEqual(original);
+    expect(prepared.scenario).toEqual(original);
+    expect(prepared.balls.map(ball => ball.ballId)).toEqual([1]);
+    const options = prepared.balls[0].options;
+    expect(options).toHaveLength(3);
+    expect(options.every(option => option.plan.pocketId === (mirrorX ? mirrorY ? 3 : 2 : mirrorY ? 5 : 0))).toBe(true);
+    for (const [index, option] of options.entries()) {
+      const simulation = simulateShot(prepared.scenario, option.plan, { record: false });
+      expect(evaluateShotObjective(prepared.scenario, option.plan, simulation).success).toBe(true);
+      expect(simulation.stopped).toBe(true);
+      expect(simulation.cueEnd).toEqual(option.plan.target);
+      for (const other of options.slice(index + 1)) {
+        expect(distance(option.plan.target, other.plan.target)).toBeGreaterThanOrEqual(MIN_FINISH_SEPARATION);
+        expect(Math.abs(option.plan.speed - other.plan.speed)).toBeGreaterThanOrEqual(0.12);
+        expect(Math.abs(option.plan.topSpin - other.plan.topSpin)).toBeGreaterThanOrEqual(0.35);
+      }
+    }
+    if (!mirrorX && !mirrorY && offset === 0) {
+      expect(prepareSandboxRound({ scenario, placement: 'manual' })).toEqual(prepared);
+    }
   });
 
   it('rejects an unplayable manual layout instead of replacing it with a course layout', () => {

@@ -174,6 +174,49 @@ test('manual placement rejects overlapping balls, accepts a corrected layout, an
   expect(await page.locator('#sandbox-table-description').textContent()).toBe(correctedLayout)
 })
 
+test('manual near-rail pot offers three playable finishes without moving the balls', async ({ page }, testInfo) => {
+  test.setTimeout(90_000)
+  await openSandbox(page)
+  await page.getByRole('button', { name: /^Place the balls myself/ }).click()
+  await expect(page.getByRole('combobox', { name: 'Scenario', exact: true })).toHaveValue('1')
+  const x = page.getByRole('spinbutton', { name: 'X cm', exact: true })
+  const y = page.getByRole('spinbutton', { name: 'Y cm', exact: true })
+  await x.fill('39.45')
+  await y.fill('79.59')
+  await page.getByRole('button', { name: 'Place ball 1', exact: true }).click()
+  await x.fill('7.6')
+  await y.fill('36.67')
+  const layout = await page.locator('#sandbox-table-description').textContent()
+  await page.getByRole('button', { name: 'Test layout', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Play this layout', exact: true })).toBeEnabled({ timeout: 45_000 })
+  await expect(page.getByRole('status')).toContainText('Ready to play')
+  await expect(page.locator('#sandbox-table-description')).toHaveText(layout!)
+  const manualRequest = await page.evaluate(() => (window as ObservedWindow).sandboxObservation.requests.find(request => request.request?.placement === 'manual'))
+  expect(manualRequest?.request?.scenario.balls.map(ball => ({ id: ball.id, position: ball.position }))).toEqual([
+    { id: 0, position: { x: 39.45 / 100, y: 79.59 / 100 } },
+    { id: 1, position: { x: 7.6 / 100, y: 36.67 / 100 } },
+  ])
+  await startPreparedRound(page)
+  await page.getByRole('button', { name: 'Select ball 1', exact: true }).click()
+  await page.getByRole('button', { name: /^Choose a (?:finish|stroke)$/, exact: true }).click()
+  const choices = page.getByRole('group', { name: 'Cue-ball finish options', exact: true })
+  await expect(choices.getByRole('button')).toHaveCount(3)
+  await expect(choices).toContainText('Topspin')
+  await expect(choices).toContainText('Backspin')
+  for (const label of ['A', 'B', 'C']) {
+    const choice = choices.getByRole('button', { name: `Choose finish ${label}`, exact: true })
+    await expect(choice).toBeVisible()
+    await choice.click()
+    await expect(choice).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: 'Lock in your shot', exact: true })).toBeEnabled()
+  }
+  const path = '/tmp/shot-selection-sandbox-near-rail-finishes.png'
+  await page.screenshot({ path, fullPage: true })
+  await testInfo.attach('Three finishes for the manual near-rail pot', { path, contentType: 'image/png' })
+  await page.getByRole('button', { name: 'Change setup', exact: true }).click()
+  await expect(page.locator('#sandbox-table-description')).toHaveText(layout!)
+})
+
 test('all scenario categories and variations are available without completing any lessons', async ({ page }) => {
   await openSandbox(page)
   await page.getByRole('button', { name: /^Place the balls myself/ }).click()
