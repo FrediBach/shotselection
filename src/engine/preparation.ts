@@ -1,6 +1,7 @@
+import { signedAngleEvidence } from './signed-angle';
 import { buildDrawDecayExperiment } from './draw-decay';
 import { contactAccessEvidence } from './contact-access';
-import { angleTrapEvidence } from './angle-trap';
+import { angleTrapEvidence, isOvershootPair } from './angle-trap';
 import { buildBackwardPlan } from './backward-planning';
 import { nextShotBlockerEvidence, postContactRebounds } from './lesson-evidence';
 import { supportsGeometryComparison } from './shot-geometry';
@@ -126,7 +127,7 @@ function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => 
   return chosen;
 }
 
-function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOptions; target?: Vec2; contactAccessPocket?: number } | null {
+function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOptions; target?: Vec2; contactAccessPocket?: number; signedAnglePreview?: PreparedRound['signedAnglePreview'] } | null {
   if (!scenario.balls.some(ball => ball.id === ballId)) return null;
   const feasible: FeasiblePlan[] = [];
   const comparison = scenario.curriculum?.learning?.comparison;
@@ -134,7 +135,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     if (comparison === 'contact-roll') return entries.every(entry => entry.plan.pocketId === entries[0].plan.pocketId)
       && entries.some(entry => isStopContact(scenario, entry.plan, entry.simulation) && qualifies(entry))
       && entries.some(entry => isRollingContact(scenario, entry.plan, entry.simulation));
-    if (comparison === 'next-angle-trap' || comparison === 'contact-access') return Boolean(anglePair(entries));
+    if (comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle') return Boolean(anglePair(entries));
     if (comparison === 'zone-margin') return Boolean(marginCenter(entries));
     if (comparison === 'cut-paths') return entries.every(entry => entry.plan.pocketId === entries[0].plan.pocketId);
     if (comparison === 'cue-rebound' || (comparison === 'avoidable-cushion' && ballId === 1)) return (comparison !== 'avoidable-cushion' || entries.every(entry => entry.plan.pocketId === entries[0].plan.pocketId)) && entries.some(entry => postContactRebounds(entry.simulation).length > 0)
@@ -180,6 +181,26 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
       const target = objective.target ?? { x: (near.simulation.cueEnd.x + far.simulation.cueEnd.x) / 2, y: (near.simulation.cueEnd.y + far.simulation.cueEnd.y) / 2 };
       if (distance(near.simulation.cueEnd, target) > objective.radius * .95 || distance(far.simulation.cueEnd, target) > objective.radius * .95) continue;
       const a = evidenceFor(near), b = evidenceFor(far);
+      if (comparison === 'signed-next-angle') {
+        if (!qualifies(near) || !qualifies(far)) continue;
+        for (const route of a.permitted) {
+          const left = signedAngleEvidence(scenario, near.simulation, route.pocketId);
+          const right = signedAngleEvidence(scenario, far.simulation, route.pocketId);
+          if (!left || !right || left.angle * right.angle >= 0
+            || Math.min(Math.abs(left.angle), Math.abs(right.angle)) < 8
+            || Math.max(left.cutAngle, right.cutAngle) > objective.maxCutAngle - 3) continue;
+          const previewTarget = { x: left.ghost.x + left.departure.x * .35, y: left.ghost.y + left.departure.y * .35 };
+          if (previewTarget.x < .12 || previewTarget.x > TABLE.length - .12 || previewTarget.y < .12 || previewTarget.y > TABLE.width - .12) continue;
+          return { near, far, target, signedAnglePreview: { pocketId: route.pocketId, target: previewTarget, radius: .09 } };
+        }
+        continue;
+      }
+      if (comparison === 'position-overshoot') {
+        if (!isOvershootPair(near.simulation, far.simulation)
+          || a.permitted.length || !a.best || a.best.cutAngle < objective.maxCutAngle + 3
+          || !b.permitted.length || b.permitted[0].cutAngle > objective.maxCutAngle - 3 || !qualifies(far)) continue;
+        return { near, far, target };
+      }
       if (comparison === 'contact-access') {
         if (a.distance === null || b.distance === null || a.distance < TABLE.ballDiameter + .002 || a.distance > .18
           || b.distance - a.distance < .08 || a.unrestricted.length || !b.permitted.length || !qualifies(far)) continue;
@@ -265,7 +286,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     }
   }
   for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId)) {
-    for (const multiplier of comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
+    for (const multiplier of comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
       for (const topSpin of comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05]) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
           const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
@@ -281,7 +302,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     if (triple) break; // Prefer three strokes to the same pocket when possible.
   }
   if (!triple) return null;
-  const positionPair = comparison === 'next-angle-trap' || comparison === 'contact-access' ? anglePair(triple)! : null;
+  const positionPair = comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' ? anglePair(triple)! : null;
   const target = positionPair ? positionPair.target : scenario.objective ? { ...(scenario.objective.target ?? (comparison === 'zone-margin' ? marginCenter(triple)! : comparison === 'contact-roll' ? triple.find(entry => isStopContact(scenario, entry.plan, entry.simulation) && qualifies(entry))! : triple.find(qualifies)!).simulation.cueEnd) } : undefined;
   // Labels are fixed by stroke strength, never by score or success probability.
   triple.sort((a, b) => a.plan.speed - b.plan.speed || a.plan.topSpin - b.plan.topSpin);
@@ -295,7 +316,10 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     const { cueApproachPath } = simulateShot(scenario, entry.plan, { record: false, recordPaths: true });
     return { id, label, cueApproachPath, plan: { ...entry.plan, id, label: `${shot} · ${label} · ${stroke}` } };
   }) as [FinishOption, FinishOption, FinishOption];
-  return { ball: { ballId, options }, target, ...(comparison === 'contact-access' ? { contactAccessPocket: positionPair!.pocketId } : {}) };
+  return { ball: { ballId, options }, target, ...(comparison === 'signed-next-angle' ? { signedAnglePreview: { ...positionPair!.signedAnglePreview!, choices: [positionPair!.near, positionPair!.far].map(entry => ({
+    ...signedAngleEvidence(scenario, entry.simulation, positionPair!.signedAnglePreview!.pocketId)!,
+    optionId: options[triple.indexOf(entry)].id, label: options[triple.indexOf(entry)].label, cue: entry.simulation.cueEnd,
+  })).sort((a, b) => a.label.localeCompare(b.label)) } } : {}), ...(comparison === 'contact-access' ? { contactAccessPocket: positionPair!.pocketId } : {}) };
 }
 
 function prepareLayout(scenario: Scenario): PreparedRound {
@@ -319,7 +343,7 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   if (scenario.objective) {
     const prepared = prepareBall(scenario, scenario.objective.ballId);
     return prepared
-      ? { scenario: { ...scenario, objective: { ...scenario.objective, target: prepared.target } }, balls: [prepared.ball], ...(prepared.contactAccessPocket !== undefined ? { contactAccessPocket: prepared.contactAccessPocket } : {}) }
+      ? { scenario: { ...scenario, objective: { ...scenario.objective, target: prepared.target } }, balls: [prepared.ball], ...(prepared.signedAnglePreview ? { signedAnglePreview: prepared.signedAnglePreview } : {}), ...(prepared.contactAccessPocket !== undefined ? { contactAccessPocket: prepared.contactAccessPocket } : {}) }
       : { scenario, balls: [] };
   }
   return { scenario, balls: scenario.balls.filter(ball => ball.id !== 0).flatMap(ball => {
