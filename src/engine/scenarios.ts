@@ -712,6 +712,7 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Clear the kick corridor',
+    learning: { concept: 'A clear incoming leg can hide a blocked outgoing leg.', prerequisite: 'Read the approach and travel after a rebound.', comparison: 'kick-corridor' },
     description: 'Another traffic ball puts pressure on the route around the screen.',
     lesson: 'Check the full width of the cue ball along the approach and rebound. Compare the finishes only after you have accounted for every ball beside the kick corridor.',
     takeaway: 'A cushion route is usable only when both legs have room for a whole ball.',
@@ -719,13 +720,14 @@ const LESSONS: readonly Lesson[] = [
       focus: 'Inspect both sides of the bounce',
       gotcha: 'A clear line to the cushion does not guarantee a clear line away from it.',
     },
-    layout: [[0.92, 0.72], [1.26, 0.29], [1.09, 0.505], [1.68, 0.86]],
+    layout: [[0.92, 0.72], [1.26, 0.29], [1.09, 0.505], [1.191057, 0.905252]],
     bank: { ballId: 1, minCushions: 1 },
   },
   {
     title: 'Control the kick finish',
-    description: 'A tighter finish turns a successful rebound into a control exercise.',
-    lesson: 'Read the kick, the pot, and the cue ball after contact as one continuous route. Use the offered finishes to decide which stroke leaves the most room for a small error.',
+    description: 'Compare the final kick approach and the cue ball’s departure toward a scratch pocket.',
+    learning: { concept: 'kick-scratch-exposure', prerequisite: 'post-contact-scratch-line', comparison: 'kick-finish' },
+    lesson: 'Read the final leg after the cushion as the incoming direction at ball 1. Compare two approaches to the same pot, then trace their actual departures to see which scratches.',
     takeaway: 'Controlling the cue ball after a kick is part of the shot, just as it is on a direct pot.',
     briefing: {
       focus: 'Plan beyond the first contact',
@@ -736,8 +738,9 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Link two cushions',
+    learning: { concept: 'ordered-kick-rebounds', prerequisite: 'kick-introduction', comparison: 'kick-sequence' },
     description: 'The route to the 1 now needs two cushion contacts before the hit.',
-    lesson: 'Trace two rebounds in order before the cue ball reaches the 1. Work back from the potting contact to the last cushion, then connect it to the first.',
+    lesson: 'Trace the cue ball from its start through the two marked rail points to ball 1. Predict their order, then reveal R1 and R2. The faint screens still block shorter routes; focus first on connecting the three legs.',
     takeaway: 'A two-cushion route connects two rebound angles to one precise contact.',
     briefing: {
       focus: 'Build a two-cushion approach',
@@ -748,20 +751,22 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Thread the two-cushion kick',
-    description: 'Traffic narrows the space around a two-cushion route.',
-    lesson: 'Apply the two-cushion sequence while checking the traffic beside each leg. Compare the three strokes for a repeatable pot and a controlled finish.',
+    learning: { concept: 'middle-kick-corridor', prerequisite: 'ordered-kick-rebounds', comparison: 'kick-middle' },
+    description: 'Ball 10 obstructs the middle leg of one two-cushion route.',
+    lesson: 'Compare two routes to the same pot. Check the segment between R1 and R2, then use the actual contact and a fixed-stroke removal test to explain why one route fails.',
     takeaway: 'Each extra leg adds another corridor that must stay clear.',
     briefing: {
       focus: 'Check every leg of the two-cushion kick',
       gotcha: 'Looking only at the two rail points can hide a blocking ball between them.',
     },
-    layout: [[0.65, 0.4], [1.27, 0.12], [0.96, 0.26], [0.783096, 0.253282], [0.690424, 0.596026], [0.452222, 0.370272], [0.849191, 0.382025], [0.7983, 0.5758], [0.467, 0.262], [0.9844, 0.5034]],
+    layout: [[0.65, 0.4], [1.27, 0.12], [0.96, 0.26], [0.783096, 0.253282], [0.690424, 0.596026], [0.452222, 0.370272], [0.849191, 0.382025], [0.7983, 0.5758], [0.467, 0.262], [0.9844, 0.5034], [2.4322267744598483, 1.107997003151002]],
     bank: { ballId: 1, minCushions: 2 },
   },
   {
     title: 'Hold the line across two rails',
-    description: 'A more demanding two-cushion kick tests pace, contact, and stopping accuracy.',
-    lesson: 'Predict the complete two-cushion journey before choosing a finish. After committing, compare the spread of the trials to see how small errors grow along the longer route.',
+    learning: { concept: 'kick-angular-error', prerequisite: 'ordered-kick-rebounds', comparison: 'kick-error' },
+    description: 'Track how a small aim change separates two paths through successive rebounds.',
+    lesson: 'Compare equal and opposite aim changes with pace and spin fixed. Predict which leg adds the most separation, then measure the two paths at R1, R2 and first contact before judging complete strokes.',
     takeaway: 'Longer rebound routes reward the stroke that stays reliable under small errors.',
     briefing: {
       focus: 'Choose margin over an exact replay',
@@ -772,8 +777,9 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'The three-cushion escape',
+    learning: { concept: 'three-rebound-final-approach', prerequisite: 'ordered-kick-rebounds', comparison: 'kick-final' },
     description: 'Finish the chapter by reaching the screened 1 after three cushion rebounds.',
-    lesson: 'Plan all three cue-ball rebounds, then the pot and the final cue-ball position. Choose the stroke with the most convincing complete route and use the trials to check your prediction.',
+    lesson: 'Trace R1, R2 and R3 in order, then identify the cue ball’s incoming direction at ball 1. Read that direction from the final leg after R3 before comparing the reliability of complete strokes.',
     takeaway: 'A multiple-cushion kick succeeds when every rebound preserves the angle and speed needed for the next.',
     briefing: {
       focus: 'Connect three rebounds into one shot',

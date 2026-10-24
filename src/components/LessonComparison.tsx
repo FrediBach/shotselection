@@ -1,3 +1,9 @@
+import KickFinalComparison from './KickFinalComparison'
+import KickErrorComparison from './KickErrorComparison'
+import KickMiddleComparison from './KickMiddleComparison'
+import KickSequenceComparison from './KickSequenceComparison'
+import KickFinishComparison from './KickFinishComparison'
+import KickCorridorComparison from './KickCorridorComparison'
 import KickSpinComparison from './KickSpinComparison'
 import KickPaceComparison from './KickPaceComparison'
 import KickContactComparison from './KickContactComparison'
@@ -61,6 +67,12 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'corridor-diagnosis' || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (comparison === 'kick-final') return <KickFinalComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'kick-error') return <KickErrorComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'kick-middle') return <KickMiddleComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'kick-sequence') return <KickSequenceComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'kick-finish') return <KickFinishComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'kick-corridor') return <KickCorridorComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'kick-spin') return <KickSpinComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'kick-pace') return <KickPaceComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'kick-contact') return <KickContactComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />

@@ -1,3 +1,9 @@
+import { kickFinalPreview } from './kick-final';
+import { kickErrorExperiment } from './kick-error';
+import { kickMiddleExperiment } from './kick-middle';
+import { kickSequencePreview } from './kick-sequence';
+import { kickFinishExperiment } from './kick-finish';
+import { kickCorridorExperiment } from './kick-corridor';
 import { kickSpinExperiment } from './kick-spin';
 import { kickPaceExperiment } from './kick-pace';
 import { kickContactEvidence } from './kick-contact';
@@ -432,6 +438,30 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }
   if (scenario.bank) {
     const prepared = prepareBall(scenario, scenario.bank.ballId);
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-final') {
+      const kickFinal = kickFinalPreview(scenario, prepared.ball.options);
+      return kickFinal ? { scenario, balls: [prepared.ball], kickFinal } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-error') {
+      const kickError = kickErrorExperiment(scenario, prepared.ball.options);
+      return kickError ? { scenario, balls: [prepared.ball], kickError } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-middle') {
+      const kickMiddle = kickMiddleExperiment(scenario, prepared.ball.options);
+      return kickMiddle ? { scenario, balls: [prepared.ball], kickMiddle } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-sequence') {
+      const kickSequence = kickSequencePreview(scenario, prepared.ball.options);
+      return kickSequence ? { scenario, balls: [prepared.ball], kickSequence } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-finish') {
+      const kickFinish = kickFinishExperiment(scenario, prepared.ball.options);
+      return kickFinish ? { scenario, balls: [prepared.ball], kickFinish } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'kick-corridor') {
+      const kickCorridor = kickCorridorExperiment(scenario, prepared.ball.options);
+      return kickCorridor ? { scenario, balls: [prepared.ball], kickCorridor } : { scenario, balls: [] };
+    }
     if (prepared && scenario.curriculum?.learning?.comparison === 'kick-spin') {
       const kickSpin = kickSpinExperiment(scenario, prepared.ball.options);
       return kickSpin ? { scenario, balls: [prepared.ball], kickSpin } : { scenario, balls: [] };

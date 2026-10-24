@@ -45,7 +45,7 @@ export interface LessonBriefing {
 export interface LessonLearning {
   concept: string;
   prerequisite: string;
-  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position' | 'kick-introduction' | 'kick-contact' | 'kick-pace' | 'kick-spin';
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position' | 'kick-introduction' | 'kick-contact' | 'kick-pace' | 'kick-spin' | 'kick-corridor' | 'kick-finish' | 'kick-sequence' | 'kick-middle' | 'kick-error' | 'kick-final';
   /** Restrict direct choices to the authored teaching routes, reflected with the table. */
   pockets?: { ballId: number; pocketId: number }[];
 }
@@ -146,6 +146,12 @@ export interface SignedAnglePreview {
   choices: { optionId: string; label: string; cue: Vec2; object: Vec2; ghost: Vec2; departure: Vec2; angle: number }[];
 }
 export interface PreparedRound {
+  kickFinal?: import('./kick-final').KickFinalPreview;
+  kickError?: import('./kick-error').KickErrorExperiment;
+  kickMiddle?: import('./kick-middle').KickMiddleExperiment;
+  kickSequence?: import('./kick-sequence').KickSequencePreview;
+  kickFinish?: import('./kick-finish').KickFinishExperiment;
+  kickCorridor?: import('./kick-corridor').KickCorridorExperiment;
   kickSpin?: import('./kick-spin').KickSpinExperiment;
   kickPace?: import('./kick-pace').KickPaceExperiment;
   kickContact?: import('./kick-contact').KickContactPreview;
