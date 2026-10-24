@@ -1,3 +1,5 @@
+import DrawDecayComparison from './DrawDecayComparison'
+import ContactAccessComparison from './ContactAccessComparison'
 import AngleTrapComparison from './AngleTrapComparison'
 import PositionLessonComparison from './PositionLessonComparison'
 import EverydayExperiment from './EverydayExperiment'
@@ -38,6 +40,8 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (prepared.drawDecay) return <DrawDecayComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
+  if (comparison === 'contact-access') return <ContactAccessComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
   if (comparison === 'next-angle-trap') return <AngleTrapComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
   if (comparison === 'contact-roll' || comparison === 'zone-margin') return <PositionLessonComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (prepared.experiment) return <EverydayExperiment prepared={prepared} result={result} busy={busy} />

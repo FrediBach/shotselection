@@ -44,7 +44,7 @@ export interface LessonBriefing {
 export interface LessonLearning {
   concept: string;
   prerequisite: string;
-  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap';
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay';
   /** Restrict direct choices to the authored teaching routes, reflected with the table. */
   pockets?: { ballId: number; pocketId: number }[];
 }
@@ -135,8 +135,13 @@ export interface LessonExperiment {
   kind: 'scratch-line' | 'avoidable-cushion' | 'cut-transfer';
   variants: { label: string; plan: ShotPlan; simulation: Simulation; speedTrials?: { multiplier: number; simulation: Simulation }[] }[];
 }
+export interface DrawDecayExperiment {
+  variants: { label: string; scenario: Scenario; plan: ShotPlan; simulation: Simulation; approach: number; launchSpeed: number; launchRollSpeed: number }[];
+}
 export interface PreparedRound {
+  drawDecay?: DrawDecayExperiment;
   backwardPlan?: BackwardPlan;
+  contactAccessPocket?: number;
   /** Controlled, unscored demonstrations derived from this prepared layout. */
   experiment?: LessonExperiment;
   /** Can differ from the input if a blocked layout required regeneration. */

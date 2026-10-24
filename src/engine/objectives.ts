@@ -19,7 +19,7 @@ function crosses(a: Vec2, b: Vec2, c: Vec2, d: Vec2): boolean {
     && Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)) <= Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y));
 }
 
-function clearsRails(start: Vec2, end: Vec2): boolean {
+export function clearsRails(start: Vec2, end: Vec2): boolean {
   return !RAILS.some(({ a, b }) => crosses(start, end, a, b)
     || Math.min(segmentDistance(a, start, end), segmentDistance(b, start, end), segmentDistance(start, a, b), segmentDistance(end, a, b)) < TABLE.ballRadius);
 }
