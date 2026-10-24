@@ -77,7 +77,7 @@ export function hasProvenNextShot(scenario: Scenario, simulation: Simulation): b
 }
 
 export function positionToleranceForScenario(scenario: Scenario): number {
-  return scenario.objective?.radius ?? positionToleranceForLevel(scenario.level);
+  return scenario.finalBall ? 0 : scenario.objective?.radius ?? positionToleranceForLevel(scenario.level);
 }
 
 export function satisfiesTrick(scenario: Scenario, plan: ShotPlan, simulation: Simulation): boolean {
@@ -97,6 +97,24 @@ export function satisfiesTrick(scenario: Scenario, plan: ShotPlan, simulation: S
   return next === trick.requiredContacts.length;
 }
 
+/** Restore only the blocker at the actual settled cue position. The next route
+ * must be newly available, not merely accompanied by an incidental contact. */
+export function plannedMovementOutcome(scenario: Scenario, simulation: Simulation) {
+  const requirement = scenario.plannedMovement, objective = scenario.objective;
+  if (!requirement || !objective) return { contact: false, opened: false };
+  const contacts = simulation.ballContacts ?? [];
+  const first = contacts.findIndex(([a, b]) => a === 0 && b === objective.ballId || b === 0 && a === objective.ballId);
+  const contact = first >= 0 && contacts.slice(first + 1).some(([a, b]) => a === 0 && b === requirement.blockerId || b === 0 && a === requirement.blockerId);
+  const original = scenario.balls.find(b => b.id === requirement.blockerId);
+  const moved = simulation.finalBalls.find(b => b.id === requirement.blockerId);
+  if (!contact || !original || !moved || moved.pocketed || distance(original.position, moved.position) < .03
+    || !simulation.stopped || simulation.scratch) return { contact, opened: false };
+  const restored = simulation.finalBalls.filter(b => !b.pocketed).map(b => b.id === original.id ? original : b);
+  const opened = directNextShotRoutes(scenario, simulation).length > 0
+    && directShotRoutes(restored, objective.nextBallId, objective.maxCutAngle).length === 0;
+  return { contact, opened };
+}
+
 /** One predicate shared by scoring and sensitivity analysis. Individual option
  * markers remain nominal endpoints; position lessons use one common zone. */
 export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simulation: Simulation) {
@@ -104,7 +122,7 @@ export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simula
   if (objective && !objective.target) throw new Error('Position lessons need a prepared landing zone.');
   const target = objective?.target ?? plan.target;
   const radius = positionToleranceForScenario(scenario);
-  const error = objective?.regions ? Math.min(...objective.regions.map(center => distance(simulation.cueEnd, center))) : distance(simulation.cueEnd, target);
+  const error = scenario.finalBall ? 0 : objective?.regions ? Math.min(...objective.regions.map(center => distance(simulation.cueEnd, center))) : distance(simulation.cueEnd, target);
   const banksSatisfied = !scenario.bank || (plan.ballId === scenario.bank.ballId
     && (simulation.cueBanksBeforeContact ?? 0) >= scenario.bank.minCushions);
   const potBallId = plan.potBallId ?? plan.ballId;
@@ -112,10 +130,11 @@ export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simula
     ? potBallId === scenario.plant.targetBallId && plan.pocketId === scenario.plant.pocketId
     : plan.ballId !== scenario.plant.targetBallId && potBallId === plan.ballId);
   const legalPot = simulation.stopped && !simulation.scratch && simulation.firstContact === plan.ballId
+    && (!scenario.finalBall || plan.ballId === scenario.finalBall.ballId && potBallId === scenario.finalBall.ballId)
     && simulation.potted.includes(potBallId) && (!objective || plan.ballId === objective.ballId) && banksSatisfied && plantSatisfied
     && satisfiesTrick(scenario, plan, simulation);
-  const zoneRatio = objective ? positionRegionRatio(objective, simulation.cueEnd) : error / radius;
+  const zoneRatio = scenario.finalBall ? 0 : objective ? positionRegionRatio(objective, simulation.cueEnd) : error / radius;
   const positioned = simulation.stopped && !simulation.scratch && zoneRatio <= 1;
   const nextShotAvailable = !objective || directNextShotRoutes(scenario, simulation).length > 0;
-  return { legalPot, positioned, nextShotAvailable, success: legalPot && positioned && nextShotAvailable, error, radius, zoneRatio };
+  return { legalPot, positioned, nextShotAvailable, success: legalPot && positioned && nextShotAvailable && (!scenario.plannedMovement || plannedMovementOutcome(scenario, simulation).opened), error, radius, zoneRatio };
 }

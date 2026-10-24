@@ -92,6 +92,12 @@ function routeContext(scenario: Scenario, selected: ShotAnalysis, best: ShotAnal
 export function buildShotFeedback(scenario: Scenario, result: RoundAnalysis): ShotFeedback {
   const { selected, best } = result
   const verdict = shotFeedbackVerdict(result)
+  if (scenario.finalBall) return { ...verdict,
+    summary: `Your stroke legally pots the final ball without a scratch in ${percent(result.selected.successRate)} of trials; the highest offered rate is ${percent(result.best.successRate)}.`,
+    reasons: [{ title: 'No next ball, no position target', detail: 'Correct first contact, the final pot, no scratch and all balls stopped complete this objective. Where the cue stops on the table earns no extra credit.' }],
+    takeaway: 'Choose the repeatable legal pot. A precise landing is unnecessary when the game is over.',
+  }
+
   if (selected.plan.id === best.plan.id) return {
     ...verdict,
     reasons: [{ title: selected.successRate === 0 ? 'What the trials show' : 'Your plan fits this table', detail: `With ${stroke(selected)}, ${percent(selected.legalPotRate)} of trials ${scenario.trick ? 'complete the legal trick' : 'make a legal pot'} and ${percent(selected.successRate)} complete the full objective.${scenario.objective ? ` That includes the landing zone and a clear next shot on ball ${scenario.objective.nextBallId}.` : ' The finish matters as well as dropping the object ball.'}` }],

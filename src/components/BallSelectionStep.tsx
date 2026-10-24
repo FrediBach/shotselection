@@ -30,7 +30,8 @@ function ballSelectionLabel({ plant }: Scenario, id: number) {
   return `Select free ball ${id}`
 }
 
-function ballSelectionCopy({ objective, bank, plant, trick, conditions }: Scenario, ballCount: number) {
+function ballSelectionCopy({ objective, bank, plant, trick, conditions, finalBall }: Scenario, ballCount: number) {
+  if (finalBall) return { description: `Only ball ${finalBall.ballId} remains. Pot it legally without scratching; there is no position target.`, unavailable: 'Only the final ball can be selected.', hint: 'Select the final ball, then compare the potting strokes.' }
   if (trick) return {
     description: trick.description,
     unavailable: `Play ball ${trick.ballId} first. The other balls are part of the trick’s setup.`,

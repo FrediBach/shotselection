@@ -1,3 +1,5 @@
+import { landingRecoveryPreview } from './landing-recovery';
+import { plannedMovementEvidence } from './planned-movement';
 import { disconnectedPositionFinder } from './disconnected-position';
 import { mirrorEnglishPreview } from './mirror-english';
 import { strengthAsymmetryPreview } from './strength-asymmetry';
@@ -52,7 +54,7 @@ import { TABLE } from './constants';
 import { POCKET_GEOMETRY } from './table-geometry';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
 import { simulateShot } from './physics';
-import { directShotRoutes, hasProvenNextShot, satisfiesTrick } from './objectives';
+import { directShotRoutes, evaluateShotObjective, hasProvenNextShot, satisfiesTrick } from './objectives';
 import { bankPlanForStroke, bankRoutesFor } from './bank-routes';
 import { plantRoutesFor } from './plant-routes';
 import { generateScenario } from './scenarios';
@@ -98,6 +100,9 @@ function scenarioFingerprint(scenario: Scenario): string {
   let hash = 2166136261;
   const identity: unknown[] = [scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant, scenario.trick, scenario.curriculum?.englishPractice, scenario.curriculum?.learning];
   if (scenario.conditions) identity.push(scenario.conditions);
+  if (scenario.plannedMovement) identity.push(scenario.plannedMovement);
+  if (scenario.finalBall) identity.push(scenario.finalBall);
+  if (scenario.defense) identity.push(scenario.defense);
   for (const char of JSON.stringify(identity)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
 }
@@ -234,6 +239,10 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
   };
   const qualified = new Map<FeasiblePlan, boolean>();
   const qualifies = (entry: FeasiblePlan): boolean => {
+    if (scenario.plannedMovement) {
+      if (!qualified.has(entry)) qualified.set(entry, (!scenario.objective!.target || positionRegionRatio(scenario.objective!, entry.simulation.cueEnd) <= 1) && Boolean(plannedMovementEvidence(scenario, entry)));
+      return qualified.get(entry)!;
+    }
     if (comparison === 'english-routing') return Boolean(englishRoute([entry]));
     if (comparison === 'sequence-reliability') return (!scenario.objective!.target || distance(entry.simulation.cueEnd, scenario.objective!.target) <= scenario.objective!.radius) && Boolean(sequenceCheck(entry));
     if (comparison === 'stepping-stone') return (!scenario.objective!.target || distance(entry.simulation.cueEnd, scenario.objective!.target) <= scenario.objective!.radius) && Boolean(steppingCheck(entry));
@@ -379,7 +388,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     }
   }
   for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId)) {
-    for (const multiplier of comparison === 'disconnected-position' || comparison === 'elongated-position' || comparison === 'english-routing' || comparison === 'corridor-center' || comparison === 'return-lane' || comparison === 'collision-assistance' || comparison === 'open-corridor' || comparison === 'pocket-change' || comparison === 'spare-graze' || comparison === 'moving-traffic' || comparison === 'fallback-plan' || comparison === 'sequence-reliability' || comparison === 'stepping-stone' || comparison === 'corridor-diagnosis' || comparison === 'angle-travel' || comparison === 'zone-exit' || comparison === 'look-ahead' || comparison === 'key-ball' || comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
+    for (const multiplier of comparison === 'planned-movement' || comparison === 'disconnected-position' || comparison === 'elongated-position' || comparison === 'english-routing' || comparison === 'corridor-center' || comparison === 'return-lane' || comparison === 'collision-assistance' || comparison === 'open-corridor' || comparison === 'pocket-change' || comparison === 'spare-graze' || comparison === 'moving-traffic' || comparison === 'fallback-plan' || comparison === 'sequence-reliability' || comparison === 'stepping-stone' || comparison === 'corridor-diagnosis' || comparison === 'angle-travel' || comparison === 'zone-exit' || comparison === 'look-ahead' || comparison === 'key-ball' || comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
       for (const topSpin of comparison === 'disconnected-position' || comparison === 'return-lane' || comparison === 'english-routing' || comparison === 'elongated-position' ? [-1.6, -1.1, -.6, 0, .5, 1.05] : comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05]) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
           const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
@@ -529,12 +538,40 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }
   if (scenario.objective) {
     const prepared = prepareBall(scenario, scenario.objective.ballId);
+    if (prepared && scenario.curriculum?.learning?.comparison === 'player-profile') {
+      // Fixed authored adjustment, never selected using sampled profile rankings.
+      const [a, b] = prepared.ball.options;
+      const target = { x: a.plan.target.x + (b.plan.target.x - a.plan.target.x) * .65, y: a.plan.target.y + (b.plan.target.y - a.plan.target.y) * .65 };
+      const plan = { ...a.plan, speed: a.plan.speed * 1.02 };
+      const nominal = simulateShot(scenario, plan, { record: false, recordPaths: true });
+      prepared.ball.options[0] = { ...a, plan: { ...plan, target: nominal.cueEnd }, cueApproachPath: nominal.cueApproachPath };
+      const ready = { ...scenario, objective: { ...scenario.objective, target } };
+      if (prepared.ball.options.some((o, i, all) => all.slice(i + 1).some(other => distance(o.plan.target, other.plan.target) < MIN_FINISH_SEPARATION))
+        || !prepared.ball.options.slice(0, 2).every(o => evaluateShotObjective(ready, o.plan, simulateShot(ready, o.plan, { record: false })).success) || !hasProvenNextShot(ready, simulateShot(ready, b.plan, { record: false }))) return { scenario, balls: [] };
+      return { scenario: ready, balls: [prepared.ball] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'defensive-outcome') {
+      // Fixed authored controls, independent of player talents or sampled scores.
+      const middle = prepared.ball.options[1], reference = prepared.ball.options[2];
+      const plan = { ...reference.plan, id: middle.id, label: reference.plan.label.replace(' · C · ', ' · B · '), speed: reference.plan.speed * .95, topSpin: reference.plan.topSpin - .2 };
+      const nominal = simulateShot(scenario, plan, { record: false, recordPaths: true });
+      prepared.ball.options[1] = { ...middle, plan: { ...plan, target: nominal.cueEnd }, cueApproachPath: nominal.cueApproachPath };
+      if (prepared.ball.options.some((o, i, all) => all.slice(i + 1).some(other => distance(o.plan.target, other.plan.target) < MIN_FINISH_SEPARATION))) return { scenario, balls: [] };
+      const ready = { ...scenario, objective: { ...scenario.objective, target: prepared.target } };
+      if (![prepared.ball.options[1], reference].every(o => evaluateShotObjective(ready, o.plan, simulateShot(ready, o.plan, { record: false })).success)) return { scenario, balls: [] };
+      return { scenario: ready, balls: [prepared.ball], defenseOptionIds: [middle.id, reference.id] };
+    }
     if (prepared && scenario.curriculum?.learning?.comparison === 'disconnected-position') {
       const entries = prepared.ball.options.map(o => ({ plan: o.plan, simulation: simulateShot(scenario, o.plan, { record: false, recordPaths: true }) }));
       const evidence = disconnectedPositionFinder(scenario)(entries);
       if (!evidence) return { scenario, balls: [] };
       const { a, b, ...preview } = evidence;
       return { scenario: { ...scenario, objective: { ...scenario.objective, target: evidence.centers[0], regions: evidence.centers } }, balls: [prepared.ball], disconnectedPosition: { ...preview, optionIds: [a.plan.id, b.plan.id] } };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'landing-recovery') {
+      const ready = { ...scenario, objective: { ...scenario.objective, target: prepared.target } };
+      const landingRecovery = landingRecoveryPreview(ready, prepared.ball.options);
+      return landingRecovery ? { scenario: ready, balls: [prepared.ball], landingRecovery } : { scenario, balls: [] };
     }
     if (prepared && scenario.curriculum?.learning?.comparison === 'mirror-english') {
       const ready = { ...scenario, objective: { ...scenario.objective, target: prepared.target } };
@@ -587,6 +624,11 @@ function prepareLayout(scenario: Scenario): PreparedRound {
 export function prepareRound(scenario: Scenario, options: { regenerate?: boolean } = {}): PreparedRound {
   if (!scenario.balls.some(ball => ball.id === 0)) throw new Error('The table needs a cue ball.');
   const objective = scenario.objective;
+  if (scenario.finalBall && (objective || scenario.bank || scenario.plant || scenario.trick || scenario.defense || scenario.plannedMovement
+    || !Number.isInteger(scenario.finalBall.ballId) || scenario.finalBall.ballId <= 0 || scenario.balls.length !== 2
+    || !scenario.balls.some(b => b.id === scenario.finalBall!.ballId))) throw new Error('A final-ball objective requires only the cue and the named final ball, with no other objective.');
+  if (scenario.plannedMovement && (!objective || !scenario.balls.some(b => b.id === scenario.plannedMovement!.blockerId) || [0, objective.ballId, objective.nextBallId].includes(scenario.plannedMovement.blockerId))) throw new Error('Planned movement needs a separate blocker and a position objective.');
+  if (scenario.defense && (!objective || scenario.defense.ballId !== objective.ballId || !Number.isFinite(scenario.defense.maxCutAngle) || scenario.defense.maxCutAngle <= 0 || scenario.defense.maxCutAngle >= 90)) throw new Error('The defensive objective needs the opener ball and a direct cut limit below 90°.');
   const bank = scenario.bank;
   const plant = scenario.plant;
   const trick = scenario.trick;
@@ -632,7 +674,7 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
   if (objective && (!scenario.balls.some(ball => ball.id === objective.ballId) || !scenario.balls.some(ball => ball.id === objective.nextBallId))) {
     throw new Error('The position lesson needs both its first object ball and its reserved next ball on the table.');
   }
-  const attempts = options.regenerate === false || ((objective || bank || plant || trick) && !scenario.curriculum) ? 1 : 4;
+  const attempts = options.regenerate === false || ((scenario.finalBall || objective || bank || plant || trick) && !scenario.curriculum) ? 1 : 4;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const generated = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
     const originalCue = attempt > 0 && scenario.conditions && scenario.curriculum ? generateScenario(scenario.level, scenario.seed).balls[0].position : undefined;
@@ -667,7 +709,7 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
       if (experiment) return { ...prepared, experiment };
     }
   }
-  if (options.regenerate === false || scenario.curriculum || objective || bank || plant || trick) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
+  if (options.regenerate === false || scenario.curriculum || scenario.finalBall || objective || bank || plant || trick) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
   const openLayout: Scenario = { ...scenario, seed: 72350, balls: generateScenario(1, 72350).balls };
   const prepared = prepareLayout(openLayout);
   if (!prepared.balls.length) throw new Error('No feasible three-finish layout could be prepared.');

@@ -478,7 +478,7 @@ function Scene(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, playing, interactive } = props
   const selectableBalls = new Set(props.selectableBallIds)
   const objective = scenario.objective
-  const predictFinish = Boolean(objective || scenario.trick)
+  const predictFinish = Boolean(objective || scenario.trick || scenario.finalBall)
   const runtime = useMemo<Runtime>(() => ({ balls: new Map(), elapsed: 0, active: false, complete: false }), [])
   const approach = props.approachOption
   const approachPaths = useMemo(() => approach ? [approach.cueApproachPath] : [], [approach])
@@ -563,7 +563,7 @@ function FlatTable(props: PoolTableProps) {
   const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, interactive, playing } = props
   const selectableBalls = new Set(props.selectableBallIds)
   const objective = scenario.objective
-  const predictFinish = Boolean(objective || scenario.trick)
+  const predictFinish = Boolean(objective || scenario.trick || scenario.finalBall)
   const frame = useFlatTablePlayback(props)
   const svgRef = useRef<SVGSVGElement>(null)
   const [svgScale, setSvgScale] = useState(2)
@@ -662,7 +662,7 @@ export default function PoolTable(props: PoolTableProps) {
   // A new scenario, inspected shot or replay starts with the initial ball layout.
   // Keying the fallback discards the previous animation before the next paint.
   const fallback = <FlatTable key={`${props.scenario.level}:${props.scenario.seed}:${props.analysis?.plan.id ?? 'setup'}:${props.playbackKey}`} {...props} />
-  return <div className="pool-table-scene" role={props.scenario.objective || props.scenario.plant || props.scenario.trick || props.scenario.conditions ? 'group' : undefined} aria-label={props.scenario.conditions ? `Pool table. ${props.scenario.conditions.name}. ${props.scenario.conditions.description}` : props.scenario.trick ? `Pool table. ${props.scenario.trick.description}` : props.scenario.objective ? `Pool table. Pot ball ${props.scenario.objective.ballId} and leave the cue ball in the cyan position zone to play ball ${props.scenario.objective.nextBallId} next.` : props.scenario.plant ? `Pool table. For the plant, hit ball ${props.scenario.plant.ballId} first to pot ball ${props.scenario.plant.targetBallId}, or choose a free ball.` : undefined} style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
+  return <div className="pool-table-scene" role={props.scenario.finalBall || props.scenario.objective || props.scenario.plant || props.scenario.trick || props.scenario.conditions ? 'group' : undefined} aria-label={props.scenario.finalBall ? `Pool table. Pot the final ball ${props.scenario.finalBall.ballId} without scratching. No position zone is required.` : props.scenario.conditions ? `Pool table. ${props.scenario.conditions.name}. ${props.scenario.conditions.description}` : props.scenario.trick ? `Pool table. ${props.scenario.trick.description}` : props.scenario.objective ? `Pool table. Pot ball ${props.scenario.objective.ballId} and leave the cue ball in the cyan position zone to play ball ${props.scenario.objective.nextBallId} next.` : props.scenario.plant ? `Pool table. For the plant, hit ball ${props.scenario.plant.ballId} first to pot ball ${props.scenario.plant.targetBallId}, or choose a free ball.` : undefined} style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
     {available ? <CanvasBoundary fallback={fallback}>
       <Canvas orthographic camera={{ position: [0, 6, 0.001], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08 }} style={{ touchAction: 'none' }}>
         <Suspense fallback={null}><Scene {...props} /></Suspense>

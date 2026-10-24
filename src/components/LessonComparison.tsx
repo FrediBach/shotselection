@@ -1,3 +1,8 @@
+import LandingRecoveryComparison from './LandingRecoveryComparison'
+import FinalBallComparison from './FinalBallComparison'
+import PlayerProfileComparison from './PlayerProfileComparison'
+import PlannedMovementComparison from './PlannedMovementComparison'
+import DefensiveOutcomeComparison from './DefensiveOutcomeComparison'
 import DisconnectedPositionComparison from './DisconnectedPositionComparison'
 import MirrorEnglishComparison from './MirrorEnglishComparison'
 import StrengthAsymmetryComparison from './StrengthAsymmetryComparison'
@@ -82,6 +87,7 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'corridor-diagnosis' || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (comparison === 'defensive-outcome') return <DefensiveOutcomeComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'disconnected-position') return <DisconnectedPositionComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'mirror-english') return <MirrorEnglishComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'strength-asymmetry') return <StrengthAsymmetryComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
@@ -111,6 +117,10 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   if (comparison === 'english-routing') return <EnglishRoutingComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'corridor-center') return <CorridorCenterComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'return-lane') return <ReturnLaneComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'landing-recovery') return <LandingRecoveryComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'final-ball') return <FinalBallComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'player-profile') return <PlayerProfileComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'planned-movement') return <PlannedMovementComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'collision-assistance') return <CollisionAssistanceComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'open-corridor') return <OpenCorridorComparison prepared={prepared} result={result} busy={busy} />
   if (comparison === 'pocket-change') return <PocketChangeComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />

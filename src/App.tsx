@@ -142,7 +142,7 @@ export default function App() {
   const objective = scenario.objective
   const plant = scenario.plant
   const trick = scenario.trick
-  const predictFinish = Boolean(objective || trick)
+  const predictFinish = Boolean(objective || trick || scenario.finalBall)
   const ballChoiceLabel = (ballId: number) => trick ? ballId === trick.ballId ? `First ball ${ballId}` : trick.requiredPots.includes(ballId) ? `Pot ${ballId}` : `Setup ball ${ballId}` : plant ? ballId === plant.ballId ? `Plant ${ballId} → ${plant.targetBallId}` : ballId === plant.targetBallId ? `Target ${ballId}` : `Free ball ${ballId}` : `Ball ${ballId}`
   const shotLabel = (plan: ShotPlan) => trick ? `Trick · pot ${trick.requiredPots.join(' + ')}` : plan.potBallId !== undefined && plan.potBallId !== plan.ballId ? `Plant ${plan.ballId} → ${plan.potBallId}` : plant ? `Free ball ${plan.ballId}` : `Ball ${plan.ballId}`
   const lastLesson = !sandbox && (scenario.level === TOTAL_LEVELS || Boolean(result && session.completedLessons === TOTAL_LEVELS))
@@ -312,7 +312,7 @@ export default function App() {
           <div className="table-footer">
             <div className="table-legend" role="group" aria-label="Table legend">
               <span title={approachOption ? 'Ideal cue-ball approach for this stroke, ending at first contact.' : undefined}><i aria-hidden="true" className={result ? "legend-cue-path" : approachOption ? "legend-approach-path" : "legend-cue"} /> {result ? 'Cue paths' : approachOption ? `Ideal path · ${approachOption.label}` : 'Cue ball'}</span>
-              {!trick && <span><i aria-hidden="true" className={objective ? "legend-position" : "legend-target"} /> {objective ? "Position zone" : "Desired finish"}</span>}
+              {!trick && !scenario.finalBall && <span><i aria-hidden="true" className={objective ? "legend-position" : "legend-target"} /> {objective ? "Position zone" : "Desired finish"}</span>}
               {objective && <span><span className="legend-next-swatch" aria-hidden="true"><BallIcon id={objective.nextBallId} small /></span> Next ball {objective.nextBallId}</span>}
               {showPlannedFinish && <span><i aria-hidden="true" className="legend-planned-finish" /> Planned finish</span>}
               {result && <><span><i aria-hidden="true" className="legend-object-pot" /> Object pots</span><span><i aria-hidden="true" className="legend-object-miss" /> Misses / fouls</span></>}

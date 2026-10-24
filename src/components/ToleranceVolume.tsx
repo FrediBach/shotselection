@@ -44,15 +44,15 @@ function strengthLabel(value: number) {
 
 type VolumePoint = ShotTolerance['volume']['points'][number];
 
-function sampleAppearance(point: VolumePoint, depth: number) {
+function sampleAppearance(point: VolumePoint, depth: number, noPositionTarget: boolean) {
   if (!point.available) return { className: 'tolerance-volume-point-unavailable', radius: 2.3, outcome: 'Outside modeled speed range; not simulated', opacity: undefined };
-  if (point.success) return { className: 'tolerance-volume-point-success', radius: 3.5 + (depth + 1.75) * 0.35, outcome: 'Pot + target reached', opacity: 0.6 + (depth + 1.75) * 0.1 };
+  if (point.success) return { className: 'tolerance-volume-point-success', radius: 3.5 + (depth + 1.75) * 0.35, outcome: noPositionTarget ? 'Legal final pot without a scratch' : 'Pot + target reached', opacity: 0.6 + (depth + 1.75) * 0.1 };
   if (point.pot) return { className: 'tolerance-volume-point-pot', radius: 2.3, outcome: 'Potted, outside target', opacity: undefined };
   return { className: 'tolerance-volume-point-miss', radius: 1.8, outcome: 'Unsuccessful pot', opacity: undefined };
 }
 
-function VolumeSample({ point, projection }: { point: VolumePoint; projection: Projection }) {
-  const appearance = sampleAppearance(point, projection.depth);
+function VolumeSample({ point, projection, noPositionTarget }: { point: VolumePoint; projection: Projection; noPositionTarget: boolean }) {
+  const appearance = sampleAppearance(point, projection.depth, noPositionTarget);
   return (
     <circle className={appearance.className} cx={projection.x} cy={projection.y} r={appearance.radius} opacity={appearance.opacity}>
       <title>{`Angle ${signed(point.angle, '°')}; English ${signed(point.sideSpin)} rad/s; strength ${signed(point.speed, '%')}. ${appearance.outcome}.`}</title>
@@ -111,6 +111,7 @@ function useVolumeRotation() {
 }
 
 interface VolumePlotContentsProps {
+  noPositionTarget: boolean;
   visibleSamples: VolumePoint[];
   limits: ShotTolerance['volume']['limits'];
   view: typeof INITIAL_VIEW;
@@ -119,7 +120,7 @@ interface VolumePlotContentsProps {
   sliceStrength: number;
 }
 
-function VolumePlotContents({ visibleSamples, limits, view, showFailures, slice, sliceStrength }: VolumePlotContentsProps) {
+function VolumePlotContents({ noPositionTarget, visibleSamples, limits, view, showFailures, slice, sliceStrength }: VolumePlotContentsProps) {
   const projected = useMemo(() => visibleSamples
     .filter((point) => point.success || showFailures)
     .map((point) => ({
@@ -155,7 +156,7 @@ function VolumePlotContents({ visibleSamples, limits, view, showFailures, slice,
       const end = project({ x: axis.vector.x * 1.12, y: axis.vector.y * 1.12, z: axis.vector.z * 1.12 }, view.yaw, view.pitch);
       return <line className={`tolerance-volume-axis tolerance-axis-${axis.key}`} key={axis.key} x1={start.x} y1={start.y} x2={end.x} y2={end.y} />;
     })}
-    {projected.map(({ point, projection }) => <VolumeSample key={`${point.angle}-${point.sideSpin}-${point.speed}`} point={point} projection={projection} />)}
+    {projected.map(({ point, projection }) => <VolumeSample key={`${point.angle}-${point.sideSpin}-${point.speed}`} point={point} projection={projection} noPositionTarget={noPositionTarget} />)}
     <g className="tolerance-volume-origin" aria-label="Nominal shot at zero deviation">
       <circle cx={CENTER.x} cy={CENTER.y} r="8" />
       <path d={`M${CENTER.x - 13},${CENTER.y}h26 M${CENTER.x},${CENTER.y - 13}v26`} />
@@ -175,6 +176,7 @@ function VolumePlotContents({ visibleSamples, limits, view, showFailures, slice,
 
 export default function ToleranceVolume({ tolerance, label }: ToleranceVolumeProps) {
   const descriptionId = useId();
+  const noPositionTarget = tolerance.positionTolerance === 0;
   const { view, resetView, rotate, onPointerDown, onPointerMove, endDrag, onLostPointerCapture, onKeyDown } = useVolumeRotation();
   const [showFailures, setShowFailures] = useState(false);
   const [slice, setSlice] = useState(false);
@@ -231,8 +233,8 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
           onKeyDown={onKeyDown}
         >
           <title>{label}: sampled combinations of angle, English, and strength</title>
-          <desc>{successCount} of {visibleSamples.length} grid points succeed. Green dots represent a legal pot with the cue ball in the target area. Hollow gray dots are outside the modeled speed range and were not simulated. The gold crosshair is the nominal shot. Drag or use arrow keys to rotate; Home resets the view.</desc>
-          <VolumePlotContents visibleSamples={visibleSamples} limits={limits} view={view} showFailures={showFailures} slice={slice} sliceStrength={sliceStrength} />
+          <desc>{successCount} of {visibleSamples.length} grid points succeed. Green dots represent {noPositionTarget ? 'a legal final pot without a scratch, wherever the cue stops' : 'a legal pot with the cue ball in the target area' }. Hollow gray dots are outside the modeled speed range and were not simulated. The gold crosshair is the nominal shot. Drag or use arrow keys to rotate; Home resets the view.</desc>
+          <VolumePlotContents noPositionTarget={noPositionTarget} visibleSamples={visibleSamples} limits={limits} view={view} showFailures={showFailures} slice={slice} sliceStrength={sliceStrength} />
         </svg>
         {successCount === 0 && <div className="tolerance-volume-empty">No successful samples {slice ? 'in this strength slice' : 'in this grid'}</div>}
         <div className="tolerance-volume-controls">
@@ -252,9 +254,9 @@ export default function ToleranceVolume({ tolerance, label }: ToleranceVolumePro
         <div><span>{signed(-limits.speed, '%')} softer</span><span>{signed(limits.speed, '%')} harder</span></div>
       </div>}
       <div className="tolerance-volume-legend">
-        <span><i className="tolerance-volume-key-success" />Pot + target</span>
+        <span><i className="tolerance-volume-key-success" />{noPositionTarget ? 'Final-ball win' : 'Pot + target'}</span>
         <span><i className="tolerance-volume-key-origin" />Nominal shot</span>
-        {showFailures && <><span><i className="tolerance-volume-key-pot" />Pot, outside target</span><span><i className="tolerance-volume-key-miss" />Miss / foul</span></>}
+        {showFailures && <>{!noPositionTarget && <span><i className="tolerance-volume-key-pot" />Pot, outside target</span>}<span><i className="tolerance-volume-key-miss" />Miss / foul</span></>}
         {showFailures && unavailableCount > 0 && <span><i className="tolerance-volume-key-unavailable" />Outside modeled range</span>}
       </div>
       <p className="tolerance-volume-count" aria-live="polite">{successCount} of {visibleSamples.length} grid points succeed{slice ? ` at ${signed(sliceStrength, '%')} strength` : ''}.</p>

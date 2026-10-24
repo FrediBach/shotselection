@@ -45,7 +45,7 @@ export interface LessonBriefing {
 export interface LessonLearning {
   concept: string;
   prerequisite: string;
-  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position' | 'kick-introduction' | 'kick-contact' | 'kick-pace' | 'kick-spin' | 'kick-corridor' | 'kick-finish' | 'kick-sequence' | 'kick-middle' | 'kick-error' | 'kick-final' | 'plant-introduction' | 'plant-line' | 'plant-margin' | 'plant-delivery' | 'plant-distance' | 'plant-throw' | 'plant-gap' | 'plant-failure' | 'plant-quality' | 'plant-setup' | 'assignment-failure' | 'conditional-continuation' | 'strength-asymmetry' | 'mirror-english' | 'disconnected-position';
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position' | 'kick-introduction' | 'kick-contact' | 'kick-pace' | 'kick-spin' | 'kick-corridor' | 'kick-finish' | 'kick-sequence' | 'kick-middle' | 'kick-error' | 'kick-final' | 'plant-introduction' | 'plant-line' | 'plant-margin' | 'plant-delivery' | 'plant-distance' | 'plant-throw' | 'plant-gap' | 'plant-failure' | 'plant-quality' | 'plant-setup' | 'assignment-failure' | 'conditional-continuation' | 'strength-asymmetry' | 'mirror-english' | 'disconnected-position' | 'defensive-outcome' | 'planned-movement' | 'player-profile' | 'final-ball' | 'landing-recovery';
   /** Restrict direct choices to the authored teaching routes, reflected with the table. */
   pockets?: { ballId: number; pocketId: number }[];
 }
@@ -102,6 +102,12 @@ export interface Scenario {
   conditions?: TableConditions;
   curriculum?: CurriculumLesson;
   objective?: PositionObjective;
+  /** Last object ball: any settled legal pot without a scratch wins. */
+  finalBall?: { ballId: number };
+  /** Required cue/blocker contact that opens a previously blocked next route. */
+  plannedMovement?: { blockerId: number };
+  /** Secondary training objective after a clean miss; opponent plays this ball directly. */
+  defense?: { ballId: number; maxCutAngle: number };
   /** Cue-ball cushions required before the first contact with this object ball. */
   bank?: { ballId: number; minCushions: number };
   /** Contact the first ball to send its paired target towards this pocket. */
@@ -148,6 +154,8 @@ export interface SignedAnglePreview {
   choices: { optionId: string; label: string; cue: Vec2; object: Vec2; ghost: Vec2; departure: Vec2; angle: number }[];
 }
 export interface PreparedRound {
+  landingRecovery?: import('./landing-recovery').LandingRecoveryPreview;
+  defenseOptionIds?: [string, string];
   disconnectedPosition?: import('./disconnected-position').DisconnectedPositionPreview;
   mirrorEnglish?: import('./mirror-english').MirrorEnglishPreview;
   strengthAsymmetry?: import('./strength-asymmetry').StrengthAsymmetryPreview;
@@ -264,6 +272,9 @@ export interface ShotAnalysis {
   trialSuccesses?: boolean[];
   trialLegalPots?: boolean[];
   assignmentFailures?: number[];
+  movementTrials?: { contact: boolean; opened: boolean }[];
+  defenseTrials?: import('./defensive-outcome').DefenseTrial[];
+  defenseExamples?: Partial<Record<'open' | 'screened', import('./defensive-outcome').DefenseExample>>;
   /** Actual scoring trials for the disconnected-region lesson, in trial order. */
   disconnectedTrials?: { point: Vec2; region: number; gap: boolean; settled: boolean; scratch: boolean; nextShotAvailable: boolean; legalPot: boolean; success: boolean }[];
   trialTargetCredits?: number[];
@@ -283,6 +294,7 @@ export interface ObjectBallTrial {
   outcome: 'pot' | 'miss' | 'foul';
 }
 export interface RoundAnalysis {
+  playerProfiles?: import('./player-profile').PlayerProfileComparison;
   continuation?: import('./conditional-continuation').ContinuationAnalysis;
   plantSetup?: import('./plant-setup').PlantSetupShot[];
   sequenceComparison?: SequenceComparison & { referenceId: string };

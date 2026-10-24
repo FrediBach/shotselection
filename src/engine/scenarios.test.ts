@@ -41,7 +41,7 @@ describe('authored pool curriculum', () => {
     expect(scenarios.slice(20, 30).every(scenario => scenario.objective)).toBe(true);
     expect(scenarios.slice(50, 60).every(scenario => scenario.bank && !scenario.objective)).toBe(true);
     expect(scenarios.slice(60, 70).every(scenario => scenario.plant && !scenario.objective && !scenario.bank)).toBe(true);
-    expect(scenarios.slice(70, 80).every(scenario => scenario.objective)).toBe(true);
+    expect(scenarios.slice(70, 80).every(scenario => scenario.level === 79 ? scenario.finalBall && !scenario.objective && scenario.balls.length === 2 : scenario.objective)).toBe(true);
     expect(scenarios.slice(90).every(scenario => scenario.conditions && !scenario.trick && !scenario.objective)).toBe(true);
   });
 
@@ -65,7 +65,7 @@ describe('authored pool curriculum', () => {
     const objectives = lessons.map(lesson => lesson.objective).filter(objective => objective !== undefined);
     expect(lessons[48].curriculum?.learning?.comparison).toBe('english-routing');
     expect(lessons[48].objective).toMatchObject({ radius: 0.22, maxCutAngle: 47 });
-    expect(objectives).toHaveLength(37);
+    expect(objectives).toHaveLength(36);
     expect(objectives[0]).toMatchObject({ radius: 0.20, maxCutAngle: 65 });
     expect(objectives.at(-1)).toMatchObject({ radius: 0.12, maxCutAngle: 40 });
     for (let index = 1; index < objectives.length; index++) {

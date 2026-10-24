@@ -186,8 +186,8 @@ export default function SandboxSetup({ onStart, initialScenario, initialPlacemen
             {SANDBOX_SCENARIOS.map(entry => <optgroup key={entry.id} label={entry.title}>{entry.lessons.map(lesson => <option key={lesson.level} value={lesson.level}>{lesson.title}</option>)}</optgroup>)}
           </select>
           <div className="sandbox-scenario-description"><span>{group?.title}</span><p>{scenario.description}</p></div>
-          {(scenario.bank || scenario.plant || scenario.objective || scenario.trick) && <p className="sandbox-objective">
-            {scenario.trick ? scenario.trick.description : scenario.bank ? `Reach ball ${scenario.bank.ballId} after at least ${scenario.bank.minCushions} cushion ${scenario.bank.minCushions === 1 ? 'rebound' : 'rebounds'}.` : scenario.plant ? `Play ball ${scenario.plant.ballId} into ball ${scenario.plant.targetBallId} for the ${POCKETS.find(pocket => pocket.id === scenario.plant?.pocketId)?.name ?? 'assigned'} pocket.` : `Pot ball ${scenario.objective!.ballId} and leave a usable shot on ball ${scenario.objective!.nextBallId}.`}
+          {(scenario.finalBall || scenario.bank || scenario.plant || scenario.objective || scenario.trick) && <p className="sandbox-objective">
+            {scenario.finalBall ? `Pot the final ball ${scenario.finalBall.ballId} without scratching. No position target.` : scenario.trick ? scenario.trick.description : scenario.bank ? `Reach ball ${scenario.bank.ballId} after at least ${scenario.bank.minCushions} cushion ${scenario.bank.minCushions === 1 ? 'rebound' : 'rebounds'}.` : scenario.plant ? `Play ball ${scenario.plant.ballId} into ball ${scenario.plant.targetBallId} for the ${POCKETS.find(pocket => pocket.id === scenario.plant?.pocketId)?.name ?? 'assigned'} pocket.` : `Pot ball ${scenario.objective!.ballId} and leave a usable shot on ball ${scenario.objective!.nextBallId}.`}
           </p>}
         </section>
         <section className="sandbox-control-section" aria-labelledby="sandbox-placement-heading">
