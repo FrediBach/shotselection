@@ -67,14 +67,13 @@ describe('trick-shot curriculum', () => {
     expect(analysis.potRate).toBe(analysis.sampleBallEnds.filter(balls => [1, 2].every(id => balls.some(ball => ball.id === id && ball.pocketed))).length / 16);
   });
 
-  it('requires object-ball cushions for a bank and cue-ball cushions for a kick', () => {
-    for (const level of [87, 89]) {
+  it('requires the specified object-ball cushions without substituting cue rebounds', () => {
+    for (const level of [87, 88, 89]) {
       const prepared = prepareRound(generateScenario(level));
       const plan = prepared.balls[0].options[0].plan;
       const simulation = simulateShot(prepared.scenario, plan, { record: false });
       expect(evaluateShotObjective(prepared.scenario, plan, simulation).legalPot).toBe(true);
-      const incomplete = level === 87 ? { ...simulation, objectCushions: 0, cueBanksBeforeContact: 2 }
-        : { ...simulation, cueBanksBeforeContact: 1, objectCushions: 2 };
+      const incomplete = { ...simulation, objectCushions: level === 89 ? 1 : 0, cueBanksBeforeContact: 3 };
       expect(evaluateShotObjective(prepared.scenario, plan, incomplete).legalPot).toBe(false);
     }
   });

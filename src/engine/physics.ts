@@ -159,6 +159,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   if (options.recordContacts) { simulation.cueContacts = []; simulation.contactEvents = []; }
   let lastCueBankTime = -Infinity;
   let lastObjectBankTime = -Infinity;
+  if (options.recordObjectRebounds) simulation.objectRebounds = [];
   let soundTime = 0;
   const lastContactTimes = new Map<string, number>();
   for (const { id, body } of bodies) body.addEventListener('collide', (event: { body: Body; contact: ContactEquation }) => {
@@ -180,6 +181,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     }
     if (options.recordContacts) {
       simulation.contactEvents!.push({ ballIds: [id, other], time: soundTime,
+      balls: bodies.map(ball => ({ id: ball.id, position: { x: ball.body.position.x, y: ball.body.position.y }, pocketed: ball.pocketed })),
       positions: [{ x: body.position.x, y: body.position.y }, { x: event.body.position.x, y: event.body.position.y }],
       incoming: [{ x: body.velocity.x, y: body.velocity.y }, { x: event.body.velocity.x, y: event.body.velocity.y }],
       pottedBefore: [...simulation.potted] });
@@ -248,7 +250,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       if (ball.pocketed) continue;
       ball.body.position.z = 0;
       ball.body.velocity.z = 0;
-      const incoming = ball.id === 0 ? { x: ball.body.velocity.x, y: ball.body.velocity.y } : undefined;
+      const incoming = ball.id === 0 || (options.recordObjectRebounds && ball.id === potBallId) ? { x: ball.body.velocity.x, y: ball.body.velocity.y } : undefined;
       const cushionImpact = resolveRails(ball.body, scenario.conditions);
       if (ball.id === 0 && firstContact === null && cushionImpact > 0 && recordPaths) {
         // A regular 30 Hz path sample can cut across a rebound. Keep its exact
@@ -263,6 +265,10 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       }
       if (ball.id === potBallId && cushionImpact > 0.035 && soundTime - lastObjectBankTime >= 0.045) {
         simulation.objectCushions!++;
+        if (options.recordObjectRebounds) simulation.objectRebounds!.push({ ballId: ball.id, time: soundTime,
+          position: { x: ball.body.position.x, y: ball.body.position.y }, incoming: incoming!,
+          outgoing: { x: ball.body.velocity.x, y: ball.body.velocity.y },
+          balls: bodies.map(b => ({ id: b.id, position: { x: b.body.position.x, y: b.body.position.y }, pocketed: b.pocketed })) });
         lastObjectBankTime = soundTime;
       }
       if (record && cushionImpact > 0) recordImpact('cushion', `cushion:${ball.id}`, cushionImpact);

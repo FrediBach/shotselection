@@ -22,7 +22,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const count = clamp(Math.floor(samples), 8, 128);
   const tolerance = positionToleranceForScenario(scenario);
   const random = seededRandom(scenario.seed ^ 0x3A7B91);
-  const nominal = simulateShot(scenario, plan);
+  const nominal = simulateShot(scenario, plan, { recordContacts: scenario.curriculum?.learning?.comparison === 'carom-plant' || scenario.curriculum?.learning?.comparison === 'contact-chain' || scenario.curriculum?.learning?.comparison === 'split-paths' || scenario.curriculum?.learning?.comparison === 'kiss-path' || scenario.curriculum?.learning?.comparison === 'carom-contact' || scenario.curriculum?.learning?.comparison === 'follow-contact' || scenario.curriculum?.learning?.comparison === 'draw-return' || scenario.curriculum?.learning?.comparison === 'object-bank' || scenario.curriculum?.learning?.comparison === 'two-object-bank', recordObjectRebounds: scenario.curriculum?.learning?.comparison === 'object-bank' || scenario.curriculum?.learning?.comparison === 'two-object-bank' });
   const endpoints: Vec2[] = [];
   const samplePaths: Vec2[][] = [];
   const sampleObjectPaths: ObjectBallTrial[] = [];

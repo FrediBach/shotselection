@@ -1,3 +1,4 @@
+import { doubleKissPreview } from './double-kiss';
 import { landingRecoveryPreview } from './landing-recovery';
 import { plannedMovementEvidence } from './planned-movement';
 import { disconnectedPositionFinder } from './disconnected-position';
@@ -335,6 +336,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
             angle, speed, topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
           const simulation = simulateShot(scenario, plan, { record: false });
           if (!isSafeFinish(simulation, ballId) || !satisfiesTrick(scenario, plan, simulation)) continue;
+          if (comparison === 'two-object-bank' && (simulation.objectCushions !== 2 || simulation.cueRebounds?.length || simulation.ballContacts?.length !== 1)) continue;
           plan.target = { ...simulation.cueEnd };
           feasible.push({ plan, simulation });
         }
@@ -452,6 +454,10 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }
   if (scenario.trick) {
     const prepared = prepareBall(scenario, scenario.trick.ballId);
+    if (prepared && scenario.curriculum?.learning?.comparison === 'double-kiss') {
+      const doubleKiss = doubleKissPreview(scenario, prepared.ball.options);
+      return doubleKiss ? { scenario, balls: [prepared.ball], doubleKiss } : { scenario, balls: [] };
+    }
     return { scenario, balls: prepared ? [prepared.ball] : [] };
   }
   if (scenario.plant) {

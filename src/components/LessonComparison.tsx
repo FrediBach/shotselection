@@ -1,3 +1,10 @@
+import TwoObjectBankComparison from './TwoObjectBankComparison'
+import DoubleKissComparison from './DoubleKissComparison'
+import ObjectBankComparison from './ObjectBankComparison'
+import DrawReturnComparison from './DrawReturnComparison'
+import KissPathComparison from './KissPathComparison'
+import SplitPathsComparison from './SplitPathsComparison'
+import ContactChainComparison from './ContactChainComparison'
 import LandingRecoveryComparison from './LandingRecoveryComparison'
 import FinalBallComparison from './FinalBallComparison'
 import PlayerProfileComparison from './PlayerProfileComparison'
@@ -117,6 +124,13 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   if (comparison === 'english-routing') return <EnglishRoutingComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'corridor-center') return <CorridorCenterComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'return-lane') return <ReturnLaneComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'two-object-bank') return <TwoObjectBankComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'double-kiss') return <DoubleKissComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
+  if (comparison === 'object-bank') return <ObjectBankComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'draw-return') return <DrawReturnComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'kiss-path') return <KissPathComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'split-paths') return <SplitPathsComparison prepared={prepared} result={result} hidden={hidden} />
+  if (comparison === 'carom-plant' || comparison === 'contact-chain' || comparison === 'carom-contact' || comparison === 'follow-contact') return <ContactChainComparison prepared={prepared} result={result} hidden={hidden} />
   if (comparison === 'landing-recovery') return <LandingRecoveryComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'final-ball') return <FinalBallComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'player-profile') return <PlayerProfileComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />

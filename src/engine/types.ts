@@ -45,7 +45,7 @@ export interface LessonBriefing {
 export interface LessonLearning {
   concept: string;
   prerequisite: string;
-  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position' | 'kick-introduction' | 'kick-contact' | 'kick-pace' | 'kick-spin' | 'kick-corridor' | 'kick-finish' | 'kick-sequence' | 'kick-middle' | 'kick-error' | 'kick-final' | 'plant-introduction' | 'plant-line' | 'plant-margin' | 'plant-delivery' | 'plant-distance' | 'plant-throw' | 'plant-gap' | 'plant-failure' | 'plant-quality' | 'plant-setup' | 'assignment-failure' | 'conditional-continuation' | 'strength-asymmetry' | 'mirror-english' | 'disconnected-position' | 'defensive-outcome' | 'planned-movement' | 'player-profile' | 'final-ball' | 'landing-recovery';
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position' | 'kick-introduction' | 'kick-contact' | 'kick-pace' | 'kick-spin' | 'kick-corridor' | 'kick-finish' | 'kick-sequence' | 'kick-middle' | 'kick-error' | 'kick-final' | 'plant-introduction' | 'plant-line' | 'plant-margin' | 'plant-delivery' | 'plant-distance' | 'plant-throw' | 'plant-gap' | 'plant-failure' | 'plant-quality' | 'plant-setup' | 'assignment-failure' | 'conditional-continuation' | 'strength-asymmetry' | 'mirror-english' | 'disconnected-position' | 'defensive-outcome' | 'planned-movement' | 'player-profile' | 'final-ball' | 'landing-recovery' | 'contact-chain' | 'split-paths' | 'kiss-path' | 'carom-plant' | 'carom-contact' | 'follow-contact' | 'draw-return' | 'object-bank' | 'double-kiss' | 'two-object-bank';
   /** Restrict direct choices to the authored teaching routes, reflected with the table. */
   pockets?: { ballId: number; pocketId: number }[];
 }
@@ -154,6 +154,7 @@ export interface SignedAnglePreview {
   choices: { optionId: string; label: string; cue: Vec2; object: Vec2; ghost: Vec2; departure: Vec2; angle: number }[];
 }
 export interface PreparedRound {
+  doubleKiss?: import('./double-kiss').DoubleKissPreview;
   landingRecovery?: import('./landing-recovery').LandingRecoveryPreview;
   defenseOptionIds?: [string, string];
   disconnectedPosition?: import('./disconnected-position').DisconnectedPositionPreview;
@@ -234,7 +235,7 @@ export interface Simulation {
   /** Recorded first-plant-ball centers from cue contact through the transfer. */
   plantTransferPath?: Vec2[];
   /** Opt-in collision-dispatch state, with outgoing velocities captured after the solver step. */
-  contactEvents?: { ballIds: [number, number]; time: number; positions: [Vec2, Vec2]; incoming: [Vec2, Vec2]; outgoing?: [Vec2, Vec2]; pottedBefore: number[] }[];
+  contactEvents?: { balls?: SimulationBall[]; ballIds: [number, number]; time: number; positions: [Vec2, Vec2]; incoming: [Vec2, Vec2]; outgoing?: [Vec2, Vec2]; pottedBefore: number[] }[];
   /** Actual cue-ball rebounds before its first object-ball contact. */
   cueBanksBeforeContact?: number;
   /** Actual cue-ball rebounds, including post-contact events; also retained without replay. */
@@ -243,6 +244,8 @@ export interface Simulation {
   ballContacts?: [number, number][];
   /** Rebounds by the primary object ball before it is pocketed. */
   objectCushions?: number;
+  /** Opt-in evidence for each counted target-object cushion rebound. */
+  objectRebounds?: { ballId: number; time: number; position: Vec2; incoming: Vec2; outgoing: Vec2; balls: SimulationBall[] }[];
   duration: number;
   /** True only when all unpocketed balls have settled before the time limit. */
   stopped: boolean;
@@ -354,6 +357,8 @@ export interface SimulateOptions {
   recordPaths?: boolean;
   /** Record ordered ball/ball contact positions, incoming and immediate post-solver velocities, plus cue/object solver-step evidence. */
   recordContacts?: boolean;
+  /** Record the target object ball’s counted cushion rebounds. */
+  recordObjectRebounds?: boolean;
   /** Diagnostic only: remove tangential friction solely between the two plant balls. */
   disablePlantTransferFriction?: boolean;
   /** Record the first plant ball every solver step until its target contact. */
