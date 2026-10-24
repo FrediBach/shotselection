@@ -92,8 +92,12 @@ export function prepareSandboxRound(request: SandboxRequest): PreparedRound {
   // Set-up tricks depend on the authored object-ball alignment. Vary the cue's
   // approach distance instead, preserving the line and complete trick contract.
   // Cushion-first tricks use the bank search, which derives its own aim line.
-  const approach = base.trick && !base.bank
-    ? normalize(subtract(base.trick.aim, base.balls.find(ball => ball.id === 0)!.position)) : null;
+  // Angled plant delivery also preserves the aligned object pair while varying
+  // the cue's approach; the lesson evidence still verifies the resulting cut.
+  const plantDelivery = base.curriculum?.learning?.comparison === 'plant-delivery';
+  const approachTarget = plantDelivery ? base.balls.find(ball => ball.id === base.plant!.ballId)!.position : base.trick?.aim;
+  const approach = ((base.trick && !base.bank) || plantDelivery) && approachTarget
+    ? normalize(subtract(approachTarget, base.balls.find(ball => ball.id === 0)!.position)) : null;
   // Other lessons try a full-table arrangement and a substantial shift first,
   // narrowing around the teaching layout when precise bank/plant lines need it.
   const spread = base.bank ? 0.008 : base.plant ? 0.025 : 0.085;

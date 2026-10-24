@@ -139,7 +139,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   });
   const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, cueRebounds: [], ballContacts: [], objectCushions: 0, duration: 0, stopped: false };
   const pendingContacts: NonNullable<Simulation['cueContacts']> = [];
-  if (options.recordContacts) simulation.cueContacts = [];
+  if (options.recordContacts) { simulation.cueContacts = []; simulation.contactEvents = []; }
   let lastCueBankTime = -Infinity;
   let lastObjectBankTime = -Infinity;
   let soundTime = 0;
@@ -151,6 +151,10 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     if (soundTime - (lastContactTimes.get(key) ?? -Infinity) < 0.045) return;
     lastContactTimes.set(key, soundTime);
     simulation.ballContacts!.push([id, other]);
+    if (options.recordContacts) simulation.contactEvents!.push({ ballIds: [id, other], time: soundTime,
+      positions: [{ x: body.position.x, y: body.position.y }, { x: event.body.position.x, y: event.body.position.y }],
+      incoming: [{ x: body.velocity.x, y: body.velocity.y }, { x: event.body.velocity.x, y: event.body.velocity.y }],
+      pottedBefore: [...simulation.potted] });
     if (options.recordContacts && id === 0) {
       const contact = { ballId: other, time: soundTime, position: { x: body.position.x, y: body.position.y },
         otherPosition: { x: event.body.position.x, y: event.body.position.y },

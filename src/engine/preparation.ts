@@ -1,3 +1,8 @@
+import { plantDistanceExperiment } from './plant-distance';
+import { plantDeliveryPreview } from './plant-delivery';
+import { plantMarginExperiment } from './plant-margin';
+import { plantLinePreview } from './plant-line';
+import { plantIntroductionPreview } from './plant-introduction';
 import { kickFinalPreview } from './kick-final';
 import { kickErrorExperiment } from './kick-error';
 import { kickMiddleExperiment } from './kick-middle';
@@ -434,6 +439,26 @@ function prepareLayout(scenario: Scenario): PreparedRound {
       const prepared = prepareBall(scenario, ball.id);
       return prepared ? [prepared.ball] : [];
     });
+    if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-distance') {
+      const plantDistance = plantDistanceExperiment(scenario, plant.ball.options);
+      return plantDistance ? { scenario, balls: [plant.ball, ...freeBalls], plantDistance } : { scenario, balls: [] };
+    }
+    if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-delivery') {
+      const plantDelivery = plantDeliveryPreview(scenario, plant.ball.options);
+      return plantDelivery ? { scenario, balls: [plant.ball, ...freeBalls], plantDelivery } : { scenario, balls: [] };
+    }
+    if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-margin') {
+      const plantMargin = plantMarginExperiment(scenario, plant.ball.options);
+      return plantMargin ? { scenario, balls: [plant.ball, ...freeBalls], plantMargin } : { scenario, balls: [] };
+    }
+    if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-line') {
+      const plantLine = plantLinePreview(scenario, plant.ball.options);
+      return plantLine ? { scenario, balls: [plant.ball, ...freeBalls], plantLine } : { scenario, balls: [] };
+    }
+    if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-introduction') {
+      const plantIntroduction = plantIntroductionPreview(scenario, plant.ball.options);
+      return plantIntroduction ? { scenario, balls: [plant.ball, ...freeBalls], plantIntroduction } : { scenario, balls: [] };
+    }
     return { scenario, balls: plant && freeBalls.length ? [plant.ball, ...freeBalls] : [] };
   }
   if (scenario.bank) {

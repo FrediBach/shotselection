@@ -47,7 +47,13 @@ it('records collision evidence without changing physical outcomes or ordinary re
   for (const option of p.balls[0].options) {
     const baseline = simulateShot(p.scenario, option.plan), measured = simulateShot(p.scenario, option.plan, { recordContacts: true });
     expect(baseline.cueContacts).toBeUndefined(); expect(measured.cueContacts!.length).toBeGreaterThan(0);
-    const { cueContacts: _contacts, cuePath: _measuredPath, ...outcome } = measured;
+    expect(baseline.contactEvents).toBeUndefined();
+    expect(measured.contactEvents!.map(event => event.ballIds)).toEqual(measured.ballContacts);
+    for (const event of measured.contactEvents!) {
+      expect(event.time).toBeGreaterThan(0);
+      expect(event.positions.concat(event.incoming).every(v => Number.isFinite(v.x) && Number.isFinite(v.y))).toBe(true);
+    }
+    const { cueContacts: _contacts, contactEvents: _events, cuePath: _measuredPath, ...outcome } = measured;
     const { cuePath: _baselinePath, ...expected } = baseline;
     expect(outcome).toEqual(expected);
     for (const c of measured.cueContacts!) {
@@ -57,7 +63,7 @@ it('records collision evidence without changing physical outcomes or ordinary re
       expect(Object.values(c.outgoing).every(Number.isFinite)).toBe(true);
     }
     const light = simulateShot(p.scenario, option.plan, { record: false, recordContacts: true });
-    expect(light.cueContacts).toEqual(measured.cueContacts); expect(light.cuePath).toHaveLength(0);
+    expect(light.cueContacts).toEqual(measured.cueContacts); expect(light.contactEvents).toEqual(measured.contactEvents); expect(light.cuePath).toHaveLength(0);
   }
 });
 

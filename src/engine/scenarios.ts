@@ -791,8 +791,9 @@ const LESSONS: readonly Lesson[] = [
   // Plants: read the line through two object balls and compare it with a demanding direct pot.
   {
     title: 'Two balls, one pocket',
+    learning: { concept: 'plant-contact-sequence', prerequisite: 'cut-paths', comparison: 'plant-introduction' },
     description: 'Compare the 1–2 plant with a long cut on the free 3.',
-    lesson: 'A plant uses one object ball to pot another: the cue ball hits the 1, which sends the 2 toward the pocket. Read the line through both balls, then compare it with the free ball and its cue-ball finish.',
+    lesson: 'Trace two contacts: the cue ball hits 1, then ball 1 hits 2 toward the pocket. Predict which ball is potted and inspect the numbered contact snapshots, then compare the complete plant with the free-ball alternative.',
     takeaway: 'Two contacts can be a sensible choice when the pair points naturally into the pocket.',
     briefing: { focus: 'Read through the pair', gotcha: 'Select the 1 to play the plant. The 2 is its potting target; a direct pot on the free 3 is the alternative.' },
     layout: [[1.00, 1.05], [1.27, 0.37], [1.27, 0.30], [1.85, 0.85]],
@@ -800,17 +801,19 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Check the natural line',
+    learning: { concept: 'plant-pair-line', prerequisite: 'plant-contact-sequence', comparison: 'plant-line' },
     description: 'A tempting pair competes with another demanding free-ball cut.',
-    lesson: 'Extend the line between the centers of the 1 and 2 all the way to the pocket. Decide whether that natural plant line has room to enter, then compare the longer shot on the 3.',
-    takeaway: 'A ball near a pocket does not make a plant work; the line between the pair decides its direction.',
+    lesson: 'Extend the initial line through the centers of 1 and 2 to the pocket mouth. Predict whether it reaches the opening, then compare the geometric crossing with ball 2’s actual miss path and the free-ball alternative.',
+    takeaway: 'A nearby pair can point outside the pocket opening. Read the pair line, then check the actual stroke and target-ball path.',
     briefing: { focus: 'Extend the line to the pocket', gotcha: 'Two nearby balls can look aligned at a glance. Check where their line reaches the pocket mouth.' },
     layout: [[0.70, 1.02], [1.288, 0.37], [1.27, 0.30], [1.55, 0.97]],
     plant: { ballId: 1, targetBallId: 2, pocketId: 1 },
   },
   {
     title: 'A pocket has edges',
+    learning: { concept: 'plant-offset-margin', prerequisite: 'plant-pair-line', comparison: 'plant-margin' },
     description: 'Read a less generous plant line against a long free-ball route.',
-    lesson: 'Judge how much space the 2 has on either side of its intended path. A plant that can drop on one exact stroke may have less margin than a longer direct pot.',
+    lesson: 'Compare this offset pair with a centered reference at the same approach and spacing. Apply the same small aim changes to both and inspect where a target pot becomes a miss, independently of the cue-ball finish.',
     takeaway: 'A playable plant still needs enough pocket margin to survive a small contact error.',
     briefing: { focus: 'Judge the spare pocket width', gotcha: 'Seeing a line into the pocket is only the start. A line near a facing can turn a small error into a miss.' },
     layout: [[0.67, 1.02], [1.274, 0.39], [1.27, 0.32], [1.70, 0.85]],
@@ -818,6 +821,7 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Approach the pair from an angle',
+    learning: { concept: 'plant-angled-delivery', prerequisite: 'plant-offset-margin', comparison: 'plant-delivery' },
     description: 'A wider cue-ball approach changes the plant without moving its pocket.',
     lesson: 'Read the contact on the 1 as well as the line from the 1 through the 2. Compare how much precision the angled first contact needs with the available direct pot.',
     takeaway: 'A useful pair alignment still depends on delivering the first ball along that line.',
@@ -827,8 +831,9 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     title: 'Distance after the transfer',
+    learning: { concept: 'plant-target-distance', prerequisite: 'plant-angled-delivery', comparison: 'plant-distance' },
     description: 'A corner-pocket plant sends the 2 farther after the transfer.',
-    lesson: 'Compare the whole plant: cue-ball approach, transfer between the pair, and the 2’s run to the pocket. Then trace the free-ball pot using the same checks.',
+    lesson: 'Compare short and long target-ball runs to the same corner pocket, keeping approach and transfer gap fixed. Inspect how the same directional error creates more lateral deviation after the longer run, separately from cue-ball finish.',
     takeaway: 'A longer journey after the second contact magnifies a small directional error in the plant.',
     briefing: { focus: 'Follow the second ball to the pocket', gotcha: 'A short gap between the pair does not make the final pot short. Include the distance beyond the 2.' },
     layout: [[1.00, 1.05], [0.91068, 0.51490], [0.85, 0.48], [1.70, 0.85]],
