@@ -28,6 +28,7 @@ svg { flex-shrink: 0; }
 .main-nav button:hover { color: #f0e6d5; }
 .main-nav .nav-help-icon { display: none; }
 .main-nav .nav-active { color: #eeeae1; }
+.main-nav .nav-highscores > svg { color: var(--gold); }
 .nav-active::after { position: absolute; bottom: -1px; height: 2px; width: 100%; background: var(--gold); content: ''; }
 .session-score { display: flex; align-items: center; gap: 10px; border: 1px solid #ffffff15; background: #1a1e1a; border-radius: 6px; padding: 8px 12px; font-size: 0.875rem; }
 .session-score > svg:first-child { color: var(--gold); }
@@ -266,6 +267,20 @@ svg { flex-shrink: 0; }
 @media (max-width: 900px) { .brand { font-size: 1.3125rem; } .main-nav { gap: 20px; } .main-nav button { font-size: 0.875rem; } .main-nav button:last-child { display: none; } .session-label, .score-divider { display: none; } .game-layout { --game-panel-height: 620px; grid-template-columns: minmax(0, 1fr) 270px; gap: 12px; } .shot-panel { --shot-panel-padding: 18px; } .table-size { display: none; } .table-toolbar { padding: 14px; } .pool-canvas { height: 370px; } .table-instruction { font-size: 0.75rem; } .table-footer { padding: 12px; } .table-legend { gap: 8px 12px; } .game-principles > div { gap: 10px; } .game-principles h3 { font-size: 0.8125rem; } .game-principles p { font-size: 0.75rem; } .principle-icon { width: 30px; height: 34px; border: 0; background: none; } .principle-icon svg { width: 21px; } }
 @media (max-width: 720px) { .app-shell { padding: 0 20px; } .app-shell > main { padding-top: 14px; } .site-header { height: 64px; gap: 8px; } .brand { font-size: 1.1875rem; gap: 8px; white-space: nowrap; min-width: 0; } .brand-mark { height: 30px; width: 30px; flex-shrink: 0; } .main-nav { display: flex; gap: 0; margin: 0; height: auto; flex-shrink: 0; } .main-nav button { display: none; } .main-nav .nav-help { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid #ffffff15; border-radius: 6px; background: #1a1e1a; } .main-nav .nav-help-icon { display: block; width: 18px; height: 18px; } .main-nav .nav-help-label, .main-nav .nav-help-arrow { display: none; } .session-score { font-size: 0.8125rem; padding: 9px 8px; gap: 6px; white-space: nowrap; flex-shrink: 0; } .eyebrow { font-size: 0.75rem; letter-spacing: 1.25px; } .game-layout { --game-panel-height: 680px; grid-template-columns: 1fr; gap: 16px; } .table-panel { height: 426px; } .table-toolbar { padding: 14px 16px; gap: 8px; } .toolbar-caption { letter-spacing: 0; } .toolbar-caption span { padding: 0 2px; } .table-stage { min-height: 0; } .pool-canvas { height: 300px; min-height: 260px; } .table-watermark { bottom: 10px; font-size: 0.625rem; letter-spacing: 2px; } .table-watermark span { font-size: 0.5rem; } .table-instruction { top: 14px; font-size: 0.75rem; } .table-footer { height: 58px; min-height: 58px; padding: 10px 16px; } .table-legend { gap: 8px 18px; } .table-legend > span { font-size: 0.75rem; } .shot-panel { --shot-panel-padding: 24px; } .panel-description { font-size: 0.875rem; } .ball-choices { gap: 10px; } .ball-choice { padding: 13px 6px 11px; } .ball-choice > span:nth-child(2) { font-size: 0.8125rem; } .lock-button { min-height: 47px; font-size: 0.875rem; } .lock-caption { font-size: 0.75rem; } .game-principles { grid-template-columns: 1fr; gap: 5px; margin: 22px 0; } .game-principles > div { padding: 15px 3px; gap: 16px; } .game-principles > div + div { border-left: 0; padding-left: 3px; border-top: 1px solid #ffffff0b; } .game-principles p br { display: none; } .game-principles h3 { font-size: 0.875rem; } .game-principles p { font-size: 0.8125rem; } .principle-icon { width: 36px; } .principle-index { display: block; top: 15px; right: 6px; } .site-footer { flex-wrap: wrap; gap: 20px; padding: 22px 0; } .site-footer > button { order: 3; width: 100%; font-size: 0.75rem; } .section-heading h2 { font-size: 1.25rem; } .section-heading .eyebrow { font-size: 0.75rem; } .ensemble-switch { font-size: 0.75rem; gap: 6px; } .analysis-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .analysis-card { padding: 14px; } .analysis-card-title { gap: 6px; flex-wrap: wrap; } .analysis-card-title > strong { font-size: 0.8125rem; } .best-tag { font-size: 0.75rem; padding: 3px; margin-left: 0; } .analysis-rate { margin-top: 16px; gap: 7px; font-size: 1.6875rem; flex-wrap: wrap; } .analysis-rate > span { font-size: 0.75rem; } .analysis-metrics { gap: 5px; } .analysis-metrics > span { font-size: 0.75rem; } .analysis-metrics strong { font-size: 0.75rem; } .ensemble-explanation { align-items: flex-start; } .ensemble-explanation p { font-size: 0.8125rem; } .ensemble-explanation > .ui-button { padding: 4px; font-size: 0.75rem; } .dialog-content { padding: 28px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+@media (min-width: 721px) and (max-width: 1150px) {
+  .session-label, .score-divider { display: none; }
+  .site-header { gap: 18px; }
+  .main-nav { gap: 18px; }
+}
+@media (max-width: 720px) {
+  .site-header { height: auto; min-height: 64px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 12px 0; }
+  .main-nav { gap: 8px; }
+  .main-nav .nav-highscores { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid #ffffff15; border-radius: 6px; background: #1a1e1a; }
+  .main-nav .nav-highscores > span { display: none; }
+  .site-header > .session-score { grid-column: 1 / -1; width: 100%; }
+  .session-score .session-label { display: inline; margin-left: auto; }
+}
 
 /* The course sits above the fixed table/decision frame. */
 .course-progress { margin-bottom: 18px; }

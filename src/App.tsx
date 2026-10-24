@@ -22,6 +22,7 @@ import PerfectCelebration from '@/components/PerfectCelebration'
 import ShotTolerancePanel from '@/components/ShotTolerancePanel'
 import CourseProgress from '@/components/CourseProgress'
 import CourseCompletion from '@/components/CourseCompletion'
+import Highscores from '@/components/Highscores'
 import GameDialogBody, { type Modal } from '@/components/GameDialogBody'
 import CharacterSelection from '@/components/CharacterSelection'
 import SandboxSetup from '@/components/SandboxSetup'
@@ -32,6 +33,7 @@ import { analyzeRoundAsync, generateScenario, prepareRoundAsync } from '@/engine
 import type { PreparedRound, RoundAnalysis, ShotAnalysis, ShotPlan } from '@/engine/types'
 import { completeLesson, freshSession, loadSession, recordLessonResult, SESSION_STORAGE_KEY, type GameMode, type Session } from '@/lib/session'
 import { createGameAudio } from '@/lib/sound'
+import { HIGHSCORES_STORAGE_KEY, identifyPlaythrough, loadHighscores, mergeHighscores, saveHighscores, updateHighscores } from '@/lib/highscores'
 
 const HELP_DISMISSED_KEY = 'shot-selection-help-dismissed'
 const SOUND_ENABLED_KEY = 'shot-selection-sound-enabled'
@@ -44,7 +46,9 @@ function initialModal(courseComplete: boolean): Modal {
   catch { return 'help' }
 }
 export default function App() {
-  const [session, setSession] = useState<Session>(loadSession)
+  const [session, setSession] = useState<Session>(() => identifyPlaythrough(loadSession()))
+  const [highscores, setHighscores] = useState(() => updateHighscores(loadHighscores(), session))
+  const [highscoreStorageAvailable, setHighscoreStorageAvailable] = useState(true)
   const sandbox = session.mode === 'sandbox'
   const courseScorePercent = session.rounds ? Math.round(session.score / (session.rounds * 100) * 100) : 0
   const [sandboxPlacement, setSandboxPlacement] = useState<'random' | 'manual'>('random')
@@ -105,6 +109,15 @@ export default function App() {
   }, [soundEnabled])
   useEffect(() => () => { request.current += 1; analysisController.current?.abort() }, [])
   useEffect(() => { try { localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session)) } catch { /* Browser storage can be unavailable. */ } }, [session])
+  useEffect(() => { setHighscores(previous => updateHighscores(previous, session)) }, [session])
+  useEffect(() => { setHighscoreStorageAvailable(saveHighscores(highscores)) }, [highscores])
+  useEffect(() => {
+    const syncHighscores = (event: StorageEvent) => {
+      if (event.key === HIGHSCORES_STORAGE_KEY) setHighscores(previous => mergeHighscores(previous, loadHighscores()))
+    }
+    window.addEventListener('storage', syncHighscores)
+    return () => window.removeEventListener('storage', syncHighscores)
+  }, [])
   useEffect(() => {
     const controller = new AbortController()
     if (session.mode === 'sandbox' || showCourseSummary || !session.character) { setPreparing(false); return () => controller.abort() }
@@ -193,7 +206,7 @@ export default function App() {
   }
   function clearRound(next: Session) {
     resetRoundState()
-    setSession(next)
+    setSession(identifyPlaythrough(next))
     setScenario(generateScenario(next.level, next.seed + next.level * 919))
     setShowSandboxSetup(next.mode === 'sandbox')
     setSandboxPlacement('random')
@@ -241,12 +254,19 @@ export default function App() {
       setCelebrating(analysis.points === 100)
       if (!document.hidden) audio.current?.play(analysis.points === 100 ? 'perfect' : 'result')
       // Persist the next unplayed level, so reloading cannot score this round twice.
-      if (!sandbox) setSession(previous => completeLesson(previous, scenario.level, analysis.points, recordLessonResult(scenario, analysis)))
+      if (!sandbox) {
+        const playedAt = new Date().toISOString()
+        setSession(previous => {
+          const next = completeLesson(previous, scenario.level, analysis.points, recordLessonResult(scenario, analysis))
+          return next === previous ? previous : { ...next, lastPlayedAt: playedAt }
+        })
+      }
     } catch (cause) {
       if (id === request.current) setError(cause instanceof Error ? cause.message : 'The simulation could not finish. Please try again.')
     } finally { if (id === request.current) setBusy(false) }
   }
   function openModal(next: Exclude<Modal, null>, opener: HTMLElement) {
+    if (next === 'highscores') setHighscores(previous => mergeHighscores(previous, loadHighscores()))
     dialogOpener.current = opener
     setModal(next)
   }
@@ -291,7 +311,7 @@ export default function App() {
     <a className="skip-link" href="#main-content">Skip to game</a>
     <header className="site-header">
       <a className="brand" href="/" aria-label="Shot Selection home"><span className="brand-mark"><span /></span><span>shot<span className="brand-light">selection</span><span className="brand-period">.</span></span></a>
-      <nav className="main-nav" aria-label="Main navigation"><button className="nav-active" onClick={() => closeModal()}>The game</button><button className="nav-help" aria-label="How to play" aria-haspopup="dialog" onClick={event => openModal('help', event.currentTarget)}><CircleHelp className="nav-help-icon" size={18} /><span className="nav-help-label">How to play</span><ArrowDownRight className="nav-help-arrow" size={13} /></button><button aria-haspopup="dialog" onClick={event => openModal('physics', event.currentTarget)}>Behind the physics</button></nav>
+      <nav className="main-nav" aria-label="Main navigation"><button className="nav-active" onClick={() => closeModal()}>The game</button><button className="nav-help" aria-label="How to play" aria-haspopup="dialog" onClick={event => openModal('help', event.currentTarget)}><CircleHelp className="nav-help-icon" size={18} /><span className="nav-help-label">How to play</span><ArrowDownRight className="nav-help-arrow" size={13} /></button><button className="nav-highscores" aria-label="Highscores" title="Highscores" aria-haspopup="dialog" onClick={event => openModal('highscores', event.currentTarget)}><Trophy size={16} /><span>Highscores</span></button><button aria-haspopup="dialog" onClick={event => openModal('physics', event.currentTarget)}>Behind the physics</button></nav>
       {sandbox ? <span className="session-score sandbox-badge"><FlaskConical size={16} /> Sandbox</span> : <button className="session-score" onClick={event => openModal('stats', event.currentTarget)} aria-haspopup="dialog" aria-label={`View session stats, ${session.score} points, ${courseScorePercent}% of maximum across ${session.rounds} scored levels`}><Trophy size={15} /><span>{session.score} <span className="muted">pts</span> <span className="muted" title="Percentage of the maximum score for played levels">({courseScorePercent}%)</span></span><span className="score-divider" /><span className="session-label">This session</span><ChevronRight size={14} /></button>}
     </header>
 
@@ -360,7 +380,7 @@ export default function App() {
     </main>
 
     <Dialog open={modal !== null} onOpenChange={open => { if (!open) closeModal() }}><DialogContent
-      className={modal === 'lesson' ? 'level-briefing' : modal === 'feedback' ? 'shot-feedback-dialog' : undefined}
+      className={modal === 'lesson' ? 'level-briefing' : modal === 'feedback' ? 'shot-feedback-dialog' : modal === 'highscores' ? 'highscores-dialog' : undefined}
       onOpenAutoFocus={event => { event.preventDefault(); dialogHeading.current?.focus({ preventScroll: true }) }}
       onCloseAutoFocus={event => {
         event.preventDefault()
@@ -372,7 +392,9 @@ export default function App() {
         else sidebarHeading.current?.focus({ preventScroll: true })
       }}
     >
-      {modal === 'feedback' && result
+      {modal === 'highscores'
+        ? <Highscores entries={highscores} currentId={session.playthroughId} storageAvailable={highscoreStorageAvailable} headingRef={dialogHeading} onClose={closeModal} />
+        : modal === 'feedback' && result
         ? <ShotFeedbackDialog result={result} scenario={scenario} headingRef={dialogHeading} shotLabel={shotLabel} finishLabel={finishLabel} onClose={closeModal} onReplay={() => { closeModal(); playShot(result.best) }} />
         : <GameDialogBody modal={modal} scenario={scenario} session={session} headingRef={dialogHeading} lessonStarted={lessonStarted} onClose={closeModal} onRestart={() => clearRound(freshSession())} />}
     </DialogContent></Dialog>

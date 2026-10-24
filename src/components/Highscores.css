@@ -1,0 +1,45 @@
+.dialog-content.highscores-dialog { width: min(780px, calc(100vw - 32px)); }
+.highscores-table { width: 100%; border-collapse: collapse; margin: 25px 0 18px; font-size: .875rem; font-variant-numeric: tabular-nums; }
+.highscores-table thead th { padding: 0 10px 12px; text-align: left; font-size: .75rem; font-weight: 500; color: var(--muted); }
+.highscores-table tbody tr { border-top: 1px solid #ffffff12; }
+.highscores-table tbody tr[data-current] { background: #d8b47508; }
+.highscores-table td, .highscores-table tbody th { padding: 16px 10px; vertical-align: middle; }
+.highscores-table .highscore-rank { width: 42px; color: var(--muted); font-weight: 500; text-align: center; }
+.highscores-table tbody tr:first-child .highscore-rank { color: var(--gold); }
+.highscore-played { min-width: 120px; overflow-wrap: anywhere; }
+.highscore-played > strong { display: block; font-weight: 500; }
+.highscore-played time, .highscore-date { display: block; color: var(--muted); font-size: .75rem; margin-top: 5px; }
+.highscore-current-label { display: block; color: var(--gold); font-size: .6875rem; margin-top: 6px; }
+.highscore-score, .highscore-percentage { white-space: nowrap; }
+.highscore-score > strong { font-weight: 500; color: var(--gold); }
+.highscore-score strong > span { font-size: .75rem; font-weight: 400; color: var(--muted); }
+.highscore-percentage > strong { font-weight: 500; }
+.highscore-progress { min-width: 140px; }
+.highscore-progress > span:first-child { font-size: .75rem; white-space: nowrap; }
+.highscore-progress progress { display: block; width: 100%; height: 3px; margin: 8px 0; border: 0; border-radius: 3px; overflow: hidden; background: #ffffff10; accent-color: #b6c9a0; }
+.highscore-progress progress::-webkit-progress-bar { background: #ffffff10; }
+.highscore-progress progress::-webkit-progress-value { background: #b6c9a0; }
+.highscore-progress progress::-moz-progress-bar { background: #b6c9a0; }
+.highscore-status { display: block; font-size: .75rem; color: var(--muted); }
+.highscore-complete { color: #b6c9a0; }
+.highscore-mobile-label { display: none; }
+.highscores-empty { margin: 26px 0; padding: 25px; border: 1px dashed #d8b47535; border-radius: 8px; text-align: center; }
+.highscores-empty > strong { color: var(--gold); font-size: 1.0625rem; font-weight: 500; }
+.dialog-content .highscores-empty p { margin-bottom: 0; }
+.dialog-content .highscores-storage-note { color: var(--gold); }
+.dialog-content .highscores-explanation { font-size: .8125rem; }
+
+@media (max-width: 600px) {
+  .dialog-content.highscores-dialog { padding: 26px 20px; }
+  .highscores-table, .highscores-table tbody { display: block; }
+  .highscores-table thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .highscores-table tbody { display: grid; gap: 12px; }
+  .highscores-table tbody tr { display: grid; grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1fr); gap: 12px 10px; padding: 16px 12px; border: 1px solid #ffffff12; border-radius: 8px; }
+  .highscores-table td, .highscores-table tbody th { padding: 0; }
+  .highscores-table .highscore-rank { width: auto; grid-column: 1; grid-row: 1; padding-top: 1px; }
+  .highscore-played { grid-column: 2 / -1; min-width: 0; }
+  .highscore-score { grid-column: 2; }
+  .highscore-percentage { grid-column: 3; }
+  .highscore-mobile-label { display: block; margin-bottom: 5px; font-size: .6875rem; color: var(--muted); }
+  .highscore-progress { grid-column: 2 / -1; min-width: 0; }
+}

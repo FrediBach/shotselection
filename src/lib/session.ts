@@ -31,6 +31,8 @@ export type Session = {
   perfect: number
   seed: number
   history?: LessonResult[]
+  playthroughId?: string
+  lastPlayedAt?: string
 }
 
 export const SESSION_STORAGE_KEY = 'shot-selection-session'
@@ -51,6 +53,12 @@ export const freshSession = (character: PlayerCharacter | null = null, mode: Gam
 function nonnegativeInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
+
+export const isPlaythroughId = (value: unknown): value is string =>
+  typeof value === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(value)
+
+export const isPlayedAt = (value: unknown): value is string =>
+  typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value
 
 const rate = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
 
@@ -102,7 +110,9 @@ export function loadSession(): Session {
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY) || 'null')
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return freshSession()
-    const { scoringVersion, courseVersion, mode, character, level, score, rounds, perfect, seed, completedLessons, carriedTournamentLessons, history } = saved as Record<string, unknown>
+    const { scoringVersion, courseVersion, mode, character, level, score, rounds, perfect, seed, completedLessons, carriedTournamentLessons, history, playthroughId, lastPlayedAt } = saved as Record<string, unknown>
+    const playthrough = { ...(isPlaythroughId(playthroughId) ? { playthroughId } : {}),
+      ...(isPlayedAt(lastPlayedAt) ? { lastPlayedAt } : {}) }
     if (mode !== undefined && mode !== 'course' && mode !== 'sandbox') return freshSession()
     if (mode === 'sandbox') {
       const player = normalizePlayerCharacter(character)
@@ -110,7 +120,7 @@ export function loadSession(): Session {
         level !== 1 || completedLessons !== 0 || score !== 0 || rounds !== 0 || perfect !== 0 ||
         carriedTournamentLessons !== undefined) return freshSession()
       return { scoringVersion: 2, courseVersion: 5, mode, character: player, completedLessons: 0,
-        level: 1, score: 0, rounds: 0, perfect: 0, seed }
+        level: 1, score: 0, rounds: 0, perfect: 0, seed, ...playthrough }
     }
     if (!nonnegativeInteger(level) || level < 1 || level >= 10000 ||
       !nonnegativeInteger(rounds) || !nonnegativeInteger(perfect) || perfect > rounds ||
@@ -151,7 +161,7 @@ export function loadSession(): Session {
     const recorded = Array.isArray(history) && scoringVersion === 2 ? normalizeLessonHistory(history, prefix) : undefined
     return { scoringVersion: 2, courseVersion: 5, mode: 'course', completedLessons: prefix, level: prefix + 1,
       ...(carry > 0 ? { carriedTournamentLessons: carry } : {}), character: player, score: points, rounds, perfect, seed,
-      ...(recorded ? { history: recorded } : {}) }
+      ...(recorded ? { history: recorded } : {}), ...playthrough }
   } catch { /* Browser storage is optional, and invalid JSON starts a fresh session. */ }
   return freshSession()
 }

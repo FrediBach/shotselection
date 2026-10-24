@@ -27,6 +27,39 @@ function expectFresh() {
 
 afterEach(() => { vi.unstubAllGlobals() })
 
+describe('playthrough metadata', () => {
+  const metadata = { playthroughId: 'run-123', lastPlayedAt: '2026-10-24T12:30:00.000Z' }
+
+  it('preserves identity and the played date through reloads, migration, and new lessons', () => {
+    storedSession({ ...currentSession, ...metadata })
+    expect(loadSession()).toEqual({ ...currentSession, ...metadata })
+    expect(completeLesson(loadSession(), 8, 100)).toMatchObject(metadata)
+    storedSession({ ...legacySession, ...metadata })
+    expect(loadSession()).toEqual({ ...currentSession, ...metadata })
+  })
+
+  it('keeps sandbox identity metadata without adding scores or course progress', () => {
+    const sandbox = { ...freshSession(customCharacter, 'sandbox'), ...metadata }
+    storedSession(sandbox)
+    expect(loadSession()).toEqual(sandbox)
+  })
+
+  it.each([
+    { playthroughId: '' }, { playthroughId: 'a'.repeat(129) }, { playthroughId: 17 }, { playthroughId: 'run id' },
+    { lastPlayedAt: 'yesterday' }, { lastPlayedAt: '2026-02-30T12:30:00.000Z' }, { lastPlayedAt: null },
+  ])('drops malformed optional metadata without resetting earned progress: %j', invalid => {
+    storedSession({ ...currentSession, ...invalid })
+    expect(loadSession()).toEqual(currentSession)
+  })
+
+  it('retains each valid metadata field independently', () => {
+    storedSession({ ...currentSession, ...metadata, lastPlayedAt: 'not-a-date' })
+    expect(loadSession()).toEqual({ ...currentSession, playthroughId: metadata.playthroughId })
+    storedSession({ ...currentSession, ...metadata, playthroughId: [] })
+    expect(loadSession()).toEqual({ ...currentSession, lastPlayedAt: metadata.lastPlayedAt })
+  })
+})
+
 describe('game modes', () => {
   it('starts in course mode and preserves legacy playthroughs without a mode', () => {
     expect(freshSession().mode).toBe('course')
