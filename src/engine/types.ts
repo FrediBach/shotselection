@@ -45,7 +45,7 @@ export interface LessonBriefing {
 export interface LessonLearning {
   concept: string;
   prerequisite: string;
-  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan';
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze';
   /** Restrict direct choices to the authored teaching routes, reflected with the table. */
   pockets?: { ballId: number; pocketId: number }[];
 }
@@ -146,6 +146,8 @@ export interface SignedAnglePreview {
 export interface PreparedRound {
   sequenceComparison?: { referenceId: string; orders: SequenceOrder[] };
   steppingStoneOptionId?: string;
+  spareGraze?: { grazedId: string; clearId: string };
+  movingTraffic?: { blockedId: string; clearId: string; pocketId: number };
   fallbackPlan?: { narrowId: string; flexibleId: string };
   zoneExit?: { blockedId: string; clearId: string; blockerId: number; pocketId: number };
   /** Two opening choices in the controlled second-shot comparison. */
@@ -188,6 +190,8 @@ export interface Simulation {
   firstContact: number | null;
   /** Speeds immediately before and after the solver step containing first contact. */
   firstImpact?: { ballId: number; time: number; position: Vec2; cueSpeedBefore: number; cueRollSpeedBefore?: number; objectSpeedBefore: number; cueSpeedAfter: number; objectSpeedAfter: number };
+  /** Opt-in cue/object impact evidence across one solver step, before rail resolution. */
+  cueContacts?: { ballId: number; time: number; position: Vec2; otherPosition: Vec2; incoming: Vec2; outgoing: Vec2; pottedBefore: number[] }[];
   /** Actual cue-ball rebounds before its first object-ball contact. */
   cueBanksBeforeContact?: number;
   /** Actual cue-ball rebounds, including post-contact events; also retained without replay. */
@@ -290,5 +294,7 @@ export interface SimulateOptions {
   record?: boolean;
   /** Record lightweight cue/object paths even when full frames are disabled. */
   recordPaths?: boolean;
+  /** Record cue/object velocities and positions around collision solver steps. */
+  recordContacts?: boolean;
   maxTime?: number;
 }

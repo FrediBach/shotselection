@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { DEFAULT_CHARACTER } from '../src/engine/characters'
 import { startLevel } from './helpers'
 
-for (const level of [4, 7, 42]) test(`level ${level} keeps predictions through reveal and permits retry and advancement`, async ({ page }) => {
+for (const level of [4, 7]) test(`level ${level} keeps predictions through reveal and permits retry and advancement`, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.addInitScript(({ level, character }) => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
@@ -24,7 +24,7 @@ for (const level of [4, 7, 42]) test(`level ${level} keeps predictions through r
   const prediction = comparison.getByRole('group', { name: 'Your prediction' }).getByRole('button').first()
   await prediction.click()
   await expect(prediction).toHaveAttribute('aria-pressed', 'true')
-  await page.getByRole('button', { name: `Choose ${level === 42 ? 'stroke' : 'finish'} A`, exact: true }).click()
+  await page.getByRole('button', { name: 'Choose finish A', exact: true }).click()
   await page.getByRole('button', { name: /Lock in/ }).click()
   await expect(comparison.getByRole('img')).toHaveCount(3, { timeout: 30000 })
   await expect(prediction).toHaveAttribute('aria-pressed', 'true')

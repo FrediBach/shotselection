@@ -138,6 +138,8 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     }
   });
   const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, cueRebounds: [], ballContacts: [], objectCushions: 0, duration: 0, stopped: false };
+  const pendingContacts: NonNullable<Simulation['cueContacts']> = [];
+  if (options.recordContacts) simulation.cueContacts = [];
   let lastCueBankTime = -Infinity;
   let lastObjectBankTime = -Infinity;
   let soundTime = 0;
@@ -149,6 +151,14 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     if (soundTime - (lastContactTimes.get(key) ?? -Infinity) < 0.045) return;
     lastContactTimes.set(key, soundTime);
     simulation.ballContacts!.push([id, other]);
+    if (options.recordContacts && id === 0) {
+      const contact = { ballId: other, time: soundTime, position: { x: body.position.x, y: body.position.y },
+        otherPosition: { x: event.body.position.x, y: event.body.position.y },
+        incoming: { x: body.velocity.x, y: body.velocity.y }, outgoing: { x: 0, y: 0 }, pottedBefore: [...simulation.potted] };
+      simulation.cueContacts!.push(contact);
+      pendingContacts.push(contact);
+      if (recordPaths) appendPathPoint(simulation.cuePath, body);
+    }
   });
   const lastSoundTimes = record ? new Map<string, number>() : null;
   const recordImpact = (type: 'ball' | 'cushion', key: string, impactSpeed: number) => {
@@ -188,6 +198,8 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     soundTime = step * TABLE.step;
     for (const ball of bodies) if (!ball.pocketed) applyCloth(ball.body, TABLE.step, scenario.conditions);
     world.step(TABLE.step);
+    for (const contact of pendingContacts) contact.outgoing = { x: cue.body.velocity.x, y: cue.body.velocity.y };
+    pendingContacts.length = 0;
     if (impactBody && simulation.firstImpact) {
       simulation.firstImpact.cueSpeedAfter = Math.hypot(cue.body.velocity.x, cue.body.velocity.y);
       simulation.firstImpact.objectSpeedAfter = Math.hypot(impactBody.velocity.x, impactBody.velocity.y);

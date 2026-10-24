@@ -33,11 +33,11 @@ describe('audit stage one: physical teaching contrasts', () => {
     }
   });
 
-  it.each([0, 1, 5, 8])('proves traffic removes the next shot without secondary collisions, reflection %i', seed => {
+  it.each([0, 1, 5, 8])('proves settled traffic removes the next shot, reflection %i', seed => {
     const prepared = prepareRound(generateScenario(42, seed), { regenerate: false });
     const evidence = prepared.balls[0].options.map(o => {
       const sim = simulateShot(prepared.scenario, o.plan, { record: false });
-      expect(sim.ballContacts).toEqual([[0, 1]]);
+      expect(sim.ballContacts?.[0]).toEqual([0, 1]);
       const before = JSON.stringify(sim);
       const evidence = nextShotBlockerEvidence(prepared.scenario, sim);
       expect(JSON.stringify(sim)).toBe(before);

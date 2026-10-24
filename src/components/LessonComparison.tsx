@@ -1,3 +1,6 @@
+import SpareGrazeComparison from './SpareGrazeComparison'
+import MovingTrafficComparison from './MovingTrafficComparison'
+import BallWidthComparison from './BallWidthComparison'
 import FallbackPlanComparison from './FallbackPlanComparison'
 import SequenceReliabilityComparison from './SequenceReliabilityComparison'
 import SteppingStoneComparison from './SteppingStoneComparison'
@@ -47,6 +50,9 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'corridor-diagnosis' || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (comparison === 'spare-graze') return <SpareGrazeComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'moving-traffic') return <MovingTrafficComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'ball-width') return <BallWidthComparison prepared={prepared} result={result} busy={busy} />
   if (comparison === 'fallback-plan') return <FallbackPlanComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'sequence-reliability') return <SequenceReliabilityComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'stepping-stone') return <SteppingStoneComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
