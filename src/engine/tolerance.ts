@@ -15,6 +15,25 @@ const REFINEMENTS = 6;
 
 interface Outcome { available: boolean; pot: boolean; success: boolean }
 
+/** Shared first-failure scan; preserve the adjacent passing/failing bracket. */
+export function scanToleranceBound(nominalPasses: boolean, cap: number, step: number, passes: (value: number) => boolean) {
+  if (!nominalPasses) return { value: 0, limited: false, failing: 0 };
+  let passing = 0;
+  for (let index = 1; index <= Math.ceil(cap / step); index++) {
+    const next = Math.min(index * step, cap);
+    if (passes(next)) { passing = next; continue; }
+    let failing = next;
+    for (let iteration = 0; iteration < REFINEMENTS; iteration++) {
+      const midpoint = (passing + failing) / 2;
+      if (passes(midpoint)) passing = midpoint;
+      else failing = midpoint;
+    }
+    return { value: passing, limited: false, failing };
+  }
+  return { value: cap, limited: true, failing: null };
+}
+
+
 /** Sample margins around the exact offered stroke, holding draw/follow fixed.
  * Each margin ends at the first observed failure moving away from zero. A later
  * successful island never widens that margin. Finite steps may miss small gaps:
@@ -64,25 +83,8 @@ export function analyzeShotTolerance(scenario: Scenario, plan: ShotPlan): ShotTo
       ? direction === -1 ? (1 - MIN_SPEED / plan.speed) * 100 : (MAX_SPEED / plan.speed - 1) * 100
       : Infinity;
     const cap = Math.max(0, Math.min(LIMITS[axis], physicalCap));
-    const count = Math.ceil(cap / SCAN_STEPS[axis]);
-    let passing = 0;
-    for (let index = 1; index <= count; index++) {
-      const next = Math.min(index * SCAN_STEPS[axis], cap);
-      if (evaluateAxis(axis, direction * next)[criterion]) {
-        passing = next;
-        continue;
-      }
-      // Only refine this adjacent pass/fail bracket, never a wider interval that
-      // could jump over an observed failure into a disconnected passing region.
-      let failing = next;
-      for (let iteration = 0; iteration < REFINEMENTS; iteration++) {
-        const midpoint = (passing + failing) / 2;
-        if (evaluateAxis(axis, direction * midpoint)[criterion]) passing = midpoint;
-        else failing = midpoint;
-      }
-      return { value: passing, limited: false };
-    }
-    return { value: cap, limited: true };
+    const { value, limited } = scanToleranceBound(nominal[criterion], cap, SCAN_STEPS[axis], value => evaluateAxis(axis, direction * value)[criterion]);
+    return { value, limited };
   };
   const axisTolerance = (axis: ToleranceAxis): AxisTolerance => ({
     pot: { negative: searchBound(axis, -1, 'pot'), positive: searchBound(axis, 1, 'pot') },

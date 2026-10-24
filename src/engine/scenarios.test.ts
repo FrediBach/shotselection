@@ -35,7 +35,7 @@ describe('authored pool curriculum', () => {
       }
     }
     expect(scenarios.slice(0, 80).filter(scenario => scenario.curriculum?.englishPractice).map(scenario => scenario.level))
-      .toEqual([9, 10, 20, 29, 30, 39, 40, 49, 50]);
+      .toEqual([9, 10, 20, 29, 30, 39, 40, 49, 50, 74]);
     expect(scenarios.slice(0, 10).every(scenario => scenario.balls.length === 2 && !scenario.objective)).toBe(true);
     expect(scenarios.slice(10, 20).every(scenario => scenario.balls.length >= 3 && !scenario.objective)).toBe(true);
     expect(scenarios.slice(20, 30).every(scenario => scenario.objective)).toBe(true);

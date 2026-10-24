@@ -68,6 +68,7 @@ function clearLandingZone(scenario: Scenario): Scenario {
   if (!scenario.objective) return scenario;
   const objective = { ...scenario.objective };
   delete objective.target;
+  delete objective.regions;
   return { ...scenario, objective };
 }
 

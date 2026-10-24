@@ -1,3 +1,6 @@
+import { inPositionGap } from './disconnected-position';
+import { analyzeContinuation } from './conditional-continuation';
+import { assignmentFailureMask } from './assignment-failure';
 import { shiftedPlantSetup } from './plant-setup';
 import { plantTrialStage } from './plant-failure';
 import type { PlantTrialStage } from './plant-failure';
@@ -22,6 +25,9 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const sampleObjectPaths: ObjectBallTrial[] = [];
   const sampleBallEnds: SimulationBall[][] = [];
   const trialSuccesses: boolean[] = [];
+  const trialLegalPots = scenario.curriculum?.learning?.comparison === 'conditional-continuation' ? [] as boolean[] : undefined;
+  const disconnectedTrials: ShotAnalysis['disconnectedTrials'] = scenario.curriculum?.learning?.comparison === 'disconnected-position' ? [] : undefined;
+  const assignmentFailures = scenario.curriculum?.learning?.comparison === 'assignment-failure' ? [] as number[] : undefined;
   const trialTargetCredits = scenario.curriculum?.learning?.comparison === 'plant-quality' ? [] as number[] : undefined;
   const spareContactTrials = scenario.curriculum?.learning?.comparison === 'collision-assistance' ? [] as boolean[] : undefined;
   const plantTrialStages = scenario.curriculum?.learning?.comparison === 'plant-failure' && scenario.plant
@@ -46,11 +52,14 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
     const potted = dropped && simulation.firstContact === plan.ballId;
     sampleObjectPaths.push({ path: simulation.objectPath, outcome: potted ? 'pot' : dropped ? 'foul' : 'miss' });
     const { legalPot: legal, error, zoneRatio, positioned, nextShotAvailable, success } = evaluateShotObjective(scenario, plan, simulation);
+    if (disconnectedTrials) disconnectedTrials.push({ point: simulation.cueEnd, region: scenario.objective!.regions!.findIndex(center => distance(simulation.cueEnd, center) <= tolerance), gap: inPositionGap(scenario.objective!, simulation.cueEnd), settled: simulation.stopped, scratch: simulation.scratch, nextShotAvailable, legalPot: legal, success });
+    assignmentFailures?.push(assignmentFailureMask(legal, positioned, nextShotAvailable));
     if (plantTrialStages) plantTrialStages.push(plantTrialStage(scenario, plan, simulation, success)!);
     if (potted) pots++;
     if (simulation.scratch) scratches++;
     if (positioned) positions++;
     if (legal) legalPots++;
+    trialLegalPots?.push(legal);
     trialSuccesses.push(success);
     if (success) successes++;
     if (nextShotAvailable) nextShots++;
@@ -105,7 +114,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
       : scratches / count > 0.12
         ? 'The cue ball runs close to a pocket. Scratch risk makes this route less dependable.'
         : 'The pot is available, but speed and spin need care to hold the chosen cue-ball position.';
-  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, trialSuccesses, ...(trialTargetCredits ? { trialTargetCredits } : {}), ...(spareContactTrials ? { spareContactTrials } : {}), ...(plantTrialStages ? { plantTrialStages } : {}), score, nominal, samples: count, explanation };
+  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, trialSuccesses, ...(trialLegalPots ? { trialLegalPots } : {}), ...(assignmentFailures ? { assignmentFailures } : {}), ...(disconnectedTrials ? { disconnectedTrials } : {}), ...(trialTargetCredits ? { trialTargetCredits } : {}), ...(spareContactTrials ? { spareContactTrials } : {}), ...(plantTrialStages ? { plantTrialStages } : {}), score, nominal, samples: count, explanation };
 }
 
 export function analyzeRound(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions = {}): RoundAnalysis {
@@ -130,5 +139,7 @@ export function analyzeRound(prepared: PreparedRound, selection: Selection, opti
       const shot = analyzeShot(shiftedPlantSetup(scenario), option.plan, options.samples ?? 48, options.talents);
       return { plan: shot.plan, score: shot.score, successRate: shot.successRate, samples: shot.samples };
     }) : undefined;
-  return { ...(plantSetup ? { plantSetup } : {}), ...(sequenceComparison ? { sequenceComparison } : {}), candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForScenario(scenario) };
+  const continuation = prepared.continuation ? analyzeContinuation(scenario, prepared.continuation,
+    candidates.find(c => c.plan.id === prepared.continuation!.referenceId)!, options.talents) : null;
+  return { ...(continuation ? { continuation } : {}), ...(plantSetup ? { plantSetup } : {}), ...(sequenceComparison ? { sequenceComparison } : {}), candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForScenario(scenario) };
 }

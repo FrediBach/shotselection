@@ -1,3 +1,8 @@
+import { disconnectedPositionFinder } from './disconnected-position';
+import { mirrorEnglishPreview } from './mirror-english';
+import { strengthAsymmetryPreview } from './strength-asymmetry';
+import { continuationPreview } from './conditional-continuation';
+import { assignmentPotProblem } from './assignment-failure';
 import { authorPlantQualityTargets } from './plant-quality';
 import { plantGapPreview } from './plant-gap';
 import { plantThrowExperiment } from './plant-throw';
@@ -179,6 +184,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     return steppingEvidence.get(entry)!;
   };
   const corridorPair = corridorPairFinder(scenario);
+  const disconnectedPair = disconnectedPositionFinder(scenario);
   const elongatedPair = elongatedPositionFinder(scenario);
   const englishRoute = englishRoutingFinder(scenario);
   const centerPair = corridorCenterPairFinder(scenario);
@@ -196,6 +202,8 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     return keyEvidence.get(entry)!;
   };
   const contrast = (entries: FeasiblePlan[]) => {
+    if (comparison === 'disconnected-position') return Boolean(disconnectedPair(entries));
+    if (comparison === 'mirror-english') return entries.some(e => e.plan.sideSpin !== 0 && e.simulation.cueRebounds?.some(r => !r.beforeContact));
     if (comparison === 'corridor-diagnosis') return Boolean(corridorPair(entries));
     if (comparison === 'elongated-position') return Boolean(elongatedPair(entries));
     if (comparison === 'english-routing') return Boolean(englishRoute(entries));
@@ -371,8 +379,8 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     }
   }
   for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId)) {
-    for (const multiplier of comparison === 'elongated-position' || comparison === 'english-routing' || comparison === 'corridor-center' || comparison === 'return-lane' || comparison === 'collision-assistance' || comparison === 'open-corridor' || comparison === 'pocket-change' || comparison === 'spare-graze' || comparison === 'moving-traffic' || comparison === 'fallback-plan' || comparison === 'sequence-reliability' || comparison === 'stepping-stone' || comparison === 'corridor-diagnosis' || comparison === 'angle-travel' || comparison === 'zone-exit' || comparison === 'look-ahead' || comparison === 'key-ball' || comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
-      for (const topSpin of comparison === 'return-lane' || comparison === 'english-routing' || comparison === 'elongated-position' ? [-1.6, -1.1, -.6, 0, .5, 1.05] : comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05]) {
+    for (const multiplier of comparison === 'disconnected-position' || comparison === 'elongated-position' || comparison === 'english-routing' || comparison === 'corridor-center' || comparison === 'return-lane' || comparison === 'collision-assistance' || comparison === 'open-corridor' || comparison === 'pocket-change' || comparison === 'spare-graze' || comparison === 'moving-traffic' || comparison === 'fallback-plan' || comparison === 'sequence-reliability' || comparison === 'stepping-stone' || comparison === 'corridor-diagnosis' || comparison === 'angle-travel' || comparison === 'zone-exit' || comparison === 'look-ahead' || comparison === 'key-ball' || comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
+      for (const topSpin of comparison === 'disconnected-position' || comparison === 'return-lane' || comparison === 'english-routing' || comparison === 'elongated-position' ? [-1.6, -1.1, -.6, 0, .5, 1.05] : comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05]) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
           const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
           const calibrated = directStroke(scenario, plan);
@@ -387,6 +395,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     // unsuitable layouts before enumerating triples or proving unrelated pots.
     if (comparison === 'english-routing' && !englishRoute(feasible)) continue;
     if (comparison === 'elongated-position' && !elongatedPair(feasible)) continue;
+    if (comparison === 'disconnected-position' && !disconnectedPair(feasible)) continue;
     triple = chooseTriple(feasible, qualifies, Boolean(english), contrast);
     if (triple) break; // Prefer three strokes to the same pocket when possible.
   }
@@ -418,6 +427,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     const { cueApproachPath } = simulateShot(scenario, entry.plan, { record: false, recordPaths: true });
     return { id, label, cueApproachPath, plan: { ...entry.plan, id, label: `${shot} · ${label} · ${stroke}` } };
   }) as [FinishOption, FinishOption, FinishOption];
+  if (comparison === 'assignment-failure') options[2] = assignmentPotProblem(scenario, options[1], options[2]);
   return { ball: { ballId, options }, target, ...(elongatedPosition ? { elongatedPosition: { alongId: options[triple.indexOf(elongatedPosition.along)].id, acrossId: options[triple.indexOf(elongatedPosition.across)].id } } : {}), ...(englishRouting ? { englishRouting: { referenceId: options[triple.indexOf(englishRouting.opening)].id } } : {}), ...(corridorCenter ? { corridorCenter: { centerId: options[triple.indexOf(corridorCenter.center)].id, edgeId: options[triple.indexOf(corridorCenter.edge)].id } } : {}), ...(returnLane ? { returnLane: { riskyId: options[triple.indexOf(returnLane.risky)].id, clearId: options[triple.indexOf(returnLane.clear)].id } } : {}), ...(assistance ? { collisionAssistance: { assistedId: options[triple.indexOf(assistance.assisted)].id, clearId: options[triple.indexOf(assistance.clear)].id } } : {}), ...(pocketChange ? { pocketChange: { originalId: options[triple.indexOf(pocketChange.original)].id, adaptedId: options[triple.indexOf(pocketChange.adapted)].id, preferredPocketId: pocketChange.preferred.pocketId, alternatePocketId: pocketChange.alternate.pocketId, blockerId: pocketChange.blocker.id } } : {}), ...(graze ? { spareGraze: { grazedId: options[triple.indexOf(graze.grazed)].id, clearId: options[triple.indexOf(graze.clear)].id } } : {}), ...(traffic ? { movingTraffic: { blockedId: options[triple.indexOf(traffic.blocked)].id, clearId: options[triple.indexOf(traffic.clear)].id, pocketId: traffic.pocketId } } : {}), ...(fallback ? { fallbackPlan: { narrowId: options[triple.indexOf(fallback.narrow)].id, flexibleId: options[triple.indexOf(fallback.flexible)].id } } : {}), ...(sequence ? { sequenceComparison: { referenceId: options[triple.indexOf(sequence)].id, orders: sequenceCheck(sequence)!.orders.map(({first, second}) => ({first, second})) } } : {}), ...(steppingStone ? { steppingStoneOptionId: options[triple.indexOf(steppingStone)].id } : {}), ...(zoneExit ? { zoneExit: { blockedId: options[triple.indexOf(zoneExit.blocked)].id, clearId: options[triple.indexOf(zoneExit.clear)].id, blockerId: zoneExit.blockerId, pocketId: zoneExit.pocketId } } : {}), ...(lookAhead ? { lookAheadOptionIds: [lookAhead.lost.opening, lookAhead.kept.opening].map(entry => options[triple.indexOf(entry)].id).sort() } : {}), ...(comparison === 'signed-next-angle' ? { signedAnglePreview: { ...positionPair!.signedAnglePreview!, choices: [positionPair!.near, positionPair!.far].map(entry => ({
     ...signedAngleEvidence(scenario, entry.simulation, positionPair!.signedAnglePreview!.pocketId)!,
     optionId: options[triple.indexOf(entry)].id, label: options[triple.indexOf(entry)].label, cue: entry.simulation.cueEnd,
@@ -519,6 +529,36 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }
   if (scenario.objective) {
     const prepared = prepareBall(scenario, scenario.objective.ballId);
+    if (prepared && scenario.curriculum?.learning?.comparison === 'disconnected-position') {
+      const entries = prepared.ball.options.map(o => ({ plan: o.plan, simulation: simulateShot(scenario, o.plan, { record: false, recordPaths: true }) }));
+      const evidence = disconnectedPositionFinder(scenario)(entries);
+      if (!evidence) return { scenario, balls: [] };
+      const { a, b, ...preview } = evidence;
+      return { scenario: { ...scenario, objective: { ...scenario.objective, target: evidence.centers[0], regions: evidence.centers } }, balls: [prepared.ball], disconnectedPosition: { ...preview, optionIds: [a.plan.id, b.plan.id] } };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'mirror-english') {
+      const ready = { ...scenario, objective: { ...scenario.objective, target: prepared.target } };
+      const mirrorEnglish = mirrorEnglishPreview(ready, prepared.ball.options);
+      return mirrorEnglish ? { scenario: ready, balls: [prepared.ball], mirrorEnglish } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'strength-asymmetry') {
+      const ready = { ...scenario, objective: { ...scenario.objective, target: prepared.target } };
+      const strengthAsymmetry = strengthAsymmetryPreview(ready, prepared.ball.options);
+      return strengthAsymmetry ? { scenario: ready, balls: [prepared.ball], strengthAsymmetry } : { scenario, balls: [] };
+    }
+    if (prepared && scenario.curriculum?.learning?.comparison === 'conditional-continuation') {
+      // Fixed authored pace adjustment keeps the slower/nominal/faster reference pots playable.
+      const original = prepared.ball.options[2];
+      const plan = { ...original.plan, speed: original.plan.speed * 1.02 };
+      const nominal = simulateShot(scenario, plan, { record: false, recordPaths: true });
+      // Retain the original proven zone stroke as B; C is the stronger diagnostic reference.
+      const middle = prepared.ball.options[1];
+      prepared.ball.options[1] = { ...original, id: middle.id, label: 'B', plan: { ...original.plan, id: middle.id, label: original.plan.label.replace(' · C · ', ' · B · ') } };
+      prepared.ball.options[2] = { ...original, plan: { ...plan, target: nominal.cueEnd }, cueApproachPath: nominal.cueApproachPath };
+      const ready = { ...scenario, objective: { ...scenario.objective, target: prepared.target } };
+      const continuation = continuationPreview(ready, [prepared.ball.options[2], ...prepared.ball.options.slice(0, 2)]);
+      return continuation ? { scenario: ready, balls: [prepared.ball], continuation } : { scenario, balls: [] };
+    }
     return prepared
       ? { scenario: { ...scenario, objective: { ...scenario.objective, target: prepared.target } }, balls: [prepared.ball], ...(prepared.elongatedPosition ? { elongatedPosition: prepared.elongatedPosition } : {}), ...(prepared.englishRouting ? { englishRouting: prepared.englishRouting } : {}), ...(prepared.corridorCenter ? { corridorCenter: prepared.corridorCenter } : {}), ...(prepared.returnLane ? { returnLane: prepared.returnLane } : {}), ...(prepared.collisionAssistance ? { collisionAssistance: prepared.collisionAssistance } : {}), ...(prepared.pocketChange ? { pocketChange: prepared.pocketChange } : {}), ...(prepared.spareGraze ? { spareGraze: prepared.spareGraze } : {}), ...(prepared.movingTraffic ? { movingTraffic: prepared.movingTraffic } : {}), ...(prepared.fallbackPlan ? { fallbackPlan: prepared.fallbackPlan } : {}), ...(prepared.sequenceComparison ? { sequenceComparison: prepared.sequenceComparison } : {}), ...(prepared.steppingStoneOptionId ? { steppingStoneOptionId: prepared.steppingStoneOptionId } : {}), ...(prepared.zoneExit ? { zoneExit: prepared.zoneExit } : {}), ...(prepared.lookAheadOptionIds ? { lookAheadOptionIds: prepared.lookAheadOptionIds } : {}), ...(prepared.signedAnglePreview ? { signedAnglePreview: prepared.signedAnglePreview } : {}), ...(prepared.contactAccessPocket !== undefined ? { contactAccessPocket: prepared.contactAccessPocket } : {}) }
       : { scenario, balls: [] };
@@ -580,6 +620,9 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
     || objective.ballId <= 0 || objective.nextBallId <= 0 || objective.ballId === objective.nextBallId
     || !Number.isFinite(objective.radius) || objective.radius <= 0
     || (objective.ellipse && (!Number.isFinite(objective.ellipse.longRadius) || objective.ellipse.longRadius <= objective.radius || !Number.isFinite(objective.ellipse.angle)))
+    || (objective.regions && (Boolean(objective.ellipse) || objective.regions.length !== 2
+      || objective.regions.some(p => ![p.x, p.y].every(Number.isFinite) || p.x < objective.radius || p.x > TABLE.length - objective.radius || p.y < objective.radius || p.y > TABLE.width - objective.radius)
+      || distance(objective.regions[0], objective.regions[1]) <= objective.radius * 2))
     || !Number.isFinite(objective.maxCutAngle) || objective.maxCutAngle < 0 || objective.maxCutAngle >= 90
     || (objective.target && (![objective.target.x, objective.target.y].every(Number.isFinite)
       || objective.target.x < TABLE.ballRadius || objective.target.x > TABLE.length - TABLE.ballRadius

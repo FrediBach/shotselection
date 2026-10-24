@@ -1,3 +1,8 @@
+import DisconnectedPositionComparison from './DisconnectedPositionComparison'
+import MirrorEnglishComparison from './MirrorEnglishComparison'
+import StrengthAsymmetryComparison from './StrengthAsymmetryComparison'
+import ConditionalContinuationComparison from './ConditionalContinuationComparison'
+import AssignmentFailureComparison from './AssignmentFailureComparison'
 import PlantSetupComparison from './PlantSetupComparison'
 import PlantQualityComparison from './PlantQualityComparison'
 import PlantFailureComparison from './PlantFailureComparison'
@@ -77,6 +82,11 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'corridor-diagnosis' || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (comparison === 'disconnected-position') return <DisconnectedPositionComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'mirror-english') return <MirrorEnglishComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'strength-asymmetry') return <StrengthAsymmetryComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'conditional-continuation') return <ConditionalContinuationComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'assignment-failure') return <AssignmentFailureComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'plant-setup') return <PlantSetupComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'plant-quality') return <PlantQualityComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'plant-failure') return <PlantFailureComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />

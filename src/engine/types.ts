@@ -45,7 +45,7 @@ export interface LessonBriefing {
 export interface LessonLearning {
   concept: string;
   prerequisite: string;
-  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position' | 'kick-introduction' | 'kick-contact' | 'kick-pace' | 'kick-spin' | 'kick-corridor' | 'kick-finish' | 'kick-sequence' | 'kick-middle' | 'kick-error' | 'kick-final' | 'plant-introduction' | 'plant-line' | 'plant-margin' | 'plant-delivery' | 'plant-distance' | 'plant-throw' | 'plant-gap' | 'plant-failure' | 'plant-quality' | 'plant-setup';
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap' | 'contact-access' | 'draw-decay' | 'position-overshoot' | 'signed-next-angle' | 'intended-next-pocket' | 'nominated-next-ball' | 'key-ball' | 'look-ahead' | 'zone-exit' | 'angle-travel' | 'corridor-diagnosis' | 'stepping-stone' | 'sequence-reliability' | 'fallback-plan' | 'ball-width' | 'moving-traffic' | 'spare-graze' | 'pocket-change' | 'open-corridor' | 'collision-assistance' | 'return-lane' | 'corridor-center' | 'english-routing' | 'elongated-position' | 'kick-introduction' | 'kick-contact' | 'kick-pace' | 'kick-spin' | 'kick-corridor' | 'kick-finish' | 'kick-sequence' | 'kick-middle' | 'kick-error' | 'kick-final' | 'plant-introduction' | 'plant-line' | 'plant-margin' | 'plant-delivery' | 'plant-distance' | 'plant-throw' | 'plant-gap' | 'plant-failure' | 'plant-quality' | 'plant-setup' | 'assignment-failure' | 'conditional-continuation' | 'strength-asymmetry' | 'mirror-english' | 'disconnected-position';
   /** Restrict direct choices to the authored teaching routes, reflected with the table. */
   pockets?: { ballId: number; pocketId: number }[];
 }
@@ -71,6 +71,8 @@ export interface PositionObjective {
   radius: number;
   /** Optional elongated region: radius is its short semi-axis, angle in radians. */
   ellipse?: { longRadius: number; angle: number };
+  /** Two disjoint circular target regions with the shared radius. */
+  regions?: [Vec2, Vec2];
   /** Largest acceptable direct next-ball cut, in degrees. */
   maxCutAngle: number;
   /** Assigned during preparation when the lesson does not specify a fixed zone. */
@@ -146,6 +148,10 @@ export interface SignedAnglePreview {
   choices: { optionId: string; label: string; cue: Vec2; object: Vec2; ghost: Vec2; departure: Vec2; angle: number }[];
 }
 export interface PreparedRound {
+  disconnectedPosition?: import('./disconnected-position').DisconnectedPositionPreview;
+  mirrorEnglish?: import('./mirror-english').MirrorEnglishPreview;
+  strengthAsymmetry?: import('./strength-asymmetry').StrengthAsymmetryPreview;
+  continuation?: import('./conditional-continuation').ContinuationPreview;
   plantGap?: import('./plant-gap').PlantGapPreview;
   plantThrow?: import('./plant-throw').PlantThrowExperiment;
   plantDistance?: import('./plant-distance').PlantDistanceExperiment;
@@ -256,6 +262,10 @@ export interface ShotAnalysis {
   sampleBallEnds: SimulationBall[][];
   /** Objective success in common-random-number trial order, for paired comparisons. */
   trialSuccesses?: boolean[];
+  trialLegalPots?: boolean[];
+  assignmentFailures?: number[];
+  /** Actual scoring trials for the disconnected-region lesson, in trial order. */
+  disconnectedTrials?: { point: Vec2; region: number; gap: boolean; settled: boolean; scratch: boolean; nextShotAvailable: boolean; legalPot: boolean; success: boolean }[];
   trialTargetCredits?: number[];
   /** Any cue/ball-3 contact in each scoring trial, including failed trials. */
   spareContactTrials?: boolean[];
@@ -273,6 +283,7 @@ export interface ObjectBallTrial {
   outcome: 'pot' | 'miss' | 'foul';
 }
 export interface RoundAnalysis {
+  continuation?: import('./conditional-continuation').ContinuationAnalysis;
   plantSetup?: import('./plant-setup').PlantSetupShot[];
   sequenceComparison?: SequenceComparison & { referenceId: string };
   candidates: ShotAnalysis[];

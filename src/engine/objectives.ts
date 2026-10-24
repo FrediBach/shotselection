@@ -104,7 +104,7 @@ export function evaluateShotObjective(scenario: Scenario, plan: ShotPlan, simula
   if (objective && !objective.target) throw new Error('Position lessons need a prepared landing zone.');
   const target = objective?.target ?? plan.target;
   const radius = positionToleranceForScenario(scenario);
-  const error = distance(simulation.cueEnd, target);
+  const error = objective?.regions ? Math.min(...objective.regions.map(center => distance(simulation.cueEnd, center))) : distance(simulation.cueEnd, target);
   const banksSatisfied = !scenario.bank || (plan.ballId === scenario.bank.ballId
     && (simulation.cueBanksBeforeContact ?? 0) >= scenario.bank.minCushions);
   const potBallId = plan.potBallId ?? plan.ballId;
