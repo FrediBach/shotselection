@@ -21,10 +21,11 @@ it('teaches working, failing and low-probability plants against difficult free b
   }
   expect(lessons[0].maxPlantPot).toBeGreaterThan(0.9);
   expect(lessons[0].plant.score - lessons[0].free.score).toBeGreaterThan(0.2);
-  for (const index of [1, 5]) {
-    expect(lessons[index].maxPlantPot).toBe(0);
-    expect(lessons[index].free.score).toBeGreaterThan(lessons[index].plant.score);
-  }
+  // Level 62 keeps the deliberately failing pair. Level 66 now isolates
+  // collision throw in an aligned, playable pair rather than repeating it.
+  expect(lessons[1].maxPlantPot).toBe(0);
+  expect(lessons[1].free.score).toBeGreaterThan(lessons[1].plant.score);
+  expect(lessons[5].maxPlantPot).toBeGreaterThan(0);
   expect(lessons[6].maxPlantPot).toBeGreaterThan(0.1);
   expect(lessons[6].maxPlantPot).toBeLessThan(0.5);
   expect(lessons[6].free.score).toBeGreaterThan(lessons[6].plant.score);

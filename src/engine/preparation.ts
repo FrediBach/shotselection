@@ -1,3 +1,6 @@
+import { authorPlantQualityTargets } from './plant-quality';
+import { plantGapPreview } from './plant-gap';
+import { plantThrowExperiment } from './plant-throw';
 import { plantDistanceExperiment } from './plant-distance';
 import { plantDeliveryPreview } from './plant-delivery';
 import { plantMarginExperiment } from './plant-margin';
@@ -439,6 +442,17 @@ function prepareLayout(scenario: Scenario): PreparedRound {
       const prepared = prepareBall(scenario, ball.id);
       return prepared ? [prepared.ball] : [];
     });
+    if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-quality') {
+      return { scenario, balls: authorPlantQualityTargets(scenario, [plant.ball, ...freeBalls]) };
+    }
+    if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-gap') {
+      const plantGap = plantGapPreview(scenario, plant.ball.options);
+      return plantGap ? { scenario, balls: [plant.ball, ...freeBalls], plantGap } : { scenario, balls: [] };
+    }
+    if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-throw') {
+      const plantThrow = plantThrowExperiment(scenario, plant.ball.options);
+      return plantThrow ? { scenario, balls: [plant.ball, ...freeBalls], plantThrow } : { scenario, balls: [] };
+    }
     if (plant && freeBalls.length && scenario.curriculum?.learning?.comparison === 'plant-distance') {
       const plantDistance = plantDistanceExperiment(scenario, plant.ball.options);
       return plantDistance ? { scenario, balls: [plant.ball, ...freeBalls], plantDistance } : { scenario, balls: [] };

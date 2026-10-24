@@ -1,3 +1,8 @@
+import PlantSetupComparison from './PlantSetupComparison'
+import PlantQualityComparison from './PlantQualityComparison'
+import PlantFailureComparison from './PlantFailureComparison'
+import PlantGapComparison from './PlantGapComparison'
+import PlantThrowComparison from './PlantThrowComparison'
 import PlantDistanceComparison from './PlantDistanceComparison'
 import PlantDeliveryComparison from './PlantDeliveryComparison'
 import PlantMarginComparison from './PlantMarginComparison'
@@ -72,6 +77,11 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'corridor-diagnosis' || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (comparison === 'plant-setup') return <PlantSetupComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'plant-quality') return <PlantQualityComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'plant-failure') return <PlantFailureComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'plant-gap') return <PlantGapComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'plant-throw') return <PlantThrowComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'plant-distance') return <PlantDistanceComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'plant-delivery') return <PlantDeliveryComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'plant-margin') return <PlantMarginComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />

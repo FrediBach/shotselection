@@ -107,9 +107,22 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     contactEquationRelaxation: 3,
     frictionEquationStiffness: 1e8,
   }));
+  const transferMaterials = options.disablePlantTransferFriction && scenario.plant
+    ? [new Material('plant-first'), new Material('plant-target')] : null;
+  if (transferMaterials) {
+    const materials = [ballMaterial, ...transferMaterials];
+    for (let i = 0; i < materials.length; i++) for (let j = i; j < materials.length; j++) {
+      if (i === 0 && j === 0) continue;
+      world.addContactMaterial(new ContactMaterial(materials[i], materials[j], {
+        friction: i === 1 && j === 2 ? 0 : 0.035 + 0.13 * dirt,
+        restitution: TABLE.ballRestitution - 0.2 * dirt,
+        contactEquationStiffness: 1e9, contactEquationRelaxation: 3, frictionEquationStiffness: 1e8,
+      }));
+    }
+  }
   const bodyIds = new Map<number, number>();
   const bodies = scenario.balls.map(ball => {
-    const body = new Body({ mass: TABLE.ballMass, shape: new Sphere(R), material: ballMaterial, linearDamping: 0, angularDamping: 0, allowSleep: false });
+    const body = new Body({ mass: TABLE.ballMass, shape: new Sphere(R), material: transferMaterials && ball.id === scenario.plant?.ballId ? transferMaterials[0] : transferMaterials && ball.id === scenario.plant?.targetBallId ? transferMaterials[1] : ballMaterial, linearDamping: 0, angularDamping: 0, allowSleep: false });
     body.position.set(ball.position.x, ball.position.y, 0);
     body.linearFactor.set(1, 1, 0);
     bodyIds.set(body.id, ball.id);
@@ -138,6 +151,10 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     }
   });
   const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, cueRebounds: [], ballContacts: [], objectCushions: 0, duration: 0, stopped: false };
+  const plantFirst = options.recordPlantTransfer && scenario.plant ? bodies.find(ball => ball.id === scenario.plant!.ballId) : undefined;
+  let recordingTransfer = false;
+  if (plantFirst) simulation.plantTransferPath = [];
+  const pendingBallContacts: { event: NonNullable<Simulation['contactEvents']>[number]; bodies: [Body, Body] }[] = [];
   const pendingContacts: NonNullable<Simulation['cueContacts']> = [];
   if (options.recordContacts) { simulation.cueContacts = []; simulation.contactEvents = []; }
   let lastCueBankTime = -Infinity;
@@ -151,10 +168,23 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     if (soundTime - (lastContactTimes.get(key) ?? -Infinity) < 0.045) return;
     lastContactTimes.set(key, soundTime);
     simulation.ballContacts!.push([id, other]);
-    if (options.recordContacts) simulation.contactEvents!.push({ ballIds: [id, other], time: soundTime,
+    if (plantFirst && scenario.plant) {
+      if (id === 0 && other === scenario.plant.ballId && !simulation.plantTransferPath!.length) {
+        recordingTransfer = true;
+        appendPathPoint(simulation.plantTransferPath!, plantFirst.body);
+      }
+      if (recordingTransfer && [id, other].includes(scenario.plant.ballId) && [id, other].includes(scenario.plant.targetBallId)) {
+        appendPathPoint(simulation.plantTransferPath!, plantFirst.body);
+        recordingTransfer = false;
+      }
+    }
+    if (options.recordContacts) {
+      simulation.contactEvents!.push({ ballIds: [id, other], time: soundTime,
       positions: [{ x: body.position.x, y: body.position.y }, { x: event.body.position.x, y: event.body.position.y }],
       incoming: [{ x: body.velocity.x, y: body.velocity.y }, { x: event.body.velocity.x, y: event.body.velocity.y }],
       pottedBefore: [...simulation.potted] });
+      pendingBallContacts.push({ event: simulation.contactEvents!.at(-1)!, bodies: [body, event.body] });
+    }
     if (options.recordContacts && id === 0) {
       const contact = { ballId: other, time: soundTime, position: { x: body.position.x, y: body.position.y },
         otherPosition: { x: event.body.position.x, y: event.body.position.y },
@@ -202,6 +232,10 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     soundTime = step * TABLE.step;
     for (const ball of bodies) if (!ball.pocketed) applyCloth(ball.body, TABLE.step, scenario.conditions);
     world.step(TABLE.step);
+    if (recordingTransfer && plantFirst) appendPathPoint(simulation.plantTransferPath!, plantFirst.body);
+    // Capture the collision response before rail correction or the next cloth step.
+    for (const { event, bodies: pair } of pendingBallContacts) event.outgoing = pair.map(body => ({ x: body.velocity.x, y: body.velocity.y })) as [Vec2, Vec2];
+    pendingBallContacts.length = 0;
     for (const contact of pendingContacts) contact.outgoing = { x: cue.body.velocity.x, y: cue.body.velocity.y };
     pendingContacts.length = 0;
     if (impactBody && simulation.firstImpact) {

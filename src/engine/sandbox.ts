@@ -94,7 +94,7 @@ export function prepareSandboxRound(request: SandboxRequest): PreparedRound {
   // Cushion-first tricks use the bank search, which derives its own aim line.
   // Angled plant delivery also preserves the aligned object pair while varying
   // the cue's approach; the lesson evidence still verifies the resulting cut.
-  const plantDelivery = base.curriculum?.learning?.comparison === 'plant-delivery';
+  const plantDelivery = ['plant-delivery', 'plant-throw'].includes(base.curriculum?.learning?.comparison ?? '');
   const approachTarget = plantDelivery ? base.balls.find(ball => ball.id === base.plant!.ballId)!.position : base.trick?.aim;
   const approach = ((base.trick && !base.bank) || plantDelivery) && approachTarget
     ? normalize(subtract(approachTarget, base.balls.find(ball => ball.id === 0)!.position)) : null;

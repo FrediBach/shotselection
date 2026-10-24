@@ -163,7 +163,13 @@ describe('authored pool curriculum', () => {
       for (const option of prepared.balls[0].options) expect(option.plan.potBallId).toBe(2);
       for (const option of prepared.balls[1].options) {
         const nominal = simulateShot(prepared.scenario, option.plan, { record: false });
-        expect(evaluateShotObjective(prepared.scenario, option.plan, nominal).success).toBe(true);
+        const outcome = evaluateShotObjective(prepared.scenario, option.plan, nominal);
+        if (scenario.curriculum?.learning?.comparison === 'plant-quality' && option.label === 'C') {
+          // This lesson authors a finish requirement independently of the nominal stop.
+          expect(outcome.legalPot).toBe(true);
+          expect(outcome.success).toBe(false);
+          expect(distance(option.plan.target, nominal.cueEnd)).toBeCloseTo(Math.hypot(.12, .04), 8);
+        } else expect(outcome.success).toBe(true);
         const cue = scenario.balls[0].position;
         const free = scenario.balls[3].position;
         const pocket = POCKET_GEOMETRY[option.plan.pocketId].center;

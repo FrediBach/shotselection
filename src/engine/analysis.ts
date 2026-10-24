@@ -1,3 +1,6 @@
+import { shiftedPlantSetup } from './plant-setup';
+import { plantTrialStage } from './plant-failure';
+import type { PlantTrialStage } from './plant-failure';
 import { analyzeSequences, sequenceLayout } from './sequence-reliability';
 import { perturbShot } from './stroke-errors';
 import { TABLE } from './constants';
@@ -19,7 +22,10 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const sampleObjectPaths: ObjectBallTrial[] = [];
   const sampleBallEnds: SimulationBall[][] = [];
   const trialSuccesses: boolean[] = [];
+  const trialTargetCredits = scenario.curriculum?.learning?.comparison === 'plant-quality' ? [] as number[] : undefined;
   const spareContactTrials = scenario.curriculum?.learning?.comparison === 'collision-assistance' ? [] as boolean[] : undefined;
+  const plantTrialStages = scenario.curriculum?.learning?.comparison === 'plant-failure' && scenario.plant
+    && plan.ballId === scenario.plant.ballId && plan.potBallId === scenario.plant.targetBallId ? [] as PlantTrialStage[] : undefined;
   let pots = 0;
   let scratches = 0;
   let positions = 0;
@@ -40,6 +46,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
     const potted = dropped && simulation.firstContact === plan.ballId;
     sampleObjectPaths.push({ path: simulation.objectPath, outcome: potted ? 'pot' : dropped ? 'foul' : 'miss' });
     const { legalPot: legal, error, zoneRatio, positioned, nextShotAvailable, success } = evaluateShotObjective(scenario, plan, simulation);
+    if (plantTrialStages) plantTrialStages.push(plantTrialStage(scenario, plan, simulation, success)!);
     if (potted) pots++;
     if (simulation.scratch) scratches++;
     if (positioned) positions++;
@@ -47,7 +54,9 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
     trialSuccesses.push(success);
     if (success) successes++;
     if (nextShotAvailable) nextShots++;
-    if (legal && nextShotAvailable) quality += scenario.objective?.ellipse ? Math.exp(-(zoneRatio ** 2) / 2) : Math.exp(-(error * error) / (2 * tolerance ** 2));
+    const credit = legal && nextShotAvailable ? (scenario.objective?.ellipse ? Math.exp(-(zoneRatio ** 2) / 2) : Math.exp(-(error * error) / (2 * tolerance ** 2))) : 0;
+    quality += credit;
+    trialTargetCredits?.push(credit);
     if (!simulation.scratch && simulation.stopped) endpoints.push(simulation.cueEnd);
     if (index < 24) samplePaths.push(simulation.cuePath);
   }
@@ -96,7 +105,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
       : scratches / count > 0.12
         ? 'The cue ball runs close to a pocket. Scratch risk makes this route less dependable.'
         : 'The pot is available, but speed and spin need care to hold the chosen cue-ball position.';
-  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, trialSuccesses, ...(spareContactTrials ? { spareContactTrials } : {}), score, nominal, samples: count, explanation };
+  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, trialSuccesses, ...(trialTargetCredits ? { trialTargetCredits } : {}), ...(spareContactTrials ? { spareContactTrials } : {}), ...(plantTrialStages ? { plantTrialStages } : {}), score, nominal, samples: count, explanation };
 }
 
 export function analyzeRound(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions = {}): RoundAnalysis {
@@ -104,7 +113,7 @@ export function analyzeRound(prepared: PreparedRound, selection: Selection, opti
   const chosen = offered.find(option => option.id === selection.optionId && option.plan.ballId === selection.ballId);
   if (!chosen) throw new Error('This finish is not available in the current round. Choose one of the offered options.');
   const { scenario } = prepared;
-  // Each fixed plan is evaluated exactly once. No target optimization or unseen
+  // Each fixed plan is evaluated once for the playable layout. No target optimization or unseen
   // alternatives are introduced after the player has made their decision.
   const candidates = offered.map(option => analyzeShot(scenario, option.plan, options.samples ?? 48, options.talents));
   const selected = candidates.find(candidate => candidate.plan.id === chosen.id)!;
@@ -115,5 +124,11 @@ export function analyzeRound(prepared: PreparedRound, selection: Selection, opti
     ...analyzeSequences(sequenceLayout(scenario, candidates.find(c => c.plan.id === prepared.sequenceComparison!.referenceId)!.nominal), prepared.sequenceComparison.orders, scenario.objective!.maxCutAngle, 128, options.talents),
     referenceId: prepared.sequenceComparison.referenceId,
   } : undefined;
-  return { ...(sequenceComparison ? { sequenceComparison } : {}), candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForScenario(scenario) };
+  // A separate, fixed-layout diagnostic reuses the same plans and indexed errors; it never enters scoring.
+  const plantSetup = scenario.curriculum?.learning?.comparison === 'plant-setup'
+    ? offered.map(option => {
+      const shot = analyzeShot(shiftedPlantSetup(scenario), option.plan, options.samples ?? 48, options.talents);
+      return { plan: shot.plan, score: shot.score, successRate: shot.successRate, samples: shot.samples };
+    }) : undefined;
+  return { ...(plantSetup ? { plantSetup } : {}), ...(sequenceComparison ? { sequenceComparison } : {}), candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForScenario(scenario) };
 }
