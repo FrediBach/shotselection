@@ -338,15 +338,6 @@ svg { flex-shrink: 0; }
 .lesson-review p { font-size: .8125rem; line-height: 1.7; color: var(--muted); margin: 8px 0; }
 .lesson-review > span:last-child { color: var(--gold); font-size: .75rem; }
 .analysis-metrics { flex-wrap: wrap; row-gap: 12px; }
-.course-finished { margin: 35px 0; padding: 48px 30px; background: radial-gradient(ellipse at top, #2b3826, #1b221c 70%); border: 1px solid #e6ba7a30; border-radius: 12px; text-align: center; }
-.completion-emblem { width: 80px; height: 80px; border-radius: 50%; display: grid; place-items: center; border: 1px solid #e6ba7a66; color: var(--gold); margin: 0 auto 25px; }
-.course-finished .eyebrow { justify-content: center; color: var(--gold); }
-.course-finished h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 450; letter-spacing: -.7px; margin: 16px 0; }
-.course-finished > p { max-width: 600px; margin: 0 auto; font-size: .9375rem; line-height: 1.8; color: var(--muted); }
-.completion-stats { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 700px; margin: 30px auto; gap: 16px; }
-.completion-stats strong { display: block; font-size: 1.9rem; color: var(--gold); font-weight: 450; }
-.completion-stats span { display: block; font-size: .75rem; color: var(--muted); margin-top: 7px; }
-.course-finished > .completion-note { font-size: .8125rem; margin-bottom: 25px; }
 @media (max-width: 720px) {
   .course-progress { margin-bottom: 18px; }
   .course-progress-heading { align-items: center; gap: 12px; }
@@ -362,9 +353,6 @@ svg { flex-shrink: 0; }
   .briefing-steps i { width: 12px; }
   .briefing-gotcha { padding: 13px; }
   .lesson-review { padding: 18px; }
-  .completion-stats { grid-template-columns: 1fr 1fr; gap: 24px; }
-  .course-finished { padding: 35px 20px; }
-  .course-finished .eyebrow { font-size: .625rem; }
 }
 
 .sandbox-session-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 0 20px; }

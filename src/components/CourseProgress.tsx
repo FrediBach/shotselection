@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useId, useRef, useState, type RefObject } from 'react'
-import { Check, ChevronLeft, ChevronRight, Flag, Trophy } from 'lucide-react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { Check, ChevronLeft, ChevronRight, Flag } from 'lucide-react'
 import { COURSE_CHAPTERS, TOTAL_LEVELS } from '@/engine/scenarios'
 import type { Scenario } from '@/engine/types'
 
@@ -74,18 +74,5 @@ export default function CourseProgress({ completed, scenario, carriedTournamentL
     <div className="course-track" role="progressbar" aria-label="Game completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage} aria-valuetext={`${completed} of ${TOTAL_LEVELS} levels complete`}><span style={{ width: `${percentage}%` }} /></div>
     <ChapterStrip completed={completed} currentChapter={scenario.curriculum?.chapterId} />
     {carriedTournamentLessons > 0 && <p className="panel-description">{scenario.level <= 60 ? 'New bank-shot and plant lessons are ready.' : 'Ten new plant lessons are ready.'} Your {carriedTournamentLessons} completed tournament {carriedTournamentLessons === 1 ? 'lesson is' : 'lessons are'} saved and will count again after the Plants chapter.</p>}
-  </section>
-}
-
-export function CourseCompletion({ score, perfect, rounds, onRestart, headingRef }: { score: number; perfect: number; rounds: number; onRestart: () => void; headingRef: RefObject<HTMLHeadingElement | null> }) {
-  useEffect(() => { headingRef.current?.focus({ preventScroll: true }) }, [headingRef])
-  return <section className="course-finished" aria-label="Course complete">
-    <div className="completion-emblem"><Trophy size={36} /></div>
-    <span className="eyebrow">{TOTAL_LEVELS} LESSONS. A STRONGER TABLE SENSE.</span>
-    <h2 ref={headingRef} tabIndex={-1}>Even the broken table couldn’t stop you.</h2>
-    <p>You’ve completed the course: reading pots, controlling the cue ball, planning the next shot, banking around blockers, comparing plants with free balls, navigating tournament traffic, performing ten trick shots, and surviving ten broken tables. That final boss took everything you learned.</p>
-    <div className="completion-stats"><div><strong>100%</strong><span>Course complete</span></div><div><strong>{score}</strong><span>Session points</span></div><div><strong>{rounds ? Math.round(score / (rounds * 100) * 100) : 0}%</strong><span>Selection accuracy</span></div><div><strong>{perfect}</strong><span>Perfect choices</span></div></div>
-    <p className="completion-note">Completion tracks lessons played. Your points measure how well you selected the shot. Play again to improve your decisions.</p>
-    <button className="ui-button button-primary" onClick={onRestart}>Start a new course</button>
   </section>
 }

@@ -19,7 +19,8 @@ import { ResultActions, BallSelectionActions, FinishSelectionActions } from '@/c
 import PoolTable from '@/components/PoolTable'
 import PerfectCelebration from '@/components/PerfectCelebration'
 import ShotTolerancePanel from '@/components/ShotTolerancePanel'
-import CourseProgress, { CourseCompletion } from '@/components/CourseProgress'
+import CourseProgress from '@/components/CourseProgress'
+import CourseCompletion from '@/components/CourseCompletion'
 import GameDialogBody, { type Modal } from '@/components/GameDialogBody'
 import CharacterSelection from '@/components/CharacterSelection'
 import SandboxSetup from '@/components/SandboxSetup'
@@ -28,7 +29,7 @@ import type { PlayerCharacter } from '@/engine/characters'
 import { TOTAL_LEVELS } from '@/engine/scenarios'
 import { analyzeRoundAsync, generateScenario, prepareRoundAsync } from '@/engine'
 import type { PreparedRound, RoundAnalysis, ShotAnalysis, ShotPlan } from '@/engine/types'
-import { completeLesson, freshSession, loadSession, SESSION_STORAGE_KEY, type GameMode, type Session } from '@/lib/session'
+import { completeLesson, freshSession, loadSession, recordLessonResult, SESSION_STORAGE_KEY, type GameMode, type Session } from '@/lib/session'
 import { createGameAudio } from '@/lib/sound'
 
 const HELP_DISMISSED_KEY = 'shot-selection-help-dismissed'
@@ -239,7 +240,7 @@ export default function App() {
       setCelebrating(analysis.points === 100)
       if (!document.hidden) audio.current?.play(analysis.points === 100 ? 'perfect' : 'result')
       // Persist the next unplayed level, so reloading cannot score this round twice.
-      if (!sandbox) setSession(previous => completeLesson(previous, scenario.level, analysis.points))
+      if (!sandbox) setSession(previous => completeLesson(previous, scenario.level, analysis.points, recordLessonResult(scenario, analysis)))
     } catch (cause) {
       if (id === request.current) setError(cause instanceof Error ? cause.message : 'The simulation could not finish. Please try again.')
     } finally { if (id === request.current) setBusy(false) }
@@ -272,6 +273,7 @@ export default function App() {
     if (!lastLesson) { clearRound(session); return }
     audio.current?.stop()
     setPlaying(false); setCelebrating(false); setShowCourseSummary(true)
+    window.scrollTo(0, 0)
   }
   function inspectShot(shot: ShotAnalysis) {
     audio.current?.stop(); audio.current?.unlock(); audio.current?.play('select')
@@ -298,7 +300,7 @@ export default function App() {
       {!sandbox && <CourseProgress completed={session.completedLessons} scenario={scenario} carriedTournamentLessons={session.carriedTournamentLessons} />}
       <div className="playthrough-player"><Crosshair size={15} /><span>Playing as <strong>{session.character.name}</strong></span><button aria-label="View player talents" aria-haspopup="dialog" onClick={event => openModal('character', event.currentTarget)}>Player talents <ChevronRight size={13} /></button></div>
       {sandbox && <div className="sandbox-session-actions"><span>Round scores only · No progression</span>{!showSandboxSetup && <Button variant="outline" size="sm" onClick={() => configureSandbox('manual')}>Change setup</Button>}<Button variant="ghost" size="sm" onClick={event => openModal('reset', event.currentTarget)}>Change player or mode</Button></div>}
-      {sandbox && showSandboxSetup ? <SandboxSetup initialPlacement={sandboxPlacement} initialScenario={requestedScenario} onStart={startSandboxRound} /> : showCourseSummary ? <CourseCompletion score={session.score} perfect={session.perfect} rounds={session.rounds} headingRef={completionHeading} onRestart={() => clearRound(freshSession())} /> : <>
+      {sandbox && showSandboxSetup ? <SandboxSetup initialPlacement={sandboxPlacement} initialScenario={requestedScenario} onStart={startSandboxRound} /> : showCourseSummary ? <CourseCompletion session={session} headingRef={completionHeading} onRestart={() => clearRound(freshSession())} /> : <>
       <div className="game-layout">
         <section className={`table-panel${objective ? " table-panel-position" : ""}${scenario.conditions ? " table-panel-broken" : ""}`} aria-label="Interactive pool table">
           <div className="table-toolbar"><div className="level-label"><span className="level-number">{sandbox ? <FlaskConical size={21} /> : String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">{sandbox ? 'SANDBOX' : `LEVEL ${String(scenario.level).padStart(2, '0')} OF ${TOTAL_LEVELS}`} <span>·</span> {objectBalls.length} OBJECT BALL{objectBalls.length === 1 ? "" : "S"}</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>{scenario.conditions ? scenario.level === TOTAL_LEVELS ? 'FINAL BOSS' : 'HOUSE SPECIAL' : 'TOURNAMENT TABLE'}</span></span><Button variant="ghost" size="icon" aria-label={sandbox ? "Review scenario briefing" : "Review level briefing"} title={sandbox ? "Review scenario briefing" : "Review level briefing"} aria-haspopup="dialog" onClick={event => openModal('lesson', event.currentTarget)}><BookOpen size={17} /></Button><Button variant="ghost" size="icon" className="sound-toggle" aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} onClick={toggleSound}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</Button><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" aria-haspopup="dialog" onClick={event => openModal('reset', event.currentTarget)} disabled={busy}><RotateCcw size={16} /></Button></div></div>
