@@ -412,3 +412,15 @@ svg { flex-shrink: 0; }
 .plant-quality-comparison th, .plant-quality-comparison td { padding: .5rem .3rem; border-bottom: 1px solid #ffffff20; text-align: right; }
 .plant-quality-comparison th:first-child { text-align: left; }
 .plant-quality-comparison caption { text-align: left; margin-bottom: .5rem; }
+
+.ensemble-scoring { margin-top: 18px; padding: 16px 18px; border: 1px solid var(--control-border); border-radius: 8px; color: #aab999; font-size: 0.8125rem; line-height: 1.7; }
+.ensemble-scoring p { margin: 0 0 10px; }
+.ensemble-scoring strong { color: var(--gold); font-weight: 500; }
+.ensemble-scoring-note { color: var(--muted); }
+.ensemble-scoring summary { cursor: pointer; color: var(--gold); }
+.ensemble-scoring details[open] summary { margin-bottom: 10px; }
+.ensemble-score-table { overflow-x: auto; margin-bottom: 12px; }
+.ensemble-score-table table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.ensemble-score-table caption { text-align: left; color: var(--muted); font-size: 0.75rem; margin-bottom: 6px; }
+.ensemble-score-table th, .ensemble-score-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--control-border); min-width: 110px; }
+.ensemble-score-table th { font-weight: 500; }

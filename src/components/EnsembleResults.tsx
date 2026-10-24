@@ -2,6 +2,7 @@ import { ChevronRight, FlaskConical, Play } from 'lucide-react'
 import { Button } from './ui/button'
 import { Switch } from './ui/switch'
 import BallIcon from './BallIcon'
+import EnsembleScoring from './EnsembleScoring'
 import { evaluateShotObjective, scoreSelection } from '@/engine'
 import type { Scenario, ShotAnalysis, RoundAnalysis, ShotPlan } from '@/engine/types'
 import { percent, englishDescription, verticalSpinDescription } from '@/lib/shot-presentation'
@@ -28,7 +29,7 @@ function ScorePlacement({ shot, candidates }: { shot: ShotAnalysis; candidates: 
   return <p className="analysis-placement"><span>{scoring.tiedCount > 1 ? 'Joint rank' : 'Rank'} {scoring.rank} of {scoring.candidateCount}</span><strong>{scoring.points} / 100</strong></p>
 }
 
-function ShotComparisonCard({ shot, candidates, active, isSelection, isBest, isPlant, isTrick, hasObjective, shotLabel, finishLabel, onInspect }: Pick<Props, 'shotLabel' | 'finishLabel' | 'onInspect'> & {
+function ShotComparisonCard({ shot, candidates, active, isSelection, isBest, isPlant, isTrick, hasObjective, isFinalBall, shotLabel, finishLabel, onInspect }: Pick<Props, 'shotLabel' | 'finishLabel' | 'onInspect'> & {
   shot: ShotAnalysis
   candidates: ShotAnalysis[]
   active: boolean
@@ -37,14 +38,15 @@ function ShotComparisonCard({ shot, candidates, active, isSelection, isBest, isP
   isPlant: boolean
   isTrick: boolean
   hasObjective: boolean
+  isFinalBall: boolean
 }) {
   return <button className={`analysis-card ${active ? 'analysis-active' : ''}`} aria-pressed={active} onClick={() => onInspect(shot)}>
     <div className="analysis-card-title"><BallIcon id={shot.plan.potBallId ?? shot.plan.ballId} small /><strong>{isSelection ? `Your selection${isPlant || isTrick ? ` · ${shotLabel(shot.plan)}` : ''} · ${finishLabel(shot.plan.id)}` : `${shotLabel(shot.plan)} · ${finishLabel(shot.plan.id)}`}</strong>{isBest ? <span className="best-tag">BEST SHOT</span> : <ChevronRight size={15} />}</div>
     <ScorePlacement shot={shot} candidates={candidates} />
     <p className="analysis-stroke">{shot.plan.speed.toFixed(2)} m/s · {verticalSpinDescription(shot.plan)}<br />{englishDescription(shot.plan)}</p>
-    <div className="analysis-rate">{percent(shot.successRate)}<span>successful outcomes</span></div>
+    <div className="analysis-rate">{percent(shot.successRate)}<span>full objective completed</span></div>
     <div className="rate-track"><span style={{ width: percent(shot.successRate) }} /></div>
-    <div className="analysis-metrics"><span>{isTrick ? 'All pots' : `Pot${isPlant ? ` ${shot.plan.potBallId ?? shot.plan.ballId}` : ''}`} <strong>{percent(shot.potRate)}</strong></span>{isTrick && <span>Legal trick <strong>{percent(shot.legalPotRate)}</strong></span>}<span>Scratch <strong>{percent(shot.scratchRate)}</strong></span><span>Spread <strong>{(shot.spread * 100).toFixed(1)} cm</strong></span>{hasObjective && <><span>In zone <strong>{percent(shot.positionRate)}</strong></span><span>Next shot <strong>{percent(shot.nextShotRate ?? 0)}</strong></span></>}</div>
+    <div className="analysis-metrics"><span>{isTrick ? 'All pots' : `Pot${isPlant ? ` ${shot.plan.potBallId ?? shot.plan.ballId}` : ''}`} <strong>{percent(shot.potRate)}</strong></span>{isTrick && <span>Legal trick <strong>{percent(shot.legalPotRate)}</strong></span>}<span>Scratch <strong>{percent(shot.scratchRate)}</strong></span><span>Spread <strong>{(shot.spread * 100).toFixed(1)} cm</strong></span>{!isFinalBall && <span>{hasObjective ? 'In zone' : 'In intended finish'} <strong>{percent(shot.positionRate)}</strong></span>}{hasObjective && <><span>Next shot <strong>{percent(shot.nextShotRate ?? 0)}</strong></span></>}</div>
   </button>
 }
 
@@ -64,7 +66,8 @@ export default function EnsembleResults({ result, scenario, inspected, playerNam
   return <section className="ensemble-section">
     <div className="section-heading"><div><div className="eyebrow">A SMALL CHANGE. A DIFFERENT OUTCOME.</div><h2>The ensemble tells the story.</h2></div><div className="ensemble-controls" role="group" aria-label="Ensemble display"><label className="ensemble-switch"><Switch checked={showEnsemble} onCheckedChange={onShowEnsemble} aria-label="Show paths" /> Show paths</label><label className="ensemble-switch"><Switch checked={showFinishes} onCheckedChange={onShowFinishes} aria-label="Show finish positions" /> Show finish positions</label></div></div>
     <p className="ensemble-player-note">These ensembles use {playerName}’s angle, English, strength, and draw / follow precision.</p>
-    <div className="analysis-grid">{[result.selected, ...result.candidates.filter(shot => shot.plan.id !== result.selected.plan.id)].map((shot, index) => <ShotComparisonCard key={shot.plan.id} shot={shot} candidates={result.candidates} active={inspected === shot} isSelection={index === 0} isBest={shot.plan.id === result.best.plan.id} isPlant={Boolean(scenario.plant)} isTrick={Boolean(scenario.trick)} hasObjective={Boolean(scenario.objective)} shotLabel={shotLabel} finishLabel={finishLabel} onInspect={onInspect} />)}</div>
+    <div className="analysis-grid">{[result.selected, ...result.candidates.filter(shot => shot.plan.id !== result.selected.plan.id)].map((shot, index) => <ShotComparisonCard key={shot.plan.id} shot={shot} candidates={result.candidates} active={inspected === shot} isSelection={index === 0} isBest={shot.plan.id === result.best.plan.id} isPlant={Boolean(scenario.plant)} isTrick={Boolean(scenario.trick)} hasObjective={Boolean(scenario.objective)} isFinalBall={Boolean(scenario.finalBall)} shotLabel={shotLabel} finishLabel={finishLabel} onInspect={onInspect} />)}</div>
+    <EnsembleScoring result={result} scenario={scenario} shotLabel={shotLabel} finishLabel={finishLabel} />
     <PlannedOutcome scenario={scenario} inspected={inspected} finishLabel={finishLabel} showPlannedFinish={showPlannedFinish} />
     <EnsembleExplanation result={result} scenario={scenario} inspected={inspected} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} onPlay={onPlay} />
   </section>
