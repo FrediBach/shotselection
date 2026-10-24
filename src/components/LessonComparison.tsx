@@ -1,3 +1,6 @@
+import FallbackPlanComparison from './FallbackPlanComparison'
+import SequenceReliabilityComparison from './SequenceReliabilityComparison'
+import SteppingStoneComparison from './SteppingStoneComparison'
 import ZoneExitComparison from './ZoneExitComparison'
 import LookAheadComparison from './LookAheadComparison'
 import KeyBallComparison from './KeyBallComparison'
@@ -43,7 +46,10 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const [checkingAgain, setCheckingAgain] = useState(false)
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
-  if (!comparison || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (!comparison || comparison === 'corridor-diagnosis' || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
+  if (comparison === 'fallback-plan') return <FallbackPlanComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'sequence-reliability') return <SequenceReliabilityComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'stepping-stone') return <SteppingStoneComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'zone-exit') return <ZoneExitComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'look-ahead' || comparison === 'angle-travel') return <LookAheadComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'key-ball') return <KeyBallComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />

@@ -1,6 +1,8 @@
+import { analyzeSequences, sequenceLayout } from './sequence-reliability';
+import { perturbShot } from './stroke-errors';
 import { TABLE } from './constants';
-import { DEFAULT_CHARACTER, talentNoiseMultiplier } from './characters';
-import { clamp, distance, normalRandom, seededRandom } from './math';
+import { DEFAULT_CHARACTER } from './characters';
+import { clamp, distance, seededRandom } from './math';
 import { simulateShot } from './physics';
 import { scoreSelection } from './scoring';
 import { evaluateShotObjective, positionToleranceForScenario } from './objectives';
@@ -12,10 +14,6 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const tolerance = positionToleranceForScenario(scenario);
   const random = seededRandom(scenario.seed ^ 0x3A7B91);
   const nominal = simulateShot(scenario, plan);
-  const angleNoise = talentNoiseMultiplier(talents.anglePrecision);
-  const englishNoise = talentNoiseMultiplier(talents.englishPrecision);
-  const strengthNoise = talentNoiseMultiplier(talents.strengthPrecision);
-  const spinNoise = talentNoiseMultiplier(talents.spinPrecision);
   const endpoints: Vec2[] = [];
   const samplePaths: Vec2[][] = [];
   const sampleObjectPaths: ObjectBallTrial[] = [];
@@ -31,13 +29,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   // Same random perturbations for every candidate: common random numbers reduce
   // comparison noise. These are stroke errors, not invented success percentages.
   for (let index = 0; index < count; index++) {
-    const perturbed: ShotPlan = {
-      ...plan,
-      angle: plan.angle + normalRandom(random) * (0.0044 + Math.abs(plan.sideSpin) * 0.000025) * angleNoise,
-      speed: plan.speed * (1 + normalRandom(random) * 0.035 * strengthNoise),
-      topSpin: plan.topSpin + normalRandom(random) * 0.085 * spinNoise,
-      sideSpin: plan.sideSpin + normalRandom(random) * 3 * englishNoise,
-    };
+    const perturbed = perturbShot(plan, random, talents);
     const simulation = simulateShot(scenario, perturbed, { record: false, recordPaths: true });
     sampleBallEnds.push(simulation.finalBalls);
     const dropped = scenario.trick
@@ -117,5 +109,9 @@ export function analyzeRound(prepared: PreparedRound, selection: Selection, opti
   candidates.sort((a, b) => b.score - a.score);
   const best = candidates[0];
   const scoring = scoreSelection(selected, candidates);
-  return { candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForScenario(scenario) };
+  const sequenceComparison = prepared.sequenceComparison ? {
+    ...analyzeSequences(sequenceLayout(scenario, candidates.find(c => c.plan.id === prepared.sequenceComparison!.referenceId)!.nominal), prepared.sequenceComparison.orders, scenario.objective!.maxCutAngle, 128, options.talents),
+    referenceId: prepared.sequenceComparison.referenceId,
+  } : undefined;
+  return { ...(sequenceComparison ? { sequenceComparison } : {}), candidates, selected, best, points: scoring.points, scoring, samples: selected.samples, positionTolerance: positionToleranceForScenario(scenario) };
 }
