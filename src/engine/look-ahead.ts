@@ -1,3 +1,4 @@
+import { isAngleTravelContrast } from './angle-travel';
 import { directShotRoutes } from './objectives';
 import { simulateShot } from './physics';
 import { secondShotPlan, secondShotPotted } from './second-shot';
@@ -19,9 +20,10 @@ export function lookAheadTrials(source: Scenario, opening: Opening) {
   })) return [];
   const scenario = layout(source, opening.simulation);
   const trials = [];
+  const angleTravel = source.curriculum?.learning?.comparison === 'angle-travel';
   for (const route of directShotRoutes(scenario.balls, 2, source.objective!.maxCutAngle)) {
-    for (const speed of [1, 1.4, 1.8, 2.2]) for (const topSpin of [0, -.7, 1]) {
-      const plan = { ...secondShotPlan(scenario, 2, route, 1, topSpin), speed };
+    for (const speed of angleTravel ? [.8, 1.2, 1.6, 2, 2.4, 2.8, 3.2] : [1, 1.4, 1.8, 2.2]) for (const topSpin of angleTravel ? [-1.1, -.7, 0, 1] : [0, -.7, 1]) {
+      const plan = { ...secondShotPlan(scenario, 2, route, 1, topSpin), id: `second-2-${route.pocketId}-${speed}-${topSpin}`, speed };
       const simulation = simulateShot(scenario, plan, { record: false, recordPaths: true });
       if (!secondShotPotted(2, simulation) || !simulation.finalBalls.some(b => b.id === 3 && !b.pocketed)) continue;
       const thirdScenario = layout(scenario, simulation);
@@ -47,6 +49,7 @@ export function lookAheadPairFinder(source: Scenario) {
       if (source.objective!.target && [a, b].some(e => distance(e.simulation.cueEnd, source.objective!.target!) > source.objective!.radius)) continue;
       for (const lost of trials(a).filter(t => !t.routes.length)) for (const kept of trials(b).filter(t => t.routes.length)) {
         if (lost.plan.pocketId !== kept.plan.pocketId || lost.plan.speed !== kept.plan.speed || lost.plan.topSpin !== kept.plan.topSpin) continue;
+        if (source.curriculum?.learning?.comparison === 'angle-travel' && !isAngleTravelContrast(source, a.simulation, b.simulation, lost.simulation, kept.simulation, kept.plan.pocketId)) continue;
         for (const route of kept.routes) for (const pace of [.95, 1.2, 1.5]) {
           const thirdPlan = secondShotPlan(kept.thirdScenario, 3, route, pace, 0);
           const third = simulateShot(kept.thirdScenario, thirdPlan, { record: false, recordPaths: true });

@@ -1,3 +1,4 @@
+import ZoneExitComparison from './ZoneExitComparison'
 import LookAheadComparison from './LookAheadComparison'
 import KeyBallComparison from './KeyBallComparison'
 import SignedAngleComparison from './SignedAngleComparison'
@@ -43,7 +44,8 @@ export default function LessonComparison({ prepared, result, hidden, busy }: { p
   const { scenario } = prepared
   const comparison = scenario.curriculum?.learning?.comparison
   if (!comparison || comparison === 'nominated-next-ball' || comparison === 'intended-next-pocket' || comparison === 'shortlist' || comparison === 'backward-plan') return null
-  if (comparison === 'look-ahead') return <LookAheadComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'zone-exit') return <ZoneExitComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
+  if (comparison === 'look-ahead' || comparison === 'angle-travel') return <LookAheadComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (comparison === 'key-ball') return <KeyBallComparison prepared={prepared} result={result} busy={busy} hidden={hidden} />
   if (prepared.signedAnglePreview) return <SignedAngleComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
   if (prepared.drawDecay) return <DrawDecayComparison prepared={prepared} result={result} hidden={hidden} busy={busy} />
