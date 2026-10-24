@@ -122,15 +122,21 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
   cue.body.velocity.set(Math.cos(angle) * speed, Math.sin(angle) * speed, 0);
   cue.body.angularVelocity.set(-Math.sin(angle) * speed / R * topSpin, Math.cos(angle) * speed / R * topSpin, sideSpin);
   let firstContact: number | null = null;
+  let impactBody: Body | undefined;
   cue.body.addEventListener('collide', (event: { body: Body }) => {
     if (firstContact === null) {
       firstContact = bodyIds.get(event.body.id) ?? null;
+      if (firstContact !== null) {
+        impactBody = event.body;
+        simulation.firstImpact = { ballId: firstContact, time: soundTime, position: { x: cue.body.position.x, y: cue.body.position.y },
+          cueSpeedBefore: Math.hypot(cue.body.velocity.x, cue.body.velocity.y), objectSpeedBefore: Math.hypot(event.body.velocity.x, event.body.velocity.y), cueSpeedAfter: 0, objectSpeedAfter: 0 };
+      }
       // Cannon emits this before resolving the collision and advancing bodies.
       // Preserve the contact point without revealing the post-contact finish.
       if (recordPaths) appendPathPoint(simulation.cueApproachPath, cue.body);
     }
   });
-  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, ballContacts: [], objectCushions: 0, duration: 0, stopped: false };
+  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, cueRebounds: [], ballContacts: [], objectCushions: 0, duration: 0, stopped: false };
   let lastCueBankTime = -Infinity;
   let lastObjectBankTime = -Infinity;
   let soundTime = 0;
@@ -181,19 +187,27 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
     soundTime = step * TABLE.step;
     for (const ball of bodies) if (!ball.pocketed) applyCloth(ball.body, TABLE.step, scenario.conditions);
     world.step(TABLE.step);
+    if (impactBody && simulation.firstImpact) {
+      simulation.firstImpact.cueSpeedAfter = Math.hypot(cue.body.velocity.x, cue.body.velocity.y);
+      simulation.firstImpact.objectSpeedAfter = Math.hypot(impactBody.velocity.x, impactBody.velocity.y);
+      impactBody = undefined;
+    }
     let moving = false;
     for (const ball of bodies) {
       if (ball.pocketed) continue;
       ball.body.position.z = 0;
       ball.body.velocity.z = 0;
+      const incoming = ball.id === 0 ? { x: ball.body.velocity.x, y: ball.body.velocity.y } : undefined;
       const cushionImpact = resolveRails(ball.body, scenario.conditions);
       if (ball.id === 0 && firstContact === null && cushionImpact > 0 && recordPaths) {
         // A regular 30 Hz path sample can cut across a rebound. Keep its exact
         // corrected center position so even multiple banks show every turn.
         appendPathPoint(simulation.cueApproachPath, ball.body);
       }
-      if (ball.id === 0 && firstContact === null && cushionImpact > 0.035 && soundTime - lastCueBankTime >= 0.045) {
-        simulation.cueBanksBeforeContact!++;
+      if (ball.id === 0 && cushionImpact > 0.035 && soundTime - lastCueBankTime >= 0.045) {
+        if (firstContact === null) simulation.cueBanksBeforeContact!++;
+        simulation.cueRebounds!.push({ time: soundTime, position: { x: ball.body.position.x, y: ball.body.position.y }, beforeContact: firstContact === null, incoming: incoming!, outgoing: { x: ball.body.velocity.x, y: ball.body.velocity.y } });
+        if (recordPaths) appendPathPoint(simulation.cuePath, ball.body);
         lastCueBankTime = soundTime;
       }
       if (ball.id === potBallId && cushionImpact > 0.035 && soundTime - lastObjectBankTime >= 0.045) {

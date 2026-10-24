@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { TABLE } from './constants';
 import { distance } from './math';
 import { evaluateShotObjective } from './objectives';
+import { supportsGeometryComparison } from './shot-geometry';
 import { simulateShot } from './physics';
 import { SANDBOX_SCENARIOS, createSandboxScenario, prepareSandboxRound, validateSandboxLayout } from './sandbox';
 
@@ -111,6 +112,19 @@ describe('sandbox preparation', () => {
     expect(other.scenario.balls).not.toEqual(prepared.scenario.balls);
     expect(source).toEqual(original);
   }, 30000);
+
+  it.each([0, 1, 5, 8])('varies cue depth without destroying the symmetric-pot lesson, seed %i', seed => {
+    const source = createSandboxScenario(13, seed);
+    const original = structuredClone(source);
+    const request = { scenario: source, placement: 'random' as const };
+    const prepared = prepareSandboxRound(request);
+    expect(prepared.scenario.balls.slice(1)).toEqual(source.balls.slice(1));
+    expect(prepared.scenario.balls[0].position.x).toBe(source.balls[0].position.x);
+    expect(prepared.scenario.balls[0].position.y).not.toBe(source.balls[0].position.y);
+    expect(supportsGeometryComparison(prepared)).toBe(true);
+    expect(prepareSandboxRound(request)).toEqual(prepared);
+    expect(source).toEqual(original);
+  });
 
   it('keeps a manual trick contract and rejects a broken chain without replacing the table', () => {
     const source = createSandboxScenario(81, 0);

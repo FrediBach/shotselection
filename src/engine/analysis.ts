@@ -20,6 +20,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
   const samplePaths: Vec2[][] = [];
   const sampleObjectPaths: ObjectBallTrial[] = [];
   const sampleBallEnds: SimulationBall[][] = [];
+  const trialSuccesses: boolean[] = [];
   let pots = 0;
   let scratches = 0;
   let positions = 0;
@@ -49,6 +50,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
     if (simulation.scratch) scratches++;
     if (positioned) positions++;
     if (legal) legalPots++;
+    trialSuccesses.push(success);
     if (success) successes++;
     if (nextShotAvailable) nextShots++;
     if (legal && nextShotAvailable) quality += Math.exp(-(error * error) / (2 * tolerance ** 2));
@@ -100,7 +102,7 @@ export function analyzeShot(scenario: Scenario, plan: ShotPlan, samples = 48, ta
       : scratches / count > 0.12
         ? 'The cue ball runs close to a pocket. Scratch risk makes this route less dependable.'
         : 'The pot is available, but speed and spin need care to hold the chosen cue-ball position.';
-  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, score, nominal, samples: count, explanation };
+  return { plan, successRate, potRate: pots / count, legalPotRate: legalPots / count, targetQuality: quality / count, scratchRate: scratches / count, positionRate: positions / count, ...(scenario.objective ? { nextShotRate: nextShots / count } : {}), spread, meanEnd, samplePaths, sampleObjectPaths, sampleEnds: endpoints, sampleBallEnds, trialSuccesses, score, nominal, samples: count, explanation };
 }
 
 export function analyzeRound(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions = {}): RoundAnalysis {

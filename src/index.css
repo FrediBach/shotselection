@@ -374,3 +374,27 @@ svg { flex-shrink: 0; }
 
 /* Keep the condition report above a full-size table on narrow screens. */
 @media (max-width: 720px) { .table-panel-broken { height: 474px; } }
+
+.lesson-comparison { padding: 1.2rem 0; border-top: 1px solid var(--border); font-size: .85rem; }
+.lesson-comparison[hidden] { display: none; }
+.lesson-comparison h3 { font-weight: 650; margin-bottom: .5rem; }
+.lesson-comparison p { margin: .6rem 0; line-height: 1.5; }
+.lesson-predictions { display: flex; flex-wrap: wrap; gap: .4rem; }
+.lesson-comparison figure { margin: 1rem 0; }
+.lesson-comparison figcaption { margin-bottom: .4rem; font-size: .8rem; }
+.lesson-comparison svg { display: block; width: 100%; }
+.lesson-comparison-note { opacity: .75; }
+
+.geometry-measures { margin: .6rem 0; font-size: .8rem; }
+.geometry-measures > div { display: flex; justify-content: space-between; gap: .8rem; margin: .35rem 0; }
+.geometry-measures dd { margin: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.shortlist-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin: .8rem 0; }
+.shortlist-card { min-width: 0; padding: .5rem; border: 1px solid var(--border); border-radius: .4rem; font-size: .75rem; }
+.shortlist-card h3 { font-weight: 650; }
+.shortlist-card svg { width: 100%; display: block; margin: .5rem 0; }
+.shortlist-card ul { list-style: none; padding: 0; }
+.shortlist-card li { margin: .6rem 0; }
+.shortlist-card li span { display: block; }
+.shortlist-card .ui-button { width: 100%; padding-inline: .25rem; }
+
+.lesson-predictions .ui-button { height: auto; min-height: 2rem; white-space: normal; text-align: left; }

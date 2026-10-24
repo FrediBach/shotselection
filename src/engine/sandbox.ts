@@ -97,16 +97,21 @@ export function prepareSandboxRound(request: SandboxRequest): PreparedRound {
   // Other lessons try a full-table arrangement and a substantial shift first,
   // narrowing around the teaching layout when precise bank/plant lines need it.
   const spread = base.bank ? 0.008 : base.plant ? 0.025 : 0.085;
-  const shifts = approach ? [0.12, 0.08, 0.04, 0.02, 0.005]
+  // The symmetry lesson varies cue depth while preserving its symmetric
+  // object pair and lateral cue offset, just as tricks preserve their chain.
+  const symmetricCue = base.curriculum?.learning?.comparison === 'off-center-cue';
+  const shifts = approach || symmetricCue ? [0.12, 0.08, 0.04, 0.02, 0.005]
     : [null, base.bank ? 0.12 : 0.35, ...[1, 0.65, 0.35, 0.15, 0.05, 0.01].map(scale => spread * scale)];
   for (const shift of shifts) {
     const margin = TABLE.ballDiameter * 1.5;
-    const cueShift = approach && shift !== null ? (random() < 0.5 ? -1 : 1) * shift * (0.5 + random() * 0.5) : 0;
+    const cueShift = (approach || symmetricCue) && shift !== null ? (random() < 0.5 ? -1 : 1) * shift * (0.5 + random() * 0.5) : 0;
     const scenario: Scenario = {
       ...base,
       balls: base.balls.map(ball => ({
         ...ball,
-        position: approach
+        position: symmetricCue
+          ? ball.id === 0 ? { x: ball.position.x, y: ball.position.y + cueShift } : { ...ball.position }
+          : approach
           ? ball.id === 0
             ? { x: ball.position.x + approach.x * cueShift, y: ball.position.y + approach.y * cueShift }
             : { ...ball.position }

@@ -1,3 +1,4 @@
+import { nextShotBlockerEvidence } from '@/engine/lesson-evidence'
 import type { RefObject } from 'react'
 import { ChevronDown, MessageCircle, Target, Trophy } from 'lucide-react'
 import type { RoundAnalysis, Scenario, ShotPlan } from '@/engine/types'
@@ -27,6 +28,7 @@ function roundVerdict(result: RoundAnalysis) {
 
 export default function RoundResultStep({ result, scenario, headingRef, shotLabel, finishLabel, onExplain }: Props) {
   const { objective, bank, plant, trick } = scenario
+  const evidence = objective ? nextShotBlockerEvidence(scenario, result.selected.nominal) : null
   return <>
     <h2 ref={headingRef} tabIndex={-1}>{roundVerdict(result)}</h2>
     <section className="score-breakdown" aria-label="How your score adds up">
@@ -43,6 +45,7 @@ export default function RoundResultStep({ result, scenario, headingRef, shotLabe
         <div><span>Best shot</span><strong>{percent(result.best.successRate)}</strong><small><BallIcon id={result.best.plan.potBallId ?? result.best.plan.ballId} small />{plant || trick ? `${shotLabel(result.best.plan)} · ` : ''}{finishLabel(result.best.plan.id)}</small></div>
       </div>
     </section>
+    {evidence && scenario.level >= 31 && scenario.level <= 50 && <p className="panel-description">In your nominal settled layout, ball {objective!.nextBallId} has {evidence.routes.length} permitted next-shot routes. Removing only the spare balls {evidence.blockedRoutes.length ? `opens ${evidence.blockedRoutes.length} additional routes.` : 'does not open another route; this finish shows no next-shot blockage from those balls.'} This checks the next-shot geometry, not a played sequence.</p>}
     <Button variant="outline" size="sm" className="shot-feedback-trigger full-width" aria-haspopup="dialog" onClick={event => onExplain(event.currentTarget)}><MessageCircle size={15} /> Explain my shot</Button>
     <details className="result-details">
       <summary>Scoring details <ChevronDown size={15} aria-hidden="true" /></summary>

@@ -38,9 +38,10 @@ export default function LevelBriefing({ scenario, headingRef, onStart, reviewing
     <DialogDescription>{scenario.description}</DialogDescription>
     {conditions && <TableConditionBriefing conditions={conditions} finalBoss={lessonIndex === lessonCount - 1} />}
     <section className="briefing-focus" aria-label="Learning focus">
-      <span className="lesson-goal-label"><Focus size={15} /> LEARN THIS</span>
+      <span className="lesson-goal-label"><Focus size={15} /> {curriculum?.chapterId === 'patterns' ? 'PRACTICE THIS' : 'LEARN THIS'}</span>
       {briefing && <h3>{briefing.focus}</h3>}
       <p>{curriculum?.lesson}</p>
+      {curriculum?.chapterId === 'patterns' && <p className="briefing-objective">Connection practice: {objective ? 'ball 1 is the fixed opener and ball 2 is the reserved next ball. This round checks the first pot and availability of the next shot; it does not play a second stroke or choose a full sequence.' : 'choose an opener and its finish. This round scores the opening shot only; it does not check a next-ball route.'}</p>}
       {plant && <p className="briefing-objective">Plant {plant.ballId} → {plant.targetBallId}: hit ball {plant.ballId} first to pot ball {plant.targetBallId} · Or choose a difficult free ball · Compare the margin for error and cue-ball finish.</p>}
       {bank && <p className="briefing-objective">Reach ball {bank.ballId} after at least {bank.minCushions} cushion{bank.minCushions === 1 ? "" : "s"} · Pot the target ball · Control the cue-ball finish.</p>}
       {objective && <p className="briefing-objective">Pot ball {objective.ballId} · Hold the cyan zone · Leave ball {objective.nextBallId} a clear shot with a cut of {objective.maxCutAngle}° or less.</p>}

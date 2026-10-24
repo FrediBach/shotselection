@@ -1,3 +1,6 @@
+import { nextShotBlockerEvidence, postContactRebounds } from './lesson-evidence';
+import { supportsGeometryComparison } from './shot-geometry';
+import { buildEverydayExperiment, needsEverydayExperiment } from './everyday-experiments';
 import { TABLE } from './constants';
 import { POCKET_GEOMETRY } from './table-geometry';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
@@ -17,7 +20,10 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
   const cue = scenario.balls.find(ball => ball.id === 0)!;
   const object = scenario.balls.find(ball => ball.id === ballId)!;
   const routes: Route[] = [];
+  const requiredPocket = scenario.curriculum?.learning?.pockets?.find(route => route.ballId === ballId)?.pocketId;
   for (const pocket of POCKET_GEOMETRY) {
+    if (requiredPocket !== undefined && pocket.id !== requiredPocket) continue;
+    if (scenario.curriculum?.learning?.comparison === 'cut-paths' && pocket.kind !== 'side') continue;
     // Oblique entry must continue across the shelf into the recessed well.
     // A ray through the mouth midpoint alone can run into the far facing.
     const direction = normalize(subtract(pocket.center, object.position));
@@ -42,7 +48,7 @@ function routesFor(scenario: Scenario, ballId: number): Route[] {
 
 function scenarioFingerprint(scenario: Scenario): string {
   let hash = 2166136261;
-  const identity: unknown[] = [scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant, scenario.trick, scenario.curriculum?.englishPractice];
+  const identity: unknown[] = [scenario.level, scenario.seed, scenario.balls, scenario.objective, scenario.bank, scenario.plant, scenario.trick, scenario.curriculum?.englishPractice, scenario.curriculum?.learning];
   if (scenario.conditions) identity.push(scenario.conditions);
   for (const char of JSON.stringify(identity)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
@@ -93,7 +99,7 @@ function pairIsDistinct(a: FeasiblePlan, b: FeasiblePlan): boolean {
     && distance(a.simulation.cueEnd, b.simulation.cueEnd) >= MIN_FINISH_SEPARATION;
 }
 
-function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => boolean, englishPractice = false): [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null {
+function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => boolean, englishPractice = false, contrast: (plans: FeasiblePlan[]) => boolean = () => true): [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null {
   let chosen: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
   let bestCost = Infinity;
   for (let a = 0; a < plans.length - 2; a++) {
@@ -103,7 +109,7 @@ function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => 
         if (!pairIsDistinct(plans[a], plans[c]) || !pairIsDistinct(plans[b], plans[c])) continue;
         const triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] = [plans[a], plans[b], plans[c]];
         if (englishPractice && triple.filter(entry => entry.plan.sideSpin !== 0).length !== 1) continue;
-        if (!triple.some(qualifies)) continue;
+        if (!triple.some(qualifies) || !contrast(triple)) continue;
         // Prefer comfortable strokes and visually separate endpoints. This is
         // geometry/nominal feasibility only, never a hidden ensemble ranking.
         const separation = Math.min(distance(plans[a].simulation.cueEnd, plans[b].simulation.cueEnd), distance(plans[a].simulation.cueEnd, plans[c].simulation.cueEnd), distance(plans[b].simulation.cueEnd, plans[c].simulation.cueEnd));
@@ -118,6 +124,18 @@ function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => 
 function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOptions; target?: Vec2 } | null {
   if (!scenario.balls.some(ball => ball.id === ballId)) return null;
   const feasible: FeasiblePlan[] = [];
+  const comparison = scenario.curriculum?.learning?.comparison;
+  const contrast = (entries: FeasiblePlan[]) => {
+    if (comparison === 'cut-paths') return entries.every(entry => entry.plan.pocketId === entries[0].plan.pocketId);
+    if (comparison === 'cue-rebound' || (comparison === 'avoidable-cushion' && ballId === 1)) return (comparison !== 'avoidable-cushion' || entries.every(entry => entry.plan.pocketId === entries[0].plan.pocketId)) && entries.some(entry => postContactRebounds(entry.simulation).length > 0)
+      && entries.some(entry => postContactRebounds(entry.simulation).length === 0);
+    if (comparison === 'next-shot-blocker') {
+      const evidence = entries.map(entry => nextShotBlockerEvidence(scenario, entry.simulation));
+      return evidence.some(item => item.routes.length === 0 && item.blockedRoutes.length > 0)
+        && evidence.some(item => item.routes.length > 0);
+    }
+    return true;
+  };
   const qualified = new Map<FeasiblePlan, boolean>();
   const qualifies = (entry: FeasiblePlan): boolean => {
     if (!scenario.objective) return true;
@@ -196,7 +214,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     }
   }
   for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId)) {
-    for (const multiplier of [0.95, 1.2, 1.5, 1.85, 2.3]) {
+    for (const multiplier of comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
       for (const topSpin of [-1.1, 0, 1.05]) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
           const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
@@ -208,7 +226,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
         }
       }
     }
-    triple = chooseTriple(feasible, qualifies, Boolean(english));
+    triple = chooseTriple(feasible, qualifies, Boolean(english), contrast);
     if (triple) break; // Prefer three strokes to the same pocket when possible.
   }
   if (!triple) return null;
@@ -258,8 +276,11 @@ function prepareLayout(scenario: Scenario): PreparedRound {
   }) };
 }
 
-/** Direct search tries at most 30 nominal strokes per object ball, or 90 when
- * an authored English lesson compares both side-spin directions with zero. Plant search
+/** Direct search normally tries at most 30 nominal strokes per object ball, or 90 when
+ * an authored English lesson compares both side-spin directions with zero. The
+ * cut-path, rebound and fixed-pocket comparisons use a denser search (up to
+ * 78 strokes for two routes) to preserve
+ * their required physical contrast. Plant search
  * tries 21 strokes on the fixed pair line, retaining physically simulated misses.
  * Trick search tries 117 strokes on its authored contact line (351 with English),
  * retaining only complete, physically proven tricks before choosing three finishes.
@@ -323,10 +344,15 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
     const layout = { ...scenario, seed: generated.seed, balls: generated.balls,
       ...(originalCue && scenario.conditions ? { conditions: reflectTableConditions(scenario.conditions,
         Math.abs(originalCue.x - regeneratedCue.x) > 1e-8, Math.abs(originalCue.y - regeneratedCue.y) > 1e-8) } : {}),
+      ...(scenario.curriculum?.learning?.pockets ? { curriculum: { ...scenario.curriculum, learning: { ...scenario.curriculum.learning, pockets: generated.curriculum?.learning?.pockets } } } : {}),
       ...(plant ? { plant: { ...plant, pocketId: generated.plant?.pocketId ?? plant.pocketId } } : {}),
       ...(trick ? { trick: generated.trick ?? trick } : {}) };
     const prepared = prepareLayout(layout);
-    if (prepared.balls.length) return prepared;
+    if (prepared.balls.length && supportsGeometryComparison(prepared)) {
+      if (!needsEverydayExperiment(prepared)) return prepared;
+      const experiment = buildEverydayExperiment(prepared);
+      if (experiment) return { ...prepared, experiment };
+    }
   }
   if (options.regenerate === false || scenario.curriculum || objective || bank || plant || trick) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
   const openLayout: Scenario = { ...scenario, seed: 72350, balls: generateScenario(1, 72350).balls };

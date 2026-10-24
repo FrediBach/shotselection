@@ -3,12 +3,13 @@ import { COURSE_CHAPTERS, TOTAL_LEVELS } from './course';
 import { seededRandom } from './math';
 import { BROKEN_LESSONS } from './broken-lessons';
 import { reflectTableConditions } from './table-conditions';
-import type { Ball, LessonBriefing, Scenario, TableConditions, TrickObjective } from './types';
+import type { Ball, LessonBriefing, LessonLearning, Scenario, TableConditions, TrickObjective } from './types';
 
 export { COURSE_CHAPTERS, LEVELS_PER_CHAPTER, TOTAL_LEVELS } from './course';
 export type { CourseChapter } from './course';
 
 export interface Lesson {
+  learning?: LessonLearning;
   title: string;
   description: string;
   lesson: string;
@@ -62,6 +63,7 @@ const LESSONS: readonly Lesson[] = [
     layout: [[1.06, 1.06], [1.27, 0.32]],
   },
   {
+    learning: { concept: 'cut-paths', prerequisite: 'contact-line', comparison: 'cut-paths' },
     title: 'Meet the ball off-center',
     description: 'Read a moderate cut into the side pocket.',
     lesson: 'The object ball sits to one side of your approach. Find the contact line behind it, then use the cut to predict which way the cue ball will leave.',
@@ -95,6 +97,7 @@ const LESSONS: readonly Lesson[] = [
     layout: [[1.04, 1.07], [1.89, 0.39]],
   },
   {
+    learning: { concept: 'post-contact-rebound', prerequisite: 'cut-paths', comparison: 'cue-rebound' },
     title: 'Read the first cushion',
     description: 'A longer diagonal approach makes the rebound worth checking.',
     lesson: 'Trace each predicted finish all the way to rest. When a route reaches a cushion, continue the line after the rebound instead of treating the rail as the endpoint.',
@@ -153,48 +156,52 @@ const LESSONS: readonly Lesson[] = [
     layout: [[0.73, 0.83], [1.16, 0.33], [1.84, 0.39]],
   },
   {
-    title: 'Distance or angle?',
-    description: 'A shorter angled shot competes with a longer route.',
-    lesson: 'Build on your two-ball comparison by weighing distance against cut angle. Decide which pot and finish are more likely to survive a small aim or speed error.',
-    takeaway: 'Shot difficulty comes from the whole route, not distance alone.',
+    learning: { concept: 'object-travel-error', prerequisite: 'contact-line', comparison: 'object-travel', pockets: [{ ballId: 1, pocketId: 1 }, { ballId: 2, pocketId: 2 }] },
+    title: 'Distance beyond contact',
+    description: 'Similar approaches send the object balls different distances to their pockets.',
+    lesson: 'The cue-ball approaches and cuts are nearly matched. Compare the distance each object ball travels after contact. Predict which route spreads the same small outgoing direction error farther by the time it reaches the pocket.',
+    takeaway: 'The same direction error creates a larger sideways miss over a longer object-ball journey.',
     briefing: {
-      focus: 'Trade distance for a better angle',
-      gotcha: 'A small aiming error grows over a longer journey. Judge both the cue-ball approach and the object-ball route.',
+      focus: 'Separate object-ball travel from cue approach',
+      gotcha: 'These approaches are nearly equal; the new difference is beyond contact. The error illustration holds outgoing direction error fixed, not every feature of the whole stroke.',
     },
-    layout: [[0.65, 0.88], [1.18, 0.32], [1.94, 0.95]],
+    layout: [[0.65, 0.85], [0.907, 0.544], [1.036, 0.746]],
   },
   {
+    learning: { concept: 'cue-position-asymmetry', prerequisite: 'contact-line', comparison: 'off-center-cue', pockets: [{ ballId: 1, pocketId: 0 }, { ballId: 2, pocketId: 2 }] },
     title: 'Compare the corner pots',
-    description: 'Two corner routes ask for different contact lines.',
-    lesson: 'Read each corner pot from the object ball back to the cue ball. Compare the cut and predicted finish on both sides of the table before selecting an opener.',
-    takeaway: 'Similar-looking corner pots can leave very different cue-ball finishes.',
+    description: 'Symmetric object balls and corner pockets, with the cue ball slightly off-center.',
+    lesson: 'Both object balls sit symmetrically relative to their corner pockets. Only the cue ball is off-center. Predict which pot now needs the fuller contact; after your shot, compare both actual approaches with a centered-cue reference.',
+    takeaway: 'Moving only the cue ball changes both approach angles while the object-to-pocket lines stay fixed.',
     briefing: {
-      focus: 'Compare both contact points',
+      focus: 'Find the asymmetry introduced by the cue ball',
       gotcha: 'Symmetry in the pockets does not guarantee symmetry in the shots when the cue ball starts off-center.',
     },
-    layout: [[0.73, 0.83], [1.84, 0.39], [0.41, 0.38]],
+    layout: [[1.18, 0.90], [0.55, 0.35], [1.99, 0.35]],
   },
   {
-    title: 'Choose the cleaner angle',
-    description: 'Two open pots reward a closer look at their contact angles.',
-    lesson: 'Estimate each cut before comparing stroke strength. Choose the route that gives both the object ball and the cue ball enough room to follow their intended paths.',
-    takeaway: 'A slightly longer route may reward you with a fuller contact.',
+    learning: { concept: 'pocket-entry-angle', prerequisite: 'cut-paths', comparison: 'pocket-entry', pockets: [{ ballId: 1, pocketId: 1 }, { ballId: 2, pocketId: 2 }] },
+    title: 'Read the pocket opening',
+    description: 'An oblique side-pocket entry competes with a straight-on corner entry.',
+    lesson: 'Separate the cut at the object ball from its entry into the pocket. Look along each object-ball route and predict which pocket mouth offers more room across that direction of travel. Then compare the whole strokes, including their different cuts and finishes.',
+    takeaway: 'An oblique entry reduces the opening seen along the ball’s path; a cleaner pocket entry can still require a harder cut.',
     briefing: {
-      focus: 'Look for the fuller contact',
-      gotcha: 'Judging only the gap to a pocket overlooks the angle needed to send the ball there.',
+      focus: 'Read pocket entry separately from cut angle',
+      gotcha: 'The side pocket is wider nose to nose, but its opening looks narrower from an oblique approach. Mouth clearance alone does not predict a pot: jaws, shelf, pace and cut still matter.',
     },
-    layout: [[0.73, 0.83], [1.17, 0.34], [1.87, 0.41]],
+    layout: [[0.40, 0.83], [0.98, 0.34], [1.90, 0.64]],
   },
   {
-    title: 'Read opposite ends',
-    description: 'Compare a side-pocket candidate with a ball toward the far end.',
-    lesson: 'Scan the whole table before choosing. One ball offers a shorter first journey while the other changes the finishing direction; predict both before committing.',
-    takeaway: 'An open table gives choices only when you check balls beyond the first one you notice.',
+    learning: { concept: 'post-contact-scratch-line', prerequisite: 'cut-paths', comparison: 'scratch-line' },
+    title: 'Spot the scratch line',
+    description: 'Find a pot whose cue-ball continuation points toward a pocket.',
+    lesson: 'An attractive pot can leave a scratch line beyond contact. Compare an offered stroke with a faster demonstration using the same aim and spin. Predict which keeps the cue ball on the table, then inspect the actual route into the pocket before choosing your scored shot.',
+    takeaway: 'Read the cue-ball continuation toward pockets; extra pace can turn a legal pot into a scratch.',
     briefing: {
-      focus: 'Scan both halves of the table',
-      gotcha: 'Fixating on the ball nearest the side pocket can hide a more comfortable route at the far end.',
+      focus: 'Identify the scratch line after contact',
+      gotcha: 'The object ball can drop in both demonstrations. A scratch still loses the shot, and these extra demonstration strokes are not scored choices.',
     },
-    layout: [[0.73, 0.86], [1.16, 0.33], [1.89, 0.95]],
+    layout: [[1.18, 0.90], [1.30, 0.45], [1.90, 0.75]],
   },
   {
     title: 'Three ways to begin',
@@ -208,32 +215,34 @@ const LESSONS: readonly Lesson[] = [
     layout: [[0.67, 0.92], [1.17, 0.32], [1.86, 0.41], [1.91, 0.95]],
   },
   {
-    title: 'Favor a calm finish',
-    description: 'Three spread-out balls offer different amounts of cue-ball travel.',
-    lesson: 'After checking the pot, compare how far each finish sends the cue ball. A shorter controlled route can be easier to reproduce even when another pot looks inviting.',
-    takeaway: 'The finish belongs in an open-table decision even before a next-ball zone is required.',
+    learning: { concept: 'avoidable-cushion-variation', prerequisite: 'post-contact-rebound', comparison: 'avoidable-cushion' },
+    title: 'Avoid an unnecessary rail',
+    description: 'Compare stopping before a cushion with landing at the rebound boundary.',
+    lesson: 'A small pace error can decide whether a route reaches the rail at all. Compare two demonstrations with the same aim and spin, then inspect five speed-only probes around each. Choose a scored stroke after accounting for this extra route change.',
+    takeaway: 'Leaving room before the rail avoids a boundary where a small speed change adds a rebound.',
     briefing: {
-      focus: 'Compare the travel after contact',
-      gotcha: 'A pot close to a pocket can still release the cue ball into a long journey.',
+      focus: 'Protect against an avoidable rebound',
+      gotcha: 'A rail can help some shots. Here, count which speed probes rebound and inspect their endpoints rather than assuming every rebound is worse.',
     },
     layout: [[0.70, 0.83], [1.16, 0.33], [1.84, 0.39], [1.88, 0.95]],
   },
   {
-    title: 'Distance with a choice',
-    description: 'A deeper cue-ball start stretches all three opening options.',
-    lesson: 'Use the extra approach distance to test your earlier comparisons. Weigh the object-ball journey and cue-ball approach together, then select the finish with room for a small error.',
-    takeaway: 'When every option is longer, compare their complete demands instead of looking for a short shot.',
+    learning: { concept: 'cut-energy-transfer', prerequisite: 'cut-paths', comparison: 'cut-transfer', pockets: [{ ballId: 1, pocketId: 0 }, { ballId: 2, pocketId: 2 }] },
+    title: 'Budget pace for the cut',
+    description: 'Compare fuller and thinner contacts with similar travel distances.',
+    lesson: 'At nearly equal incoming cue speed, a thinner contact sends less speed into the object ball. Compare the measured speeds just before and after contact, then see whether adding pace rescues the thinner pot. The demonstrations keep launch spin fixed at center ball.',
+    takeaway: 'Budget pace for the cut: a thinner contact can leave the object ball short while the cue ball retains more motion.',
     briefing: {
-      focus: 'Judge the total journey',
-      gotcha: 'A short object-ball path can conceal a long and sensitive cue-ball approach.',
+      focus: 'Connect cut angle to transferred speed',
+      gotcha: 'Equal launch speed does not guarantee equal speed at contact. Check the measured incoming speeds before attributing the outgoing difference to the cut.',
     },
-    layout: [[0.46, 1.02], [1.16, 0.33], [1.84, 0.39], [1.88, 0.95]],
+    layout: [[1.33, 1.13], [0.65, 0.55], [1.80, 0.37], [0.35, 0.90]],
   },
   {
-    englishPractice: 18,
+    learning: { concept: 'two-ball-shortlist', prerequisite: 'opening-ball-choice', comparison: 'shortlist' },
     title: 'Shortlist four open balls',
-    description: 'Four open candidates test your table-reading routine.',
-    lesson: 'Scan all four balls and narrow the choice to two promising pots. Each offers an English stroke and two without side spin. Compare angle, pace and the full cue-ball route before choosing your finish.',
+    description: 'Record two promising balls, compare their routes and strokes, then pick an opener.',
+    lesson: 'Mark exactly two balls for your shortlist. Compare their contact lines and three familiar draw, center and follow strokes side by side. Choose your opener from that pair; you can return and change the shortlist before committing.',
     takeaway: 'A deliberate shortlist keeps a larger table from turning into a rushed guess.',
     briefing: {
       focus: 'Narrow the field deliberately',
@@ -243,13 +252,14 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     englishPractice: 18,
-    title: 'Choose the comfortable stroke',
-    description: 'Read four open balls and choose a dependable pot and finish.',
-    lesson: 'Shortlist a comfortable pot, then compare its finishes against the other balls. Weigh the English option against the two no-English strokes: added side spin is useful only when the complete stroke leaves a finish you can control.',
-    takeaway: 'Choose the finish you can reproduce, then judge it against the other available strokes.',
+    learning: { concept: 'sampling-near-tie', prerequisite: 'two-ball-shortlist', comparison: 'near-tie' },
+    title: 'Recognize a near tie',
+    description: 'Learn when a small sampled success-rate difference is too weak to trust.',
+    lesson: 'Choose a whole stroke using the familiar pace, draw, follow and English controls. After the trials, compare two close options under the same indexed stroke errors. Decide whether their small success-rate gap establishes an advantage or calls for more evidence.',
+    takeaway: 'A tiny sampled edge is not proof of a safer stroke, and a near tie does not prove identical chances.',
     briefing: {
-      focus: 'Choose a repeatable finish',
-      gotcha: 'An easy pot can hide a demanding finish. Extra cue-ball travel gives speed errors more room to matter.',
+      focus: 'Recognize uncertainty in a near tie',
+      gotcha: 'The game score also rewards finish quality. This comparison asks only about complete success rates; it does not erase differences in cue-ball control.',
     },
     layout: [[0.73, 0.83], [1.16, 0.33], [1.84, 0.39], [1.88, 0.95], [0.41, 0.38]],
   },
@@ -380,7 +390,7 @@ const LESSONS: readonly Lesson[] = [
   {
     title: 'Read the whole table',
     description: 'Look beyond the first pot on a four-ball layout.',
-    lesson: 'A pattern connects one shot to the next. Scan all four balls before choosing your opener, then compare finishes for open space and access to another ball.',
+    lesson: 'Practice scanning all four balls before choosing your opener. Compare the first pot and cue-ball finish; this opening exercise does not score access to a particular next ball.',
     takeaway: 'A pattern starts with reading every ball before taking the first one.',
     briefing: {
       focus: 'See more than the opening pot',
@@ -474,9 +484,9 @@ const LESSONS: readonly Lesson[] = [
   },
   {
     englishPractice: 18,
-    title: 'Choose a sequence with margin',
+    title: 'Choose a connection with margin',
     description: 'A tighter zone asks you to evaluate the reliability of the connection.',
-    lesson: 'Compare the English stroke with the no-English alternatives, tracing each full route through the layout. Choose the sequence that leaves room for error in the landing zone and a clear approach to the next ball.',
+    lesson: 'Compare the English stroke with the no-English alternatives, tracing each full route through the layout. Choose the first-to-second-ball connection that leaves room for error in the landing zone and a clear approach to the next ball.',
     takeaway: 'A good connection remains usable across a range of small stroke errors.',
     briefing: {
       focus: 'Leave margin in the connection',
@@ -511,15 +521,16 @@ const LESSONS: readonly Lesson[] = [
     layout: [[0.73, 0.83], [1.16, 0.33], [1.84, 0.39], [1.88, 0.95], [0.41, 0.38], [1.43, 0.91]],
   },
   {
+    learning: { concept: 'next-shot-blocker', prerequisite: 'next-shot-availability', comparison: 'next-shot-blocker' },
     title: 'Position through traffic',
     description: 'Pot the 1 and keep the 2 playable among four object balls.',
-    lesson: 'Add position to your traffic check. Use the cut angle, speed and spin to predict a route into the zone that keeps access to the 2 open.',
+    lesson: 'Compare the settled cue-ball positions: the 3 screens the next shot from one finish but leaves a route from another. Predict which stroke loses access to the 2, then compare that exact layout with the spare balls removed.',
     takeaway: 'Protect access to the next ball instead of accepting any successful pot.',
     briefing: {
       focus: 'Protect the next-ball lane',
-      gotcha: 'Brushing a traffic ball can change your finish even when the 1 drops. Include possible contacts in your prediction.',
+      gotcha: 'A pot can leave no permitted route to the 2 even without touching a spare ball. Check both the cue approach and the object-to-pocket line.',
     },
-    layout: [[0.74, 0.83], [1.15, 0.34], [1.85, 0.40], [1.52, 0.88], [0.40, 0.39]],
+    layout: [[0.74, 0.83], [1.15, 0.34], [1.85, 0.40], [1.60, 0.40], [0.40, 0.39]],
     position: { radius: 0.162, maxCutAngle: 51 },
   },
   {
@@ -1096,6 +1107,7 @@ export function generateScenario(level: number, seed = 71431 + level * 919): Sce
     curriculum: {
       chapterId: chapter.id, chapterTitle: chapter.title, chapterIndex, lessonIndex, lessonCount,
       lesson: lesson.lesson, takeaway: lesson.takeaway,
+      ...(lesson.learning ? { learning: { ...lesson.learning, ...(lesson.learning.pockets ? { pockets: lesson.learning.pockets.map(route => ({ ...route, pocketId: reflectedPocket(route.pocketId) })) } : {}) } } : {}),
       ...(lesson.englishPractice ? { englishPractice: lesson.englishPractice } : {}),
       briefing: { ...lesson.briefing, stage: lessonIndex === 0 ? 'introduce' : lessonIndex < 6 ? 'develop' : 'apply' },
     },

@@ -40,7 +40,15 @@ export interface LessonBriefing {
   focus: string;
   gotcha: string;
 }
+export interface LessonLearning {
+  concept: string;
+  prerequisite: string;
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie';
+  /** Restrict direct choices to the authored teaching routes, reflected with the table. */
+  pockets?: { ballId: number; pocketId: number }[];
+}
 export interface CurriculumLesson {
+  learning?: LessonLearning;
   chapterId: string;
   chapterTitle: string;
   chapterIndex: number;
@@ -122,7 +130,13 @@ export interface BallFinishOptions {
   ballId: number;
   options: [FinishOption, FinishOption, FinishOption];
 }
+export interface LessonExperiment {
+  kind: 'scratch-line' | 'avoidable-cushion' | 'cut-transfer';
+  variants: { label: string; plan: ShotPlan; simulation: Simulation; speedTrials?: { multiplier: number; simulation: Simulation }[] }[];
+}
 export interface PreparedRound {
+  /** Controlled, unscored demonstrations derived from this prepared layout. */
+  experiment?: LessonExperiment;
   /** Can differ from the input if a blocked layout required regeneration. */
   scenario: Scenario;
   /** Balls absent from this list remain on the table but are not selectable. */
@@ -152,8 +166,12 @@ export interface Simulation {
   potted: number[];
   scratch: boolean;
   firstContact: number | null;
+  /** Speeds immediately before and after the solver step containing first contact. */
+  firstImpact?: { ballId: number; time: number; position: Vec2; cueSpeedBefore: number; objectSpeedBefore: number; cueSpeedAfter: number; objectSpeedAfter: number };
   /** Actual cue-ball rebounds before its first object-ball contact. */
   cueBanksBeforeContact?: number;
+  /** Actual cue-ball rebounds, including post-contact events; also retained without replay. */
+  cueRebounds?: { time: number; position: Vec2; beforeContact: boolean; incoming: Vec2; outgoing: Vec2 }[];
   /** Ordered distinct impacts, retained even when replay recording is disabled. */
   ballContacts?: [number, number][];
   /** Rebounds by the primary object ball before it is pocketed. */
@@ -183,6 +201,8 @@ export interface ShotAnalysis {
   sampleEnds: Vec2[];
   /** Every ball's final state for every trial, in sampleObjectPaths trial order. */
   sampleBallEnds: SimulationBall[][];
+  /** Objective success in common-random-number trial order, for paired comparisons. */
+  trialSuccesses?: boolean[];
   /** Robust utility in [0,1], based on actual ensemble outcomes. */
   score: number;
   nominal: Simulation;
