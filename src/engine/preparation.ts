@@ -1,6 +1,9 @@
+import { angleTrapEvidence } from './angle-trap';
+import { buildBackwardPlan } from './backward-planning';
 import { nextShotBlockerEvidence, postContactRebounds } from './lesson-evidence';
 import { supportsGeometryComparison } from './shot-geometry';
 import { buildEverydayExperiment, needsEverydayExperiment } from './everyday-experiments';
+import { isStopContact, isRollingContact } from './position-learning';
 import { TABLE } from './constants';
 import { POCKET_GEOMETRY } from './table-geometry';
 import { clamp, distance, dot, normalize, segmentDistance, subtract } from './math';
@@ -126,6 +129,11 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
   const feasible: FeasiblePlan[] = [];
   const comparison = scenario.curriculum?.learning?.comparison;
   const contrast = (entries: FeasiblePlan[]) => {
+    if (comparison === 'contact-roll') return entries.every(entry => entry.plan.pocketId === entries[0].plan.pocketId)
+      && entries.some(entry => isStopContact(scenario, entry.plan, entry.simulation) && qualifies(entry))
+      && entries.some(entry => isRollingContact(scenario, entry.plan, entry.simulation));
+    if (comparison === 'next-angle-trap') return Boolean(anglePair(entries));
+    if (comparison === 'zone-margin') return Boolean(marginCenter(entries));
     if (comparison === 'cut-paths') return entries.every(entry => entry.plan.pocketId === entries[0].plan.pocketId);
     if (comparison === 'cue-rebound' || (comparison === 'avoidable-cushion' && ballId === 1)) return (comparison !== 'avoidable-cushion' || entries.every(entry => entry.plan.pocketId === entries[0].plan.pocketId)) && entries.some(entry => postContactRebounds(entry.simulation).length > 0)
       && entries.some(entry => postContactRebounds(entry.simulation).length === 0);
@@ -146,6 +154,36 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
       && hasProvenNextShot(scenario, entry.simulation);
     qualified.set(entry, result);
     return result;
+  };
+  // Nominal geometry only: never optimize against the later error ensembles.
+  const marginCenter = (entries: FeasiblePlan[]) => entries.find(center => entries.some(edge => {
+    if (center === edge || center.plan.pocketId !== edge.plan.pocketId) return false;
+    const objective = scenario.objective!;
+    const target = objective.target ?? center.simulation.cueEnd;
+    const centralDistance = distance(center.simulation.cueEnd, target);
+    const edgeDistance = distance(edge.simulation.cueEnd, target);
+    return centralDistance <= objective.radius * .2 && edgeDistance >= objective.radius * .7
+      && edgeDistance <= objective.radius * .95 && qualifies(center) && qualifies(edge);
+  }));
+  const angleEvidence = new Map<FeasiblePlan, ReturnType<typeof angleTrapEvidence>>();
+  const evidenceFor = (entry: FeasiblePlan) => {
+    if (!angleEvidence.has(entry)) angleEvidence.set(entry, angleTrapEvidence(scenario, entry.simulation));
+    return angleEvidence.get(entry)!;
+  };
+  const anglePair = (entries: FeasiblePlan[]) => {
+    const objective = scenario.objective!;
+    for (const near of entries) for (const far of entries) {
+      if (near === far || near.plan.pocketId !== far.plan.pocketId
+        || near.simulation.ballContacts?.length !== 1 || far.simulation.ballContacts?.length !== 1) continue;
+      const target = objective.target ?? { x: (near.simulation.cueEnd.x + far.simulation.cueEnd.x) / 2, y: (near.simulation.cueEnd.y + far.simulation.cueEnd.y) / 2 };
+      if (distance(near.simulation.cueEnd, target) > objective.radius * .95 || distance(far.simulation.cueEnd, target) > objective.radius * .95) continue;
+      const a = evidenceFor(near), b = evidenceFor(far);
+      if (a.distance === null || b.distance === null || b.distance - a.distance < .05
+        || a.permitted.length || !a.best || a.best.cutAngle < objective.maxCutAngle + 3
+        || !b.permitted.length || b.permitted[0].cutAngle > objective.maxCutAngle - 3 || !qualifies(far)) continue;
+      return { near, far, target };
+    }
+    return null;
   };
   let triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
   const isPlant = scenario.plant?.ballId === ballId;
@@ -214,8 +252,8 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     }
   }
   for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId)) {
-    for (const multiplier of comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
-      for (const topSpin of [-1.1, 0, 1.05]) {
+    for (const multiplier of comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]) {
+      for (const topSpin of comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05]) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
           const plan: ShotPlan = { id: '', ballId, pocketId: route.pocketId, angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
           const calibrated = directStroke(scenario, plan);
@@ -230,7 +268,7 @@ function prepareBall(scenario: Scenario, ballId: number): { ball: BallFinishOpti
     if (triple) break; // Prefer three strokes to the same pocket when possible.
   }
   if (!triple) return null;
-  const target = scenario.objective ? { ...(scenario.objective.target ?? triple.find(qualifies)!.simulation.cueEnd) } : undefined;
+  const target = comparison === 'next-angle-trap' ? anglePair(triple)!.target : scenario.objective ? { ...(scenario.objective.target ?? (comparison === 'zone-margin' ? marginCenter(triple)! : comparison === 'contact-roll' ? triple.find(entry => isStopContact(scenario, entry.plan, entry.simulation) && qualifies(entry))! : triple.find(qualifies)!).simulation.cueEnd) } : undefined;
   // Labels are fixed by stroke strength, never by score or success probability.
   triple.sort((a, b) => a.plan.speed - b.plan.speed || a.plan.topSpin - b.plan.topSpin);
   const fingerprint = scenarioFingerprint(scenario);
@@ -349,6 +387,11 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
       ...(trick ? { trick: generated.trick ?? trick } : {}) };
     const prepared = prepareLayout(layout);
     if (prepared.balls.length && supportsGeometryComparison(prepared)) {
+      if (scenario.curriculum?.learning?.comparison === 'backward-plan') {
+        const backwardPlan = buildBackwardPlan(prepared);
+        if (backwardPlan) return { ...prepared, backwardPlan };
+        continue;
+      }
       if (!needsEverydayExperiment(prepared)) return prepared;
       const experiment = buildEverydayExperiment(prepared);
       if (experiment) return { ...prepared, experiment };

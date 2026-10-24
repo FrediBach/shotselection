@@ -1,3 +1,4 @@
+import type { BackwardPlan } from './backward-planning';
 import type { RoundScore } from './scoring';
 
 /** Stroke consistency from 0 (least precise) to 100 (most precise). */
@@ -43,7 +44,7 @@ export interface LessonBriefing {
 export interface LessonLearning {
   concept: string;
   prerequisite: string;
-  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie';
+  comparison: 'cut-paths' | 'cue-rebound' | 'next-shot-blocker' | 'object-travel' | 'off-center-cue' | 'pocket-entry' | 'scratch-line' | 'avoidable-cushion' | 'cut-transfer' | 'shortlist' | 'near-tie' | 'contact-roll' | 'zone-margin' | 'backward-plan' | 'next-angle-trap';
   /** Restrict direct choices to the authored teaching routes, reflected with the table. */
   pockets?: { ballId: number; pocketId: number }[];
 }
@@ -135,6 +136,7 @@ export interface LessonExperiment {
   variants: { label: string; plan: ShotPlan; simulation: Simulation; speedTrials?: { multiplier: number; simulation: Simulation }[] }[];
 }
 export interface PreparedRound {
+  backwardPlan?: BackwardPlan;
   /** Controlled, unscored demonstrations derived from this prepared layout. */
   experiment?: LessonExperiment;
   /** Can differ from the input if a blocked layout required regeneration. */
@@ -167,7 +169,7 @@ export interface Simulation {
   scratch: boolean;
   firstContact: number | null;
   /** Speeds immediately before and after the solver step containing first contact. */
-  firstImpact?: { ballId: number; time: number; position: Vec2; cueSpeedBefore: number; objectSpeedBefore: number; cueSpeedAfter: number; objectSpeedAfter: number };
+  firstImpact?: { ballId: number; time: number; position: Vec2; cueSpeedBefore: number; cueRollSpeedBefore?: number; objectSpeedBefore: number; cueSpeedAfter: number; objectSpeedAfter: number };
   /** Actual cue-ball rebounds before its first object-ball contact. */
   cueBanksBeforeContact?: number;
   /** Actual cue-ball rebounds, including post-contact events; also retained without replay. */

@@ -129,7 +129,8 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       if (firstContact !== null) {
         impactBody = event.body;
         simulation.firstImpact = { ballId: firstContact, time: soundTime, position: { x: cue.body.position.x, y: cue.body.position.y },
-          cueSpeedBefore: Math.hypot(cue.body.velocity.x, cue.body.velocity.y), objectSpeedBefore: Math.hypot(event.body.velocity.x, event.body.velocity.y), cueSpeedAfter: 0, objectSpeedAfter: 0 };
+          cueSpeedBefore: Math.hypot(cue.body.velocity.x, cue.body.velocity.y),
+          cueRollSpeedBefore: R * (cue.body.angularVelocity.y * cue.body.velocity.x - cue.body.angularVelocity.x * cue.body.velocity.y) / Math.max(1e-9, Math.hypot(cue.body.velocity.x, cue.body.velocity.y)), objectSpeedBefore: Math.hypot(event.body.velocity.x, event.body.velocity.y), cueSpeedAfter: 0, objectSpeedAfter: 0 };
       }
       // Cannon emits this before resolving the collision and advancing bodies.
       // Preserve the contact point without revealing the post-contact finish.

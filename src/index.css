@@ -398,3 +398,5 @@ svg { flex-shrink: 0; }
 .shortlist-card .ui-button { width: 100%; padding-inline: .25rem; }
 
 .lesson-predictions .ui-button { height: auto; min-height: 2rem; white-space: normal; text-align: left; }
+
+.lesson-comparison svg.contact-inset { max-width: 170px; margin: .5rem auto; background: #143f38; border-radius: .4rem; }

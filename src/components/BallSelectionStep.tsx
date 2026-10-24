@@ -63,9 +63,9 @@ export default function BallSelectionStep({ scenario, selectedBall, selectableBa
   const singleChoice = ready && !preparing && selectableBallIds.length === 1
   return <>
     <h2 ref={headingRef} tabIndex={-1}>Choose your ball.</h2>
-    <p className="panel-description">{description}</p>
+    <p className="panel-description">{scenario.curriculum?.learning?.comparison === 'backward-plan' ? 'Ball 1 opens the shot. First plan the contact on ball 2 using the comparison below; then choose the opening stroke.' : description}</p>
     <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <BallChoice key={ball.id} ball={ball} scenario={scenario} selected={selectedBall === ball.id} selectable={selectableBalls.has(ball.id)} preparing={preparing} ready={ready} ballChoiceLabel={ballChoiceLabel} onSelect={onSelect} />)}</div>
     {ready && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">{unavailable}</p>}
-    <div className="wizard-hint"><MousePointer2 size={17} /><p>{singleChoice ? `${ballChoiceLabel(selectableBallIds[0])} ${scenario.trick ? 'starts this trick' : 'is the only playable ball'} and is selected automatically. Choose a stroke when you’re ready.` : hint}</p></div>
+    <div className="wizard-hint"><MousePointer2 size={17} /><p>{scenario.curriculum?.learning?.comparison === 'backward-plan' ? 'Answer the contact question or show the plan without answering. Either reveals the landing area and lets you choose a stroke.' : singleChoice ? `${ballChoiceLabel(selectableBallIds[0])} ${scenario.trick ? 'starts this trick' : 'is the only playable ball'} and is selected automatically. Choose a stroke when you’re ready.` : hint}</p></div>
   </>
 }

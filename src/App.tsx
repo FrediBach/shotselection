@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import BallIcon from '@/components/BallIcon'
 import EnsembleResults from '@/components/EnsembleResults'
+import BackwardPlanning from '@/components/BackwardPlanning'
 import ShortlistSelectionStep from '@/components/ShortlistSelectionStep'
 import BallSelectionStep from '@/components/BallSelectionStep'
 import LessonComparison from '@/components/LessonComparison'
@@ -46,6 +47,7 @@ export default function App() {
   const [prepared, setPrepared] = useState<PreparedRound | null>(null)
   const [preparing, setPreparing] = useState(true)
   const [prepareAttempt, setPrepareAttempt] = useState(0)
+  const [backwardReady, setBackwardReady] = useState(false)
   const [shortlist, setShortlist] = useState<number[]>([])
   const [selectedBall, setSelectedBall] = useState<number | null>(null)
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
@@ -111,6 +113,8 @@ export default function App() {
     return () => controller.abort()
   }, [requestedScenario, prepareAttempt, showCourseSummary, session.character, session.mode])
   const scenario = prepared?.scenario ?? requestedScenario
+  const backwardPending = Boolean(prepared?.backwardPlan) && !backwardReady
+  const tableScenario = backwardPending && scenario.objective ? { ...scenario, objective: { ...scenario.objective, target: undefined } } : scenario
   const shortlistMode = scenario.curriculum?.learning?.comparison === 'shortlist'
   const objectBalls = scenario.balls.filter(ball => ball.id > 0)
   const selectableBallIds = prepared?.balls.map(ball => ball.ballId) ?? []
@@ -163,7 +167,7 @@ export default function App() {
     setShowCourseSummary(false)
     request.current += 1
     analysisController.current?.abort()
-    setSelectedBall(null); setSelectedOptionId(null); setShortlist([])
+    setSelectedBall(null); setSelectedOptionId(null); setShortlist([]); setBackwardReady(false)
     setPrepared(null); setPreparing(true)
     setSelectionStep('ball')
     setResult(null); setInspected(null); setBusy(false); setPlaying(false); setError('')
@@ -207,6 +211,7 @@ export default function App() {
   }
   async function submit() {
     if (!session.character || selectionStep !== 'finish' || !prepared || selectedBall === null || !selectedOption || busy || preparing || result) return
+    if (backwardPending) return
     if (shortlistMode && (shortlist.length !== 2 || !shortlist.includes(selectedBall))) return
     audio.current?.unlock()
     audio.current?.play('confirm')
@@ -285,8 +290,8 @@ export default function App() {
           <div className="table-toolbar"><div className="level-label"><span className="level-number">{sandbox ? <FlaskConical size={21} /> : String(scenario.level).padStart(2, '0')}</span><div><div className="toolbar-title">{difficulty}</div><div className="toolbar-caption">{sandbox ? 'SANDBOX' : `LEVEL ${String(scenario.level).padStart(2, '0')} OF ${TOTAL_LEVELS}`} <span>·</span> {objectBalls.length} OBJECT BALL{objectBalls.length === 1 ? "" : "S"}</div></div></div><div className="table-actions"><span className="table-size">9 FT <span>{scenario.conditions ? scenario.level === TOTAL_LEVELS ? 'FINAL BOSS' : 'HOUSE SPECIAL' : 'TOURNAMENT TABLE'}</span></span><Button variant="ghost" size="icon" aria-label={sandbox ? "Review scenario briefing" : "Review level briefing"} title={sandbox ? "Review scenario briefing" : "Review level briefing"} aria-haspopup="dialog" onClick={event => openModal('lesson', event.currentTarget)}><BookOpen size={17} /></Button><Button variant="ghost" size="icon" className="sound-toggle" aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'} onClick={toggleSound}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</Button><Button variant="ghost" size="icon" aria-label="Restart session" title="Restart session" aria-haspopup="dialog" onClick={event => openModal('reset', event.currentTarget)} disabled={busy}><RotateCcw size={16} /></Button></div></div>
           {scenario.conditions && <TableConditionSummary conditions={scenario.conditions} finalBoss={scenario.curriculum?.lessonIndex === 9} />}
           <div className="table-stage">
-            <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? predictFinish ? 'Preparing stroke choices' : plant ? 'Preparing plant and free-ball choices' : 'Preparing playable finish options' : selectionStep === 'ball' ? (selectedBall === null ? plant ? 'Compare the plant with the free ball' : 'Start by selecting an object ball' : `${ballChoiceLabel(selectedBall)} selected. Choose a ${predictFinish || selectableBallIds.length === 1 ? "stroke" : "finish"} next.`) : selectedOption === null ? predictFinish ? 'Choose a stroke in the side panel' : 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
-            <div className="pool-canvas"><PoolTable scenario={scenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : !predictFinish && selectionStep === 'finish' ? target : null} onSelectBall={selectBall} approachOption={approachOption} finishOptions={predictFinish || result || selectionStep !== 'finish' ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={shortlistMode && selectionStep === 'finish' ? shortlist : selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} showFinishes={Boolean(result) && showFinishes} playing={playing} playbackKey={playbackKey} onPlaybackSound={event => { if (!document.hidden) audio.current?.play(event.type === 'cue' ? 'shot' : event.type === 'ball' ? 'collision' : event.type, event.strength) }} onPlaybackEnd={() => { setPlaying(false); audio.current?.stop() }} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
+            <div className="table-instruction"><span className={result ? 'instruction-dot complete' : 'instruction-dot'} />{playing ? 'Playing the simulated shot' : result ? 'Explore the paths. Find the pattern.' : preparing ? predictFinish ? 'Preparing stroke choices' : plant ? 'Preparing plant and free-ball choices' : 'Preparing playable finish options' : backwardPending ? 'Plan the contact on ball 2 first' : selectionStep === 'ball' ? (selectedBall === null ? plant ? 'Compare the plant with the free ball' : 'Start by selecting an object ball' : `${ballChoiceLabel(selectedBall)} selected. Choose a ${predictFinish || selectableBallIds.length === 1 ? "stroke" : "finish"} next.`) : selectedOption === null ? predictFinish ? 'Choose a stroke in the side panel' : 'Choose finish A, B, or C' : 'Your call. Ready when you are.'}</div>
+            <div className="pool-canvas"><PoolTable scenario={tableScenario} selectedBall={result ? inspected?.plan.ballId ?? selectedBall : selectedBall} target={result ? inspected?.plan.target || target : !predictFinish && selectionStep === 'finish' ? target : null} onSelectBall={selectBall} approachOption={backwardPending ? null : approachOption} finishOptions={predictFinish || result || selectionStep !== 'finish' ? [] : finishOptions} selectedOptionId={selectedOptionId} onSelectOption={selectOption} selectableBallIds={shortlistMode && selectionStep === 'finish' ? shortlist : selectableBallIds} analysis={inspected} showEnsemble={Boolean(result) && showEnsemble} showFinishes={Boolean(result) && showFinishes} playing={playing} playbackKey={playbackKey} onPlaybackSound={event => { if (!document.hidden) audio.current?.play(event.type === 'cue' ? 'shot' : event.type === 'ball' ? 'collision' : event.type, event.strength) }} onPlaybackEnd={() => { setPlaying(false); audio.current?.stop() }} interactive={!preparing && !busy && !result && Boolean(prepared)} /></div>
             {celebrating && <PerfectCelebration onComplete={finishCelebration} />}
             <div className="table-watermark">SHOT SELECTION <span>EST. 2026</span></div>
             {(busy || preparing) && <div className="simulation-overlay" role="status"><LoaderCircle className="spin" size={25} /><strong>{preparing ? predictFinish ? 'Preparing three playable strokes' : plant ? 'Preparing plant and free-ball options' : 'Finding three playable finishes' : 'Finding the margin for error'}</strong><span>{preparing ? 'Checking the pot, cue-ball position, and stroke for each option…' : 'Simulating small variations in every offered shot…'}</span></div>}
@@ -313,12 +318,13 @@ export default function App() {
           <div className="shot-panel-body" data-step={result ? 'result' : selectionStep} key={`${scenario.level}-${scenario.seed}`}>
             {result ? <RoundResultStep result={result} scenario={scenario} headingRef={sidebarHeading} shotLabel={shotLabel} finishLabel={finishLabel} onExplain={opener => openModal('feedback', opener)} /> : selectionStep === 'ball' ? shortlistMode && prepared ? <ShortlistSelectionStep prepared={prepared} shortlist={shortlist} selectedBall={selectedBall} headingRef={sidebarHeading} onToggle={selectBall} onChoose={id => { if (shortlist.length === 2 && shortlist.includes(id)) { setSelectedBall(id); setSelectedOptionId(null) } }} /> : <BallSelectionStep scenario={scenario} selectedBall={selectedBall} selectableBallIds={selectableBallIds} preparing={preparing} ready={Boolean(prepared)} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectBall} /> : <FinishSelectionStep scenario={scenario} selectedBall={selectedBall} finishOptions={finishOptions} selectedOptionId={selectedOptionId} busy={busy} headingRef={sidebarHeading} ballChoiceLabel={ballChoiceLabel} onSelect={selectOption} />}
             {shortlistMode && shortlist.length === 2 && (result || selectionStep === 'finish') && <p className="panel-description" aria-label="Your shortlist">Your shortlist: balls {shortlist.join(' and ')}. {selectedBall !== null && `Opener: ball ${selectedBall}.`}</p>}
+            {prepared?.backwardPlan && <BackwardPlanning key={`backward-${scenario.level}-${scenario.seed}`} prepared={prepared} result={result} ready={backwardReady} onReady={() => setBackwardReady(true)} />}
             {prepared && scenario.curriculum?.learning && <LessonComparison key={`${scenario.level}-${scenario.seed}`} prepared={prepared} result={result} hidden={!result && selectionStep !== 'finish'} busy={busy} />}
             {error && <div role="alert" className="error-message"><p>{error}</p>{!prepared && !preparing && <Button variant="outline" size="sm" onClick={() => setPrepareAttempt(attempt => attempt + 1)}>Retry preparation</Button>}</div>}
           </div>
           <div className="shot-panel-actions">
             {result ? <ResultActions playing={playing} lastLesson={lastLesson} sandbox={sandbox} onReplay={() => playShot(result.best)} onNext={advanceRound} />
-              : selectionStep === 'ball' ? <BallSelectionActions selectedBall={selectedBall} selectedBallLabel={selectedBall === null ? '' : ballChoiceLabel(selectedBall)} preparing={preparing} ready={Boolean(prepared)} positionLesson={predictFinish} singleChoice={selectableBallIds.length === 1} plantLesson={Boolean(plant)} onContinue={() => setSelectionStep('finish')} />
+              : selectionStep === 'ball' ? <BallSelectionActions selectedBall={selectedBall} selectedBallLabel={selectedBall === null ? '' : ballChoiceLabel(selectedBall)} preparing={preparing} ready={Boolean(prepared) && !backwardPending} positionLesson={predictFinish} singleChoice={selectableBallIds.length === 1} plantLesson={Boolean(plant)} onContinue={() => { if (!backwardPending) setSelectionStep('finish') }} />
               : <FinishSelectionActions hasSelection={Boolean(selectedOption)} busy={busy} preparing={preparing} ready={Boolean(prepared)} onSubmit={submit} onBack={() => setSelectionStep('ball')} />}
           </div>
         </aside>
