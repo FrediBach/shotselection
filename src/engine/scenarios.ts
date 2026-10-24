@@ -397,20 +397,21 @@ const LESSONS: readonly Lesson[] = [
   },
   // Build a pattern: introduce one idea, develop it, then combine it with tighter demands.
   {
-    title: 'Read the whole table',
-    description: 'Look beyond the first pot on a four-ball layout.',
-    lesson: 'Practice scanning all four balls before choosing your opener. Compare the first pot and cue-ball finish; this opening exercise does not score access to a particular next ball.',
-    takeaway: 'A pattern starts with reading every ball before taking the first one.',
+    learning: { concept: 'nominated-next-ball', prerequisite: 'intended-next-pocket', comparison: 'nominated-next-ball' },
+    title: 'Name the next ball',
+    description: 'Choose a later ball, then compare openers by the connection they leave.',
+    lesson: 'Nominate ball 2 or 3 as your next ball, then reserve it while choosing an opener. Compare an easier opening cut that loses the connection with a harder cut that preserves it. After the shot, inspect access to your nominated ball from the actual settled layout. The connection check is separate from the opening-shot score; you do not execute a sequence.',
+    takeaway: 'An easy opening pot can lose the ball you planned to play next.',
     briefing: {
-      focus: 'See more than the opening pot',
-      gotcha: 'A tidy first pot can leave the cue ball behind another ball. Check what each finish lets you see.',
+      focus: 'Reserve and verify a named next ball',
+      gotcha: 'A smaller opening cut can leave no permitted route to the nominated ball.',
     },
     layout: [[0.68, 0.81], [1.12, 0.31], [1.91, 0.42], [2.12, 0.98], [0.40, 0.34]],
   },
   {
     title: 'Connect the first two',
     description: 'Play the 1 to the 2 while keeping the remaining balls in view.',
-    lesson: 'Turn your whole-table scan into a two-ball plan. Work backward from a playable shot on the 2, then predict which stroke on the 1 reaches its setup zone.',
+    lesson: 'Turn your whole-table scan into a two-ball plan. Work backward from a playable shot on the 2, then predict which stroke on the 1 reaches its setup zone. After scoring, choose and play the second shot from that settled layout.',
     takeaway: 'Planning backward turns two separate pots into a deliberate sequence.',
     briefing: {
       focus: 'Work backward from the 2',

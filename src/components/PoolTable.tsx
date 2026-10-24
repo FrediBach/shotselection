@@ -11,6 +11,8 @@ import { TABLE, positionToleranceForLevel } from '../engine/constants'
 import { CUSHIONS, POCKET_GEOMETRY } from '../engine/table-geometry'
 import { PlaybackSoundCursor } from '../lib/playback-events'
 
+export type TableReplay = Pick<ShotAnalysis, 'plan' | 'nominal' | 'samplePaths' | 'sampleObjectPaths' | 'sampleBallEnds'>
+
 export interface PoolTableProps {
   scenario: Scenario
   selectedBall: number | null
@@ -21,7 +23,7 @@ export interface PoolTableProps {
   selectedOptionId: string | null
   onSelectOption: (id: string) => void
   selectableBallIds: number[]
-  analysis: ShotAnalysis | null
+  analysis: TableReplay | null
   showEnsemble: boolean
   showFinishes: boolean
   playing: boolean
@@ -445,7 +447,7 @@ function EnsembleFinishes({ trials }: { trials: SimulationBall[][] }) {
 }
 
 function SceneAnalysis({ analysis, showEnsemble, showFinishes, playing, objective, requiredPots }: {
-  analysis: ShotAnalysis
+  analysis: TableReplay
   showEnsemble: boolean
   showFinishes: boolean
   playing: boolean
@@ -532,7 +534,7 @@ function useFlatTablePlayback({ scenario, analysis, playing, playbackKey, onPlay
 }
 
 function FlatAnalysisOverlay({ analysis, showEnsemble, showFinishes, playing, requiredPots }: {
-  analysis: ShotAnalysis
+  analysis: TableReplay
   showEnsemble: boolean
   showFinishes: boolean
   playing: boolean

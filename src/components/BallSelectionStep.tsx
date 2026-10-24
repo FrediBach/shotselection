@@ -4,6 +4,7 @@ import type { Scenario } from '@/engine/types'
 import BallIcon from './BallIcon'
 
 interface Props {
+  reservedBallId?: number | null;
   scenario: Scenario
   selectedBall: number | null
   selectableBallIds: number[]
@@ -47,25 +48,26 @@ function ballSelectionCopy({ objective, bank, plant, trick, conditions }: Scenar
   }
 }
 
-function BallChoice({ ball, scenario, selected, selectable, preparing, ready, ballChoiceLabel, onSelect }: Pick<Props, 'scenario' | 'preparing' | 'ready' | 'ballChoiceLabel' | 'onSelect'> & {
+function BallChoice({ ball, reservedBallId, scenario, selected, selectable, preparing, ready, ballChoiceLabel, onSelect }: Pick<Props, 'scenario' | 'preparing' | 'ready' | 'ballChoiceLabel' | 'onSelect'> & {
+  reservedBallId?: number | null
   ball: Scenario['balls'][number]
   selected: boolean
   selectable: boolean
 }) {
   const { objective, plant, trick } = scenario
-  return <button className={`ball-choice ${selected ? 'selected' : ''}`} onClick={() => onSelect(ball.id)} disabled={preparing || !selectable} title={ready && !selectable ? unavailableBallReason(scenario, ball.id) : `Choose ${ballChoiceLabel(ball.id).toLowerCase()}`} aria-pressed={selected} aria-label={ballSelectionLabel(scenario, ball.id)}><BallIcon id={ball.id} /><span>{plant || trick ? ballChoiceLabel(ball.id) : `${objective?.nextBallId === ball.id ? 'Next' : 'Ball'} ${ball.id}`}</span>{selected && <span className="ball-check"><Check size={10} /></span>}</button>
+  return <button className={`ball-choice ${selected ? 'selected' : ''}`} onClick={() => onSelect(ball.id)} disabled={preparing || !selectable} title={ready && !selectable ? ball.id === reservedBallId ? 'Reserved for your nominated next shot' : unavailableBallReason(scenario, ball.id) : `Choose ${ballChoiceLabel(ball.id).toLowerCase()}`} aria-pressed={selected} aria-label={ballSelectionLabel(scenario, ball.id)}><BallIcon id={ball.id} /><span>{plant || trick ? ballChoiceLabel(ball.id) : `${objective?.nextBallId === ball.id || reservedBallId === ball.id ? 'Next' : 'Ball'} ${ball.id}`}</span>{selected && <span className="ball-check"><Check size={10} /></span>}</button>
 }
 
-export default function BallSelectionStep({ scenario, selectedBall, selectableBallIds, preparing, ready, headingRef, ballChoiceLabel, onSelect }: Props) {
+export default function BallSelectionStep({ reservedBallId, scenario, selectedBall, selectableBallIds, preparing, ready, headingRef, ballChoiceLabel, onSelect }: Props) {
   const objectBalls = scenario.balls.filter(ball => ball.id > 0)
   const { description, unavailable, hint } = ballSelectionCopy(scenario, objectBalls.length)
   const selectableBalls = new Set(selectableBallIds)
   const singleChoice = ready && !preparing && selectableBallIds.length === 1
   return <>
     <h2 ref={headingRef} tabIndex={-1}>Choose your ball.</h2>
-    <p className="panel-description">{scenario.curriculum?.learning?.comparison === 'backward-plan' ? 'Ball 1 opens the shot. First plan the contact on ball 2 using the comparison below; then choose the opening stroke.' : description}</p>
-    <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <BallChoice key={ball.id} ball={ball} scenario={scenario} selected={selectedBall === ball.id} selectable={selectableBalls.has(ball.id)} preparing={preparing} ready={ready} ballChoiceLabel={ballChoiceLabel} onSelect={onSelect} />)}</div>
-    {ready && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">{unavailable}</p>}
+    <p className="panel-description">{scenario.curriculum?.learning?.comparison === 'nominated-next-ball' ? 'Nominate your next ball below, then choose a different ball as the opener.' : scenario.curriculum?.learning?.comparison === 'backward-plan' ? 'Ball 1 opens the shot. First plan the contact on ball 2 using the comparison below; then choose the opening stroke.' : description}</p>
+    <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <BallChoice reservedBallId={reservedBallId} key={ball.id} ball={ball} scenario={scenario} selected={selectedBall === ball.id} selectable={selectableBalls.has(ball.id)} preparing={preparing} ready={ready} ballChoiceLabel={ballChoiceLabel} onSelect={onSelect} />)}</div>
+    {ready && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">{reservedBallId ? `Ball ${reservedBallId} is reserved for your next shot. Other dimmed balls have no three playable finishes.` : unavailable}</p>}
     <div className="wizard-hint"><MousePointer2 size={17} /><p>{scenario.curriculum?.learning?.comparison === 'backward-plan' ? 'Answer the contact question or show the plan without answering. Either reveals the landing area and lets you choose a stroke.' : singleChoice ? `${ballChoiceLabel(selectableBallIds[0])} ${scenario.trick ? 'starts this trick' : 'is the only playable ball'} and is selected automatically. Choose a stroke when you’re ready.` : hint}</p></div>
   </>
 }

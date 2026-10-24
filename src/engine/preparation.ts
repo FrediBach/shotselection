@@ -1,3 +1,4 @@
+import { findNominatedBallContrasts } from './nominated-ball';
 import { signedAngleEvidence } from './signed-angle';
 import { buildDrawDecayExperiment } from './draw-decay';
 import { contactAccessEvidence } from './contact-access';
@@ -425,6 +426,11 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
       ...(trick ? { trick: generated.trick ?? trick } : {}) };
     const prepared = prepareLayout(layout);
     if (prepared.balls.length && supportsGeometryComparison(prepared)) {
+      if (scenario.curriculum?.learning?.comparison === 'nominated-next-ball') {
+        const nextBallNominations = findNominatedBallContrasts(prepared);
+        if (nextBallNominations.length >= 2) return { ...prepared, nextBallNominations };
+        continue;
+      }
       if (scenario.curriculum?.learning?.comparison === 'backward-plan') {
         const backwardPlan = buildBackwardPlan(prepared);
         if (backwardPlan) return { ...prepared, backwardPlan };
