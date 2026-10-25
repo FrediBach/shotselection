@@ -25,17 +25,19 @@ export default function SandboxSetup({ character, ...props }: SandboxSetupProps 
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => { heading.current?.focus({ preventScroll: true }) }, [])
 
-  return <section className="sandbox-setup" aria-labelledby="sandbox-heading">
-    <div className="sandbox-intro">
+  const modeSwitcher = <div className="sandbox-mode-options sandbox-placement-options" role="group" aria-label="Sandbox mode">
+      <button type="button" aria-label="Scenario mode" aria-pressed={mode === 'scenario'} onClick={() => setMode('scenario')}><Dices size={21} /><span><strong>Scenario mode</strong><span>A practice layout with ready-made shot choices.</span></span></button>
+      <button type="button" aria-label="Lab mode" aria-pressed={mode === 'lab'} onClick={() => setMode('lab')}><FlaskConical size={21} /><span><strong>Lab mode</strong><span>Your balls, your strokes, your comparisons.</span></span></button>
+    </div>
+
+  return <section className={`sandbox-setup${mode === 'lab' ? ' sandbox-setup-lab' : ''}`} aria-labelledby="sandbox-heading">
+    <div className={mode === 'lab' ? 'sr-only' : 'sandbox-intro'}>
       <span className="eyebrow"><FlaskConical size={14} /> THE SANDBOX</span>
       <h1 id="sandbox-heading" ref={heading} tabIndex={-1}>Make room to experiment.</h1>
       <p>Practice a scenario or build your own experiment. Compare how ball positions, strength, aim, and spin change your chances.</p>
     </div>
-    <div className="sandbox-mode-options sandbox-placement-options" role="group" aria-label="Sandbox mode">
-      <button type="button" aria-label="Scenario mode" aria-pressed={mode === 'scenario'} onClick={() => setMode('scenario')}><Dices size={21} /><span><strong>Scenario mode</strong><span>A practice layout with ready-made shot choices.</span></span></button>
-      <button type="button" aria-label="Lab mode" aria-pressed={mode === 'lab'} onClick={() => setMode('lab')}><FlaskConical size={21} /><span><strong>Lab mode</strong><span>Your balls, your strokes, your comparisons.</span></span></button>
-    </div>
-    {mode === 'lab' ? <LabMode character={character} /> : <ScenarioSetup {...props} />}
+    {mode === 'scenario' && modeSwitcher}
+    {mode === 'lab' ? <LabMode character={character} modeSwitcher={modeSwitcher} /> : <ScenarioSetup {...props} />}
   </section>
 }
 

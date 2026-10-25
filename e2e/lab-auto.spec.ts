@@ -81,7 +81,12 @@ async function openSingleManualOption(page: Page) {
   await page.getByRole('button', { name: 'Start sandbox', exact: true }).click()
   await page.getByRole('button', { name: 'Lab mode', exact: true }).click()
   await expect(page.getByRole('checkbox', { name: 'Auto-adapt option 1', exact: true })).toBeChecked()
-  for (const toggle of await page.getByRole('checkbox', { name: /^Auto-adapt option / }).all()) await toggle.uncheck()
+  const cancelAdapting = page.getByRole('button', { name: 'Cancel adapting', exact: true })
+  if (await cancelAdapting.isVisible()) await cancelAdapting.click()
+  for (let ordinal = 1; ordinal <= 3; ordinal++) {
+    await page.getByRole('button', { name: new RegExp(`^Edit option ${ordinal}:`) }).click()
+    await page.getByRole('checkbox', { name: `Auto-adapt option ${ordinal}`, exact: true }).uncheck()
+  }
   await page.getByRole('button', { name: 'Remove option 3', exact: true }).click()
   await page.getByRole('button', { name: 'Remove option 2', exact: true }).click()
   await page.evaluate(() => {
@@ -91,6 +96,14 @@ async function openSingleManualOption(page: Page) {
     observation.terminatedWorkers = 0
   })
   return page.getByRole('group', { name: 'Option 1', exact: true })
+}
+
+async function layoutDescription(page: Page) {
+  await page.getByRole('button', { name: 'Edit layout', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Table layout', exact: true })
+  const description = await dialog.locator('#sandbox-table-description').textContent()
+  await dialog.getByRole('button', { name: 'Done', exact: true }).click()
+  return description
 }
 
 async function setLocks(option: Locator, locks: LabShotLocks) {
@@ -127,7 +140,7 @@ test('auto-fit repairs free values, preserves chosen locks, and reports impossib
   await strength.fill('0.1')
   await setLocks(option, { ...allLocked, speed: false })
   const before = await settings(option)
-  const layout = await page.locator('#sandbox-table-description').textContent()
+  const layout = await layoutDescription(page)
   await page.getByRole('button', { name: 'Auto-fit options', exact: true }).click()
   await expect(option.locator('.lab-fit-status[data-status="found"]')).toBeVisible({ timeout: 60_000 })
   let observed = await page.evaluate(() => (window as ObservedWindow).autoObservation)
@@ -137,7 +150,7 @@ test('auto-fit repairs free values, preserves chosen locks, and reports impossib
   expect(observed.results[0].settings).toEqual({ ...before, speed: expect.any(Number) })
   expect(observed.results[0].settings.speed).toBeGreaterThan(0.1)
   expect(await settings(option)).toEqual(observed.results[0].settings)
-  await expect(page.locator('#sandbox-table-description')).toHaveText(layout!)
+  expect(await layoutDescription(page)).toBe(layout)
 
   // Editing locks the chosen strength; auto-adapt must repair the bad aim
   // without changing that strength or the nominated ball and pocket.

@@ -1,13 +1,15 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
-import { ChevronLeft, ChevronRight, Copy, FlaskConical, LoaderCircle, LockKeyhole, Plus, RotateCcw, Sparkles, Trash2, UnlockKeyhole } from 'lucide-react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { CircleHelp, Copy, FlaskConical, Layers3, LoaderCircle, LockKeyhole, Plus, RotateCcw, SlidersHorizontal, Sparkles, Trash2, UnlockKeyhole } from 'lucide-react'
 import { analyzeLabAsync, fitLabShotAsync } from '../engine/client'
-import { POCKETS, TABLE } from '../engine/constants'
+import { POCKETS } from '../engine/constants'
 import { createLabScenario, DEFAULT_LAB_SHOT_SETTINGS, generateLabVariants, LAB_SHOT_LIMITS, MAX_LAB_BALLS, MAX_LAB_VARIANTS, resizeLabBalls } from '../engine/lab'
-import type { LabResult, LabShotAnalysis, LabShotSettings, LabVariant } from '../engine/lab'
+import type { LabResult, LabShotSettings, LabVariant } from '../engine/lab'
 import type { LabShotLocks } from '../engine/lab-auto'
 import { validateSandboxLayout } from '../engine/sandbox'
-import type { PlayerCharacter, Scenario, Vec2 } from '../engine/types'
+import type { PlayerCharacter, Scenario } from '../engine/types'
 import BallLayoutEditor from './BallLayoutEditor'
+import LabResults from './LabResults'
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from './ui/dialog'
 import { Button } from './ui/button'
 import './LabMode.css'
 
@@ -18,10 +20,6 @@ const NUMERIC_FIELDS: { key: NumericSetting; label: string }[] = [
   { key: 'sideSpin', label: 'Sidespin (rad/s)' },
   { key: 'aimOffset', label: 'Aim offset (°)' },
 ]
-const BALL_COLORS = ['#f4f1e7', '#e9b14e', '#6594d2', '#db7466', '#a68cce', '#e59857', '#71aa89', '#b7747d', '#787e79']
-const ballColor = (id: number) => BALL_COLORS[id > 8 ? id - 8 : id] ?? '#c4c0a7'
-const percent = (rate: number) => `${(rate * 100).toFixed(1)}%`
-const points = (path: Vec2[]) => path.map(point => `${point.x},${point.y}`).join(' ')
 const freshSeed = () => Math.floor(Math.random() * 0x7fffffff)
 const initialVariants = (): LabVariant[] => [0.7, 1.3, 2.1].map((speed, index) => ({
   id: `lab-option-${index + 1}`, label: ['Soft', 'Medium', 'Firm'][index], settings: { ...DEFAULT_LAB_SHOT_SETTINGS, speed },
@@ -96,8 +94,7 @@ function MorphEditor({ scenario, variants, value, onChange, onGenerate }: { scen
   const { start, end, steps } = value
   const error = morphValidation(value)
   const tooMany = variants.length + steps > MAX_LAB_VARIANTS
-  return <details className="lab-morph">
-    <summary>Morph between two strokes <span>Generate evenly spaced options</span></summary>
+  return <div className="lab-morph">
     <div className="lab-morph-content">
       <p className="lab-note">Set a start and an end. Every numeric value changes together in equal steps; the ball and pocket stay fixed. Both endpoints are included. Generated options start with auto-adapt off. Their target and varied values are locked, so fitting later preserves your series while adapting the other values.</p>
       <div className="lab-morph-toolbar">
@@ -115,104 +112,25 @@ function MorphEditor({ scenario, variants, value, onChange, onGenerate }: { scen
       </div>
       {error ? <p className="lab-error" role="status">{error}</p> : tooMany ? <p className="lab-note">Appending would exceed {MAX_LAB_VARIANTS} options. Reduce the steps, remove options, or replace the current list.</p> : <p className="lab-note">Append keeps all {variants.length} existing options. Replace builds a new list of {steps} options.</p>}
     </div>
-  </details>
+  </div>
 }
 
-function EnsembleDiagram({ scenario, shot, showPaths, showEnds }: { scenario: Scenario; shot: LabShotAnalysis; showPaths: boolean; showEnds: boolean }) {
-  const titleId = useId()
-  const clipId = useId().replace(/:/g, '')
-  return <svg className="lab-ensemble-table" viewBox="-.13 -.13 2.8 1.53" role="img" aria-labelledby={titleId}>
-    <title id={titleId}>{shot.plan.label}: {shot.samples} simulated trials. Success {percent(shot.successRate)}, scratch {percent(shot.scratchRate)}. The solid lines show the intended stroke.</title>
-    <defs><clipPath id={clipId}><rect x={-.06} y={-.06} width={TABLE.length + .12} height={TABLE.width + .12} /></clipPath></defs>
-    <rect x={-.105} y={-.105} width={TABLE.length + .21} height={TABLE.width + .21} rx={.075} fill="#111a15" stroke="#695f43" strokeWidth={.012} />
-    <rect x={-.04} y={-.04} width={TABLE.length + .08} height={TABLE.width + .08} rx={.02} fill="#39553c" />
-    <rect width={TABLE.length} height={TABLE.width} fill="#48674b" />
-    {POCKETS.map(pocket => <circle key={pocket.id} cx={pocket.position.x} cy={pocket.position.y} r={pocket.kind === 'corner' ? TABLE.cornerPocketRadius : TABLE.sidePocketRadius} fill="#0c110e" stroke={pocket.id === shot.plan.pocketId ? '#f4ce8a' : '#8c7a54'} strokeWidth={pocket.id === shot.plan.pocketId ? .013 : .006} />)}
-    <g clipPath={`url(#${clipId})`} fill="none" strokeLinejoin="round">
-      {showPaths && <>
-        {shot.samplePaths.map((path, index) => <polyline key={`cue-${index}`} points={points(path)} stroke="#99e8ed" strokeOpacity={.14} strokeWidth={.005} />)}
-        {shot.sampleObjectPaths.map((trial, index) => <polyline key={`object-${index}`} points={points(trial.path)} stroke={trial.outcome === 'pot' ? '#f2cc8c' : '#ed9786'} strokeOpacity={.23} strokeWidth={.005} />)}
-      </>}
-      {showEnds && shot.sampleBallEnds.flatMap((balls, index) => balls.filter(ball => !ball.pocketed).map(ball => <circle key={`${index}-${ball.id}`} cx={ball.position.x} cy={ball.position.y} r={.018} stroke={ballColor(ball.id)} strokeOpacity={.5} strokeWidth={.004} />))}
-      <polyline points={points(shot.nominal.cuePath)} stroke="#c0f7fb" strokeWidth={.009} />
-      <polyline points={points(shot.nominal.objectPath)} stroke="#f5cc86" strokeWidth={.009} />
-      {!shot.nominal.scratch && <circle cx={shot.nominal.cueEnd.x} cy={shot.nominal.cueEnd.y} r={.031} stroke="#f4f1e7" strokeWidth={.006} />}
-    </g>
-    {scenario.balls.map(ball => <g key={ball.id} transform={`translate(${ball.position.x} ${ball.position.y})`}>
-      <circle r={TABLE.ballRadius} fill={ballColor(ball.id)} stroke="#1b271d" strokeWidth={.003} />
-      {ball.id !== 0 && <><circle r={TABLE.ballRadius * .6} fill="#f5f0df" /><text textAnchor="middle" dominantBaseline="central" fontFamily="Arial, sans-serif" fontSize={.027} fontWeight={700} fill="#25291f">{ball.id}</text></>}
-    </g>)}
-  </svg>
-}
-
-function LabResults({ result, variants, playerName }: { result: LabResult; variants: LabVariant[]; playerName: string }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [showPaths, setShowPaths] = useState(true)
-  const [showEnds, setShowEnds] = useState(true)
-  const inspector = useRef<HTMLDivElement>(null)
-  const selectedIndex = Math.max(0, result.shots.findIndex(entry => entry.plan.id === selectedId))
-  const shot = result.shots[selectedIndex]
-  useEffect(() => { inspector.current?.focus({ preventScroll: true }) }, [])
-
-  function stepOption(direction: number) {
-    setSelectedId(previous => {
-      const index = Math.max(0, result.shots.findIndex(entry => entry.plan.id === previous))
-      return result.shots[(index + direction + result.shots.length) % result.shots.length].plan.id
-    })
-  }
-
-  function navigateOptions(event: KeyboardEvent<HTMLElement>) {
-    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || result.shots.length < 2) return
-    const target = event.target as HTMLElement
-    if (target.closest('input, select, textarea, [contenteditable]:not([contenteditable="false"]), [role="slider"], [role="spinbutton"]')) return
-    const direction = event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : 0
-    if (!direction) return
-    event.preventDefault()
-    stepOption(direction)
-  }
-
-  if (!shot) return null
-  const failures = [
-    ['Ball not potted', shot.failures.misses], ['Wrong / no first contact', shot.failures.wrongContact], ['Wrong pocket', shot.failures.wrongPocket], ['Cue-ball scratch', shot.failures.scratch], ['Still moving at limit', shot.failures.unsettled],
-  ] as const
-  return <section className="lab-results" aria-labelledby="lab-results-heading" onKeyDown={navigateOptions}>
-    <div className="lab-section-heading"><div><span className="eyebrow">03 · OBSERVE THE DIFFERENCE</span><h2 id="lab-results-heading">Compare the ensembles.</h2></div><span className="lab-badge">{result.samples} trials / option</span></div>
-    <p className="lab-note">Every option uses {playerName}’s precision and the same seeded stroke errors for a paired comparison. Success means contacting your chosen ball first, potting it in your chosen pocket, and settling without a scratch.</p>
-    <div className="lab-comparison-scroll"><table className="lab-comparison" aria-label="Lab comparison"><thead><tr><th scope="col">Option</th><th scope="col">Success</th><th scope="col">Pot</th><th scope="col">Scratch</th><th scope="col">Cue spread</th></tr></thead><tbody>{result.shots.map((entry, index) => <tr key={entry.plan.id} className={entry.plan.id === shot.plan.id ? 'lab-comparison-selected' : ''}>
-      <th scope="row"><button type="button" aria-label={`Inspect ${entry.plan.label}`} aria-pressed={entry.plan.id === shot.plan.id} onClick={() => setSelectedId(entry.plan.id)}><span className="lab-option-number">{String(index + 1).padStart(2, '0')}</span><span>{entry.plan.label}<small>Ball {entry.plan.ballId} → {POCKETS.find(pocket => pocket.id === entry.plan.pocketId)?.name}<br />{entry.plan.speed.toFixed(2)} m/s · draw/follow {entry.plan.topSpin.toFixed(2)}<br />Sidespin {entry.plan.sideSpin.toFixed(1)} rad/s · aim offset {(variants.find(variant => variant.id === entry.plan.id)?.settings.aimOffset ?? 0).toFixed(2)}°</small></span></button></th>
-      <td><strong>{percent(entry.successRate)}</strong></td><td>{percent(entry.potRate)}</td><td>{percent(entry.scratchRate)}</td><td>{entry.sampleEnds.length ? `${(entry.spread * 100).toFixed(1)} cm` : 'n/a'}</td>
-    </tr>)}</tbody></table></div>
-    <p className="lab-note lab-comparison-note">Pot counts the chosen pocket with correct first contact; a pot can still scratch or fail to settle. Cue spread is the RMS distance from the mean finish among settled, non-scratch cue balls (n/a when there are none). These are simulated estimates; use more trials to investigate close differences.</p>
-    <div ref={inspector} className="lab-inspector" role="group" aria-label="Ensemble inspector" aria-describedby="lab-inspector-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" tabIndex={0} onPointerDown={event => {
-      if (event.button === 0 && (event.target as Element).closest('.lab-ensemble-table')) inspector.current?.focus({ preventScroll: true })
-    }}>
-      <div className="lab-inspection-heading">
-        <div className="lab-option-navigation">
-          <Button type="button" variant="outline" size="icon" aria-label="Previous play option" title="Previous option (← or ↑)" disabled={result.shots.length < 2} onClick={() => stepOption(-1)}><ChevronLeft size={17} aria-hidden="true" /></Button>
-          <Button type="button" variant="outline" size="icon" aria-label="Next play option" title="Next option (→ or ↓)" disabled={result.shots.length < 2} onClick={() => stepOption(1)}><ChevronRight size={17} aria-hidden="true" /></Button>
-          <h3><span>{selectedIndex + 1} / {result.shots.length}</span> {shot.plan.label}</h3>
-        </div>
-        <div className="lab-display-options"><label><input type="checkbox" checked={showPaths} onChange={event => setShowPaths(event.target.checked)} /> Trial paths</label><label><input type="checkbox" checked={showEnds} onChange={event => setShowEnds(event.target.checked)} /> Ball finishes</label></div>
-      </div>
-      <p id="lab-inspector-help" className="lab-inspector-help">Use ← / → or ↑ / ↓ to step through options.</p>
-      <p className="lab-inspection-stats" aria-live="polite" aria-atomic="true"><span className="sr-only">Option {selectedIndex + 1} of {result.shots.length}, {shot.plan.label}. </span><span>Success <strong>{percent(shot.successRate)}</strong></span><span>Pot <strong>{percent(shot.potRate)}</strong></span><span>Scratch <strong>{percent(shot.scratchRate)}</strong></span><span>Cue spread <strong>{shot.sampleEnds.length ? `${(shot.spread * 100).toFixed(1)} cm` : 'n/a'}</strong></span></p>
-      <EnsembleDiagram scenario={result.scenario} shot={shot} showPaths={showPaths} showEnds={showEnds} />
-    </div>
-    <p className="lab-legend"><span><i className="lab-key-cue" /> Cue path</span><span><i className="lab-key-object" /> Successful object path</span><span><i className="lab-key-miss" /> Failed object path</span><span>Solid lines: intended stroke · Rings: trial finishes</span><span>{showPaths ? `${shot.samplePaths.length} cue paths and ${shot.sampleObjectPaths.length} object paths shown.` : 'Trial paths hidden.'}</span></p>
-    <div className="lab-failures"><div><h3>What went wrong?</h3><p>Counts out of {shot.samples} trials. A trial can have more than one failure.</p></div><dl>{failures.map(([label, count]) => <div key={label}><dt>{label}</dt><dd>{count}<span> / {shot.samples}</span></dd></div>)}</dl></div>
-  </section>
-}
-
-export default function LabMode({ character }: { character: PlayerCharacter }) {
+export default function LabMode({ character, modeSwitcher }: { character: PlayerCharacter; modeSwitcher: ReactNode }) {
   const [scenario, setScenario] = useState(() => createLabScenario(freshSeed()))
   const [variants, setVariants] = useState<LabVariant[]>(initialVariants)
   const [assistance, setAssistance] = useState<Record<string, ShotAssistance>>(() => Object.fromEntries(initialVariants().map(variant => [variant.id, freshAssistance()])))
   const [samples, setSamples] = useState(64)
   const [morph, setMorph] = useState<MorphSettings>(() => ({ start: { ...DEFAULT_LAB_SHOT_SETTINGS, speed: .7 }, end: { ...DEFAULT_LAB_SHOT_SETTINGS, speed: 2.1 }, steps: 5 }))
   const [result, setResult] = useState<LabResult | null>(null)
+  const [stale, setStale] = useState(false)
+  const [selectedId, setSelectedId] = useState('lab-option-1')
+  const [inspectedId, setInspectedId] = useState('lab-option-1')
+  const [dialog, setDialog] = useState<'layout' | 'morph' | 'guide' | null>(null)
+  const [mobileView, setMobileView] = useState<'edit' | 'results'>('edit')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
+  const selectedIdRef = useRef(selectedId)
   const nextId = useRef(4)
   const version = useRef(0)
   const controller = useRef<AbortController | null>(null)
@@ -224,6 +142,10 @@ export default function LabMode({ character }: { character: PlayerCharacter }) {
   const fitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingFits = useRef(new Set<string>())
   const heading = useRef<HTMLHeadingElement>(null)
+  const optionPicker = useRef<HTMLDivElement>(null)
+  const pendingEditorFocus = useRef<string | null>(null)
+  const selectedIndex = Math.max(0, variants.findIndex(variant => variant.id === selectedId))
+  const selected = variants[selectedIndex]
   const geometryError = validateSandboxLayout(scenario)
   const variantError = variants.map((variant, index) => {
     const invalid = settingsError(variant.settings) ?? (!scenario.balls.some(ball => ball.id === variant.settings.ballId && ball.id !== 0) ? `Ball ${variant.settings.ballId} is unavailable. Choose a ball on the table or unlock Ball and fit again.` : null)
@@ -237,12 +159,33 @@ export default function LabMode({ character }: { character: PlayerCharacter }) {
     return () => { version.current += 1; controller.current?.abort(); cancelFitWork() }
   }, [])
 
+  useEffect(() => {
+    const picker = optionPicker.current
+    const button = picker?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')
+    if (picker && button) {
+      const pickerBounds = picker.getBoundingClientRect()
+      const buttonBounds = button.getBoundingClientRect()
+      if (buttonBounds.top < pickerBounds.top) picker.scrollTop -= pickerBounds.top - buttonBounds.top
+      else if (buttonBounds.bottom > pickerBounds.bottom) picker.scrollTop += buttonBounds.bottom - pickerBounds.bottom
+    }
+    if (pendingEditorFocus.current === selected.id) {
+      document.getElementById(`${selected.id}-name`)?.focus({ preventScroll: true })
+      pendingEditorFocus.current = null
+    }
+  }, [selected.id])
+
+  function selectVariant(id: string) {
+    selectedIdRef.current = id
+    setSelectedId(id)
+    if (result?.shots.some(shot => shot.plan.id === id)) setInspectedId(id)
+  }
+
   function invalidate() {
     version.current += 1
     controller.current?.abort()
     controller.current = null
     setBusy(false)
-    setResult(null)
+    setStale(true)
     setError(null)
     setNotice('')
   }
@@ -384,11 +327,21 @@ export default function LabMode({ character }: { character: PlayerCharacter }) {
     const addedAssistance = freshAssistance(sourceAssistance?.enabled ?? true, { ...sourceAssistance?.locks })
     writeVariants([...variantsRef.current, { id, label: source ? `${source.label} copy` : `Option ${number}`, settings: { ...(source?.settings ?? DEFAULT_LAB_SHOT_SETTINGS) } }])
     writeAssistance({ ...assistanceRef.current, [id]: addedAssistance })
+    pendingEditorFocus.current = id
+    selectVariant(id)
+    setMobileView('edit')
     queueFits(addedAssistance.enabled ? [id] : [])
   }
 
   function removeVariant(id: string) {
+    if (variantsRef.current.length <= 1) return
     invalidate()
+    const index = variantsRef.current.findIndex(variant => variant.id === id)
+    if (id === selected.id) {
+      const nextSelectedId = variantsRef.current[index + 1]?.id ?? variantsRef.current[index - 1].id
+      pendingEditorFocus.current = nextSelectedId
+      selectVariant(nextSelectedId)
+    }
     writeVariants(variantsRef.current.filter(variant => variant.id !== id))
     const nextAssistance = { ...assistanceRef.current }
     delete nextAssistance[id]
@@ -408,7 +361,10 @@ export default function LabMode({ character }: { character: PlayerCharacter }) {
       writeAssistance({ ...(append ? assistanceRef.current : {}), ...Object.fromEntries(generated.map(variant => [variant.id, freshAssistance(false, { ...locks })])) })
       if (!append) pendingFits.current.clear()
       queueFits([])
-      setNotice(`${morph.steps} editable options generated, including both endpoints. Auto-adapt is off; the target and varied values are locked so fitting preserves your steps.`)
+      selectVariant(generated[0].id)
+      setMobileView('edit')
+      setDialog(null)
+      setNotice(`${morph.steps} options generated. Auto-adapt is off; the target and varied values are locked.`)
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'The steps could not be generated.') }
   }
 
@@ -423,7 +379,10 @@ export default function LabMode({ character }: { character: PlayerCharacter }) {
       const analysis = await analyzeLabAsync({ scenario, variants, samples, talents: character.talents }, { signal: abort.signal })
       if (abort.signal.aborted || version.current !== runVersion) return
       setResult(analysis)
-      setNotice('Ensembles ready. Select an option below to inspect its paths and failures.')
+      setInspectedId(selectedIdRef.current)
+      setStale(false)
+      setMobileView('results')
+      setNotice('Ensembles ready. Select an option to compare its results.')
     } catch (reason) {
       if (abort.signal.aborted || version.current !== runVersion) return
       setError(reason instanceof Error ? reason.message : 'The ensembles could not be calculated. Try again.')
@@ -433,24 +392,57 @@ export default function LabMode({ character }: { character: PlayerCharacter }) {
   }
 
   return <div className="lab-mode">
-    <div className="lab-intro"><span className="eyebrow"><FlaskConical size={14} /> THE SHOT LAB</span><h2 ref={heading} tabIndex={-1}>Build your own experiment.</h2><p>Place the balls and start with playable strokes. Set the values you want to explore; auto-adapt adjusts the rest. Compare the ensembles to see which changes alter the odds.</p></div>
-    <section className="lab-layout-section" aria-labelledby="lab-layout-heading">
-      <div className="lab-layout-controls"><span className="eyebrow">01 · SET THE TABLE</span><h3 id="lab-layout-heading">A layout of your own.</h3><label className="lab-field" htmlFor="lab-ball-count"><span>Object balls</span><select id="lab-ball-count" value={scenario.balls.length - 1} onChange={event => changeCount(Number(event.target.value))}>{Array.from({ length: MAX_LAB_BALLS }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} {index === 0 ? 'object ball' : 'object balls'}</option>)}</select></label><p className="lab-note">The white cue ball is always included. Place up to {MAX_LAB_BALLS} object balls anywhere clear of the cushions and each other.</p><Button type="button" variant="outline" size="sm" onClick={() => { changeLayout(resizeLabBalls(createLabScenario(freshSeed()), scenario.balls.length - 1)); setNotice('The layout has been reset. Your shot options are kept.') }}><RotateCcw size={14} /> Reset layout</Button><p className="lab-note">Shots do not need to be good to be tested. A miss, obstruction, or scratch can be the point of the experiment.</p></div>
-      <div className="sandbox-editor lab-layout-editor"><BallLayoutEditor scenario={scenario} onChange={changeLayout} />{geometryError && <p className="lab-error" role="status">{geometryError}</p>}</div>
-    </section>
-
-    <section className="lab-options-section" aria-labelledby="lab-options-heading">
-      <div className="lab-section-heading"><div><span className="eyebrow">02 · DESIGN YOUR STROKES</span><h2 id="lab-options-heading">Change one thing. Or everything.</h2></div><span className="lab-badge">{variants.length} / {MAX_LAB_VARIANTS} options</span></div>
-      <div className="lab-auto-guide"><div><h3><Sparkles size={16} /> You set the constraints. Auto finds a stroke.</h3><p>Editing a value locks it. Use the locks to choose what auto can change, including the ball and pocket. Turn auto-adapt off for a fully manual experiment. A playable stroke succeeds in the intended simulation; run ensembles to measure its reliability.</p></div>{fitting ? <Button type="button" variant="outline" onClick={cancelFits}>Cancel adapting</Button> : <Button type="button" variant="outline" disabled={!!geometryError} onClick={() => { invalidate(); queueFits(variantsRef.current.map(variant => variant.id), 0) }}><Sparkles size={15} /> Auto-fit options</Button>}</div>
-      <p className="lab-note">Strength is the cue ball’s launch speed. Draw / follow is the initial rolling-spin ratio: −1 adds backspin, 0 launches without forward or backspin, +1 is natural forward roll. The cloth changes that spin along the route. Positive sidespin adds left English. An aim offset of 0° points along the direct-pot line; positive angles turn clockwise on the table.</p>
-      <div className="lab-options-grid">{variants.map((variant, index) => <ShotOptionEditor key={variant.id} scenario={scenario} variant={variant} assistance={assistance[variant.id]} index={index} canAdd={variants.length < MAX_LAB_VARIANTS} canRemove={variants.length > 1} onUpdate={(changes, field) => updateVariant(variant.id, changes, field)} onDuplicate={() => addVariant(variant)} onRemove={() => removeVariant(variant.id)} onToggleLock={field => toggleLock(variant.id, field)} onToggleAuto={() => toggleAuto(variant.id)} onFit={() => { invalidate(); queueFits([variant.id], 0) }} />)}</div>
-      <Button type="button" variant="outline" disabled={variants.length >= MAX_LAB_VARIANTS} onClick={() => addVariant()}><Plus size={15} /> Add option</Button>
-
-      <MorphEditor scenario={scenario} variants={variants} value={morph} onChange={value => { invalidate(); setMorph(value) }} onGenerate={generateSteps} />
-      {variantError && <p className="lab-error" role="status">{variantError}</p>}
-      <div className="lab-run"><div><label className="lab-field" htmlFor="lab-samples"><span>Trials per option</span><select id="lab-samples" value={samples} onChange={event => { invalidate(); setSamples(Number(event.target.value)) }}>{[32, 64, 128].map(count => <option key={count} value={count}>{count} trials</option>)}</select></label><p className="lab-note">Using {character.name}’s precision. More trials take longer. Editing the experiment cancels the current run and clears its results.</p></div><div className="lab-run-actions">{busy ? <><span className="lab-running" role="status"><LoaderCircle size={17} className="sandbox-spinner" /> Simulating {variants.length * samples} trials…</span><Button type="button" variant="outline" onClick={() => { invalidate(); setNotice('Run cancelled. Edit your options or run again.') }}>Cancel run</Button></> : <>{fitting && <span className="lab-running" role="status"><LoaderCircle size={17} className="sandbox-spinner" /> Adapting options…</span>}<Button type="button" disabled={!!geometryError || !!variantError || fitting} onClick={() => { void runEnsembles() }}><FlaskConical size={17} /> {error ? 'Retry ensembles' : 'Run ensembles'}</Button></>}</div></div>
-      {error && <p className="lab-error" role="alert">{error}</p>}<p className="lab-run-notice" role="status" aria-live="polite">{notice}</p>
-    </section>
-    {result && <LabResults result={result} variants={variants} playerName={character.name} />}
+    <div className="lab-workspace-heading">
+      <div><h2 ref={heading} tabIndex={-1}><FlaskConical size={21} /> Shot lab</h2><p>Adjust a stroke. Run it. Compare the odds.</p></div>
+      {modeSwitcher}
+      <div className="lab-workspace-tools">
+        <Dialog open={dialog === 'layout'} onOpenChange={open => setDialog(open ? 'layout' : null)}>
+          <DialogTrigger asChild><Button type="button" variant="outline" size="sm"><SlidersHorizontal size={15} /> Edit layout</Button></DialogTrigger>
+          <DialogContent className="lab-dialog lab-layout-dialog">
+            <DialogTitle>Table layout</DialogTitle>
+            <DialogDescription>Move the balls to set up your experiment. Changes apply immediately.</DialogDescription>
+            <div className="lab-layout-toolbar"><label className="lab-field" htmlFor="lab-ball-count"><span>Object balls</span><select id="lab-ball-count" value={scenario.balls.length - 1} onChange={event => changeCount(Number(event.target.value))}>{Array.from({ length: MAX_LAB_BALLS }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} {index === 0 ? 'object ball' : 'object balls'}</option>)}</select></label><Button type="button" variant="outline" size="sm" onClick={() => { changeLayout(resizeLabBalls(createLabScenario(freshSeed()), scenario.balls.length - 1)); setNotice('The layout has been reset. Your shot options are kept.') }}><RotateCcw size={14} /> Reset layout</Button></div>
+            <div className="sandbox-editor lab-layout-editor"><BallLayoutEditor scenario={scenario} onChange={changeLayout} /></div>
+            {geometryError && <p className="lab-error" role="status">{geometryError}</p>}
+            <div className="lab-dialog-footer"><span>The cue ball is always included.</span><Button type="button" onClick={() => setDialog(null)}>Done</Button></div>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={dialog === 'morph'} onOpenChange={open => setDialog(open ? 'morph' : null)}>
+          <DialogTrigger asChild><Button type="button" variant="outline" size="sm" aria-label="Morph between two strokes"><Layers3 size={15} /> Morph strokes</Button></DialogTrigger>
+          <DialogContent className="lab-dialog lab-morph-dialog">
+            <DialogTitle>Morph between two strokes</DialogTitle>
+            <DialogDescription>Build a series of evenly spaced options between two strokes.</DialogDescription>
+            <MorphEditor scenario={scenario} variants={variants} value={morph} onChange={setMorph} onGenerate={generateSteps} />
+          </DialogContent>
+        </Dialog>
+        <Dialog open={dialog === 'guide'} onOpenChange={open => setDialog(open ? 'guide' : null)}>
+          <DialogTrigger asChild><Button type="button" variant="ghost" size="icon" aria-label="Lab guide" title="Lab guide"><CircleHelp size={18} /></Button></DialogTrigger>
+          <DialogContent className="lab-dialog lab-guide-dialog">
+            <DialogTitle>Lab guide</DialogTitle>
+            <DialogDescription>Set up an experiment, vary your strokes, and compare their reliability.</DialogDescription>
+            <h3>Set the constraints. Auto finds a stroke.</h3><p>Editing a value locks it. Use the locks to choose what auto can change, including the ball and pocket. Turn auto-adapt off for a fully manual experiment. A playable stroke succeeds in the intended simulation; run ensembles to measure its reliability.</p>
+            <h3>Know your controls</h3><dl className="lab-guide-fields"><div><dt>Strength</dt><dd>The cue ball’s launch speed in meters per second.</dd></div><div><dt>Draw / follow</dt><dd>The initial rolling-spin ratio: −1 adds backspin, 0 has no forward or backspin, +1 is natural forward roll. The cloth changes spin along the route.</dd></div><div><dt>Sidespin</dt><dd>Positive values add left English, in radians per second.</dd></div><div><dt>Aim offset</dt><dd>0° points along the direct-pot line. Positive angles turn clockwise on the table.</dd></div></dl>
+            <h3>Experiment freely</h3><p>A miss, obstruction, or scratch can be the point of the experiment. Each option uses {character.name}’s precision and the same seeded errors for a paired comparison. More trials help investigate close differences.</p><p>Edits cancel an active run. Previous results stay visible until you run again. Use the arrow keys in the result inspector to step through options.</p>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+    <div className="lab-run">
+      <div className="lab-run-summary"><span className="lab-badge">{variants.length} options · {scenario.balls.length - 1} {scenario.balls.length === 2 ? 'ball' : 'balls'}</span><span>{character.name}’s precision</span></div>
+      <div className="lab-run-actions"><label className="lab-field" htmlFor="lab-samples"><span>Trials per option</span><select id="lab-samples" value={samples} onChange={event => { invalidate(); setSamples(Number(event.target.value)) }}>{[32, 64, 128].map(count => <option key={count} value={count}>{count} trials</option>)}</select></label>{busy ? <><span className="lab-running" role="status"><LoaderCircle size={15} className="sandbox-spinner" /> {variants.length * samples} trials…</span><Button type="button" variant="outline" onClick={() => { invalidate(); setNotice('Run cancelled. Edit your options or run again.') }}>Cancel run</Button></> : <Button type="button" disabled={!!geometryError || !!variantError || fitting} onClick={() => { void runEnsembles() }}>{fitting ? <LoaderCircle size={16} className="sandbox-spinner" /> : <FlaskConical size={16} />} {error ? 'Retry ensembles' : 'Run ensembles'}</Button>}</div>
+    </div>
+    <div className="lab-feedback" aria-live="polite">{error ? <p className="lab-error" role="alert">{error}</p> : geometryError ? <p className="lab-error">{geometryError} Open Edit layout to fix it.</p> : variantError ? <p className="lab-error">{variantError}</p> : <p className="lab-run-notice" role="status">{busy ? 'Simulating your strokes… You can keep editing to cancel this run.' : fitting ? 'Adapting unlocked values…' : notice || 'Ready to experiment. Editing a value locks it; auto adapts the rest.'}</p>}</div>
+    <div className="lab-mobile-navigation" role="group" aria-label="Lab workspace view"><button type="button" aria-pressed={mobileView === 'edit'} onClick={() => setMobileView('edit')}>Edit strokes</button><button type="button" aria-pressed={mobileView === 'results'} onClick={() => setMobileView('results')}>{result ? 'View results' : 'View table'}{result && stale && <span> · Previous run</span>}</button></div>
+    <div className="lab-workspace" data-mobile-view={mobileView}>
+      <section className="lab-options-section" aria-labelledby="lab-options-heading">
+        <div className="lab-section-heading"><h3 id="lab-options-heading">Shot options <span>{variants.length}/{MAX_LAB_VARIANTS}</span></h3><Button type="button" variant="ghost" size="sm" disabled={variants.length >= MAX_LAB_VARIANTS} onClick={() => addVariant()}><Plus size={15} /> Add option</Button></div>
+        <div ref={optionPicker} className="lab-option-picker" role="group" aria-label="Choose a shot option">{variants.map((variant, index) => <button type="button" key={variant.id} aria-label={`Edit option ${index + 1}: ${variant.label}`} aria-pressed={selected.id === variant.id} onClick={() => selectVariant(variant.id)}><span>{String(index + 1).padStart(2, '0')}</span><span>{variant.label || `Option ${index + 1}`}</span></button>)}</div>
+        <ShotOptionEditor key={selected.id} scenario={scenario} variant={selected} assistance={assistance[selected.id]} index={selectedIndex} canAdd={variants.length < MAX_LAB_VARIANTS} canRemove={variants.length > 1} onUpdate={(changes, field) => updateVariant(selected.id, changes, field)} onDuplicate={() => addVariant(selected)} onRemove={() => removeVariant(selected.id)} onToggleLock={field => toggleLock(selected.id, field)} onToggleAuto={() => toggleAuto(selected.id)} onFit={() => { invalidate(); queueFits([selected.id], 0) }} />
+        <div className="lab-batch-actions">{fitting ? <Button type="button" variant="ghost" size="sm" onClick={cancelFits}><LoaderCircle size={14} className="sandbox-spinner" /> Cancel adapting</Button> : <Button type="button" variant="ghost" size="sm" disabled={!!geometryError} onClick={() => { invalidate(); queueFits(variantsRef.current.map(variant => variant.id), 0) }}><Sparkles size={14} /> Auto-fit options</Button>}<span>Applies to all {variants.length}</span></div>
+      </section>
+      <div className="lab-results-panel">
+        {result ? <LabResults result={result} selectedId={inspectedId} onSelect={id => { setInspectedId(id); if (variants.some(variant => variant.id === id)) selectVariant(id) }} stale={stale} /> : <section className="lab-preview" aria-label="Experiment preview"><div className="lab-section-heading"><h3>Your table</h3><span className="lab-badge">9 ft · {scenario.balls.length - 1} object {scenario.balls.length === 2 ? 'ball' : 'balls'}</span></div>{dialog !== 'layout' ? <BallLayoutEditor scenario={scenario} onChange={changeLayout} editable={false} /> : <div className="lab-table-placeholder" />}<div className="lab-preview-note"><FlaskConical size={22} /><h3>A small change can change the odds.</h3><p>Choose a stroke on the left, then run the ensembles.<br />Compare success rates and see every path here.</p></div></section>}
+      </div>
+    </div>
   </div>
 }
