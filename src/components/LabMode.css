@@ -1,5 +1,5 @@
 .lab-mode { min-width: 0; }
-.lab-workspace-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: 16px 0; }
+.lab-workspace-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; margin: 16px 0; }
 .lab-workspace-heading h2 { display: flex; align-items: center; gap: 10px; font-size: 1.65rem; font-weight: 500; letter-spacing: -.7px; margin: 0; }
 .lab-workspace-heading h2 svg { color: var(--gold); }
 .lab-workspace-heading h2:focus { outline: none; }
@@ -92,12 +92,16 @@
 .lab-morph-toolbar { display: flex; align-items: flex-end; gap: 16px; margin: 20px 0; }
 .lab-morph-toolbar .lab-target-fields { flex: 1; margin: 0; }
 .lab-morph-toolbar .ui-button { min-height: 36px; font-size: .6875rem; }
-.lab-morph-endpoints { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.lab-morph-endpoints fieldset { padding: 14px; border: 1px solid #75836860; border-radius: 6px; min-width: 0; margin: 0; }
-.lab-morph-endpoints legend { padding: 0 7px; color: var(--gold); font-size: .75rem; }
-.lab-morph-actions { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+.lab-morph-endpoints, .lab-variation-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.lab-morph-endpoints fieldset, .lab-variation-settings fieldset { padding: 14px; border: 1px solid #75836860; border-radius: 6px; min-width: 0; margin: 0; }
+.lab-morph-endpoints legend, .lab-variation-settings legend { padding: 0 7px; color: var(--gold); font-size: .75rem; }
+.lab-morph-actions, .lab-variation-actions { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
 .lab-morph-actions > .lab-field { max-width: 170px; margin-right: auto; }
-.lab-morph-actions > .ui-button { min-height: 36px; font-size: .75rem; }
+.lab-morph-actions > .ui-button, .lab-variation-actions > .ui-button { min-height: 36px; font-size: .75rem; }
+.lab-variation-source { margin: 18px 0; }
+.lab-variation-settings .lab-target-fields { margin-top: 0; }
+.lab-variation-settings .lab-note { margin-top: 0; }
+.lab-variation-summary { color: var(--gold); font-size: .8125rem; line-height: 1.6; margin: 18px 0 0; }
 .lab-guide-fields { margin: 12px 0; }
 .lab-guide-fields > div { padding: 10px 0; border-bottom: 1px solid #ffffff0c; }
 .lab-guide-fields dt { font-size: .8125rem; color: #dddccc; }
@@ -143,9 +147,9 @@
   .lab-workspace-heading { margin-top: 16px; }
   .lab-option-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .dialog-content.lab-dialog { padding: 22px 18px; }
-  .lab-morph-endpoints { grid-template-columns: minmax(0, 1fr); }
+  .lab-morph-endpoints, .lab-variation-settings { grid-template-columns: minmax(0, 1fr); }
   .lab-morph-toolbar { flex-wrap: wrap; gap: 12px; }
   .lab-morph-toolbar .lab-target-fields { flex-basis: 100%; }
   .lab-morph-actions > .lab-field { max-width: none; flex-basis: 100%; }
-  .lab-morph-actions > .ui-button { width: 100%; }
+  .lab-morph-actions > .ui-button, .lab-variation-actions > .ui-button { width: 100%; }
 }

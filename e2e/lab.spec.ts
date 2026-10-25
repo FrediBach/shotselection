@@ -440,6 +440,135 @@ test('morphs interpolate all stroke values and a cancelled run can be restarted'
   await expect(page.getByText('Results from the previous run. Run again to update.', { exact: true })).toBeVisible()
 })
 
+test('stroke variations copy the selected option and append independent changes for real ensembles', async ({ page }, testInfo) => {
+  test.setTimeout(120_000)
+  await openLab(page)
+  const first = option(page, 1)
+  await first.getByRole('textbox', { name: 'Name', exact: true }).fill('Reference stroke')
+  await setStroke(first, { speed: '1.3', topSpin: '0.2', sideSpin: '2', aimOffset: '1' })
+  const second = await selectOption(page, 2)
+  await second.getByRole('textbox', { name: 'Name', exact: true }).fill('Selected stroke')
+  await second.getByRole('combobox', { name: 'Pocket', exact: true }).selectOption('2')
+  await setStroke(second, { speed: '1.6', topSpin: '0.4', sideSpin: '8', aimOffset: '3' })
+
+  await page.getByRole('button', { name: 'Vary stroke', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Vary one stroke', exact: true })
+  const base = dialog.getByRole('group', { name: 'Base stroke', exact: true })
+  const amounts = dialog.getByRole('group', { name: 'Variation amounts', exact: true })
+  const source = dialog.getByRole('combobox', { name: 'Base option', exact: true })
+  await expect(source.locator('option:checked')).toHaveText('2 · Selected stroke')
+  await expect(base.getByRole('spinbutton', { name: 'Strength (m/s)', exact: true })).toHaveValue('1.6')
+  await expect(base.getByRole('spinbutton', { name: 'Draw / follow', exact: true })).toHaveValue('0.4')
+  await expect(base.getByRole('spinbutton', { name: 'Sidespin (rad/s)', exact: true })).toHaveValue('8')
+  await expect(base.getByRole('spinbutton', { name: 'Aim offset (°)', exact: true })).toHaveValue('3')
+  await expect(dialog.getByRole('combobox', { name: 'Variation pocket', exact: true })).toHaveValue('2')
+  await source.selectOption({ label: '1 · Reference stroke' })
+  await expect(base.getByRole('spinbutton', { name: 'Strength (m/s)', exact: true })).toHaveValue('1.3')
+  await expect(base.getByRole('spinbutton', { name: 'Draw / follow', exact: true })).toHaveValue('0.2')
+  await expect(base.getByRole('spinbutton', { name: 'Sidespin (rad/s)', exact: true })).toHaveValue('2')
+  await expect(base.getByRole('spinbutton', { name: 'Aim offset (°)', exact: true })).toHaveValue('1')
+  await expect(dialog.getByRole('combobox', { name: 'Variation pocket', exact: true })).toHaveValue('1')
+  await dialog.getByRole('combobox', { name: 'Variation ball', exact: true }).selectOption('1')
+  await dialog.getByRole('combobox', { name: 'Variation pocket', exact: true }).selectOption('3')
+  await setStroke(base, { speed: '1.5', topSpin: '0.5', sideSpin: '10', aimOffset: '2' })
+  await setStroke(amounts, { speed: '0.3', topSpin: '0.4', sideSpin: '7', aimOffset: '1.5' })
+  const path = '/tmp/shot-selection-lab-variations-desktop.png'
+  await dialog.screenshot({ path })
+  await testInfo.attach('Single-stroke variation controls on desktop', { path, contentType: 'image/png' })
+  await dialog.getByRole('button', { name: 'Append variations', exact: true }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Edit option / })).toHaveCount(12)
+  for (let ordinal = 4; ordinal <= 12; ordinal++) {
+    const generated = await selectOption(page, ordinal)
+    await expect(generated.getByRole('checkbox', { name: `Auto-adapt option ${ordinal}`, exact: true })).not.toBeChecked()
+    await expect(generated.getByRole('button', { name: /^Unlock / })).toHaveCount(6)
+  }
+  await page.getByRole('button', { name: 'Run ensembles', exact: true }).click()
+  await expect(page.getByRole('table', { name: 'Lab comparison', exact: true })).toBeVisible({ timeout: 90_000 })
+  const observed = await page.evaluate(() => (window as ObservedWindow).labObservation)
+  expect(observed.requests).toHaveLength(1)
+  expect(observed.requests[0].samples).toBe(32)
+  const variants = observed.requests[0].variants
+  expect(variants).toHaveLength(12)
+  expect(new Set(variants.map(variant => variant.id)).size).toBe(12)
+  expect(variants.slice(0, 2)).toMatchObject([
+    { label: 'Reference stroke', settings: { ballId: 1, pocketId: 1, speed: 1.3, topSpin: 0.2, sideSpin: 2, aimOffset: 1 } },
+    { label: 'Selected stroke', settings: { ballId: 1, pocketId: 2, speed: 1.6, topSpin: 0.4, sideSpin: 8, aimOffset: 3 } },
+  ])
+  const settings = { ballId: 1, pocketId: 3, speed: 1.5, topSpin: 0.5, sideSpin: 10, aimOffset: 2 }
+  expect(variants.slice(3)).toMatchObject([
+    { label: 'Base stroke', settings },
+    { label: 'Strength −', settings: { ...settings, speed: expect.closeTo(1.2, 10) } },
+    { label: 'Strength +', settings: { ...settings, speed: expect.closeTo(1.8, 10) } },
+    { label: 'Draw / follow −', settings: { ...settings, topSpin: expect.closeTo(0.1, 10) } },
+    { label: 'Draw / follow +', settings: { ...settings, topSpin: expect.closeTo(0.9, 10) } },
+    { label: 'Sidespin −', settings: { ...settings, sideSpin: 3 } },
+    { label: 'Sidespin +', settings: { ...settings, sideSpin: 17 } },
+    { label: 'Aim offset −', settings: { ...settings, aimOffset: 0.5 } },
+    { label: 'Aim offset +', settings: { ...settings, aimOffset: 3.5 } },
+  ])
+  expect(observed.results).toHaveLength(1)
+  expect(observed.results[0].shots).toHaveLength(12)
+  expect(observed.results[0].shots.every(shot => shot.samples === 32 && shot.sampleBallEnds.length === 32)).toBe(true)
+  expect(observed.results[0].shots.map(shot => shot.plan.label)).toEqual(variants.map(variant => variant.label))
+})
+
+test('stroke variations validate amounts, support replacement at capacity, and fit the mobile dialog', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openLab(page)
+  await setStroke(option(page, 1), { speed: '1.3', topSpin: '0', sideSpin: '0', aimOffset: '0' })
+  const trigger = page.getByRole('button', { name: 'Vary stroke', exact: true })
+  await trigger.click()
+  const dialog = page.getByRole('dialog', { name: 'Vary one stroke', exact: true })
+  const base = dialog.getByRole('group', { name: 'Base stroke', exact: true })
+  const amounts = dialog.getByRole('group', { name: 'Variation amounts', exact: true })
+  const append = dialog.getByRole('button', { name: 'Append variations', exact: true })
+  const replace = dialog.getByRole('button', { name: 'Replace options with variations', exact: true })
+  for (const [label, value] of [['Strength (m/s)', '0.2'], ['Draw / follow', '0.25'], ['Sidespin (rad/s)', '5'], ['Aim offset (°)', '1']]) {
+    await expect(amounts.getByRole('spinbutton', { name: label, exact: true })).toHaveValue(value)
+  }
+  const strengthAmount = amounts.getByRole('spinbutton', { name: 'Strength (m/s)', exact: true })
+  for (const invalid of ['', '-0.2']) {
+    await strengthAmount.fill(invalid)
+    await expect(append).toBeDisabled()
+    await expect(replace).toBeDisabled()
+  }
+  await strengthAmount.fill('0.2')
+  const strength = base.getByRole('spinbutton', { name: 'Strength (m/s)', exact: true })
+  await strength.fill('5')
+  await expect(append).toBeDisabled()
+  await expect(replace).toBeDisabled()
+  await strength.fill('1.3')
+  await expect(append).toBeEnabled()
+  await expect(replace).toBeEnabled()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
+  const path = '/tmp/shot-selection-lab-variations-mobile.png'
+  await page.screenshot({ path, fullPage: true })
+  await testInfo.attach('Single-stroke variation controls on mobile', { path, contentType: 'image/png' })
+  await append.click()
+  await expect(page.getByRole('button', { name: /^Edit option / })).toHaveCount(12)
+
+  await trigger.click()
+  await expect(append).toBeDisabled()
+  await expect(replace).toBeEnabled()
+  // Excluding three axes leaves the base and strength minus/plus, which fit.
+  await setStroke(amounts, { speed: '0.2', topSpin: '0', sideSpin: '0', aimOffset: '0' })
+  await expect(append).toBeEnabled()
+  await append.click()
+  await expect(page.getByRole('button', { name: /^Edit option / })).toHaveCount(15)
+  await trigger.click()
+  await setStroke(amounts, { speed: '0.2', topSpin: '0.25', sideSpin: '5', aimOffset: '1' })
+  await expect(append).toBeDisabled()
+  await expect(replace).toBeEnabled()
+  await replace.click()
+  await expect(dialog).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Edit option / })).toHaveCount(9)
+  await expect(option(page, 1).getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('Base stroke')
+  await expect(option(page, 1).getByRole('checkbox', { name: 'Auto-adapt option 1', exact: true })).not.toBeChecked()
+  await expect(option(page, 1).getByRole('button', { name: /^Unlock / })).toHaveCount(6)
+})
+
 test('mobile lab supports fifteen balls, rejects overlaps, and keeps controls within the viewport', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await openLab(page)

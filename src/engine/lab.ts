@@ -29,6 +29,12 @@ export interface LabShotSettings {
   aimOffset: number;
 }
 
+export type LabVariationAmounts = Pick<LabShotSettings, 'speed' | 'topSpin' | 'sideSpin' | 'aimOffset'>;
+
+export const DEFAULT_LAB_VARIATION_AMOUNTS: LabVariationAmounts = {
+  speed: 0.2, topSpin: 0.25, sideSpin: 5, aimOffset: 1,
+};
+
 export const DEFAULT_LAB_SHOT_SETTINGS: LabShotSettings = {
   ballId: 1, pocketId: 1, speed: 1.3, topSpin: 0, sideSpin: 0, aimOffset: 0,
 };
@@ -138,6 +144,43 @@ export function generateLabVariants(start: LabShotSettings, end: LabShotSettings
     }
     return { id: `lab-step-${index + 1}`, label: `Step ${index + 1}`, settings };
   });
+}
+
+/** Compare the base stroke with independent decreases and increases of each enabled control. */
+export function generateLabVariations(base: LabShotSettings, amounts: LabVariationAmounts): LabVariant[] {
+  validateSettings(base);
+  const controls = [
+    { key: 'speed', label: 'Strength' },
+    { key: 'topSpin', label: 'Draw / follow' },
+    { key: 'sideSpin', label: 'Sidespin' },
+    { key: 'aimOffset', label: 'Aim offset' },
+  ] as const;
+  for (const { key, label } of controls) {
+    const { min, max } = LAB_SHOT_LIMITS[key];
+    if (!Number.isFinite(amounts[key]) || amounts[key] < 0 || amounts[key] > max - min) {
+      throw new Error(`${label} variation must be between 0 and ${max - min}.`);
+    }
+  }
+  if (!controls.some(({ key }) => amounts[key] > 0)) {
+    throw new Error('Set at least one variation amount above zero.');
+  }
+  const variants: LabVariant[] = [{ id: 'lab-variation-base', label: 'Base stroke', settings: { ...base } }];
+  for (const { key, label } of controls) {
+    const { min, max } = LAB_SHOT_LIMITS[key];
+    for (const direction of [-1, 1]) {
+      const boundary = direction < 0 ? min : max;
+      const value = amounts[key] >= Math.abs(boundary - base[key])
+        ? boundary : base[key] + direction * amounts[key];
+      // Each variant changes only its own control, so unchanged values are the only possible duplicates.
+      if (value === base[key]) continue;
+      variants.push({
+        id: `lab-variation-${key}-${direction < 0 ? 'minus' : 'plus'}`,
+        label: `${label} ${direction < 0 ? '−' : '+'}`,
+        settings: { ...base, [key]: value },
+      });
+    }
+  }
+  return variants;
 }
 
 function analyzeVariant(scenario: Scenario, plan: ShotPlan, samples: number, talents: CharacterTalents): LabShotAnalysis {

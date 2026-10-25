@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { CircleHelp, Copy, FlaskConical, Layers3, LoaderCircle, LockKeyhole, Plus, RotateCcw, SlidersHorizontal, Sparkles, Trash2, UnlockKeyhole } from 'lucide-react'
+import { CircleHelp, Copy, FlaskConical, Layers3, LoaderCircle, LockKeyhole, Move, Plus, RotateCcw, SlidersHorizontal, Sparkles, Trash2, UnlockKeyhole } from 'lucide-react'
 import { analyzeLabAsync, fitLabShotAsync } from '../engine/client'
 import { POCKETS } from '../engine/constants'
-import { createLabScenario, DEFAULT_LAB_SHOT_SETTINGS, generateLabVariants, LAB_SHOT_LIMITS, MAX_LAB_BALLS, MAX_LAB_VARIANTS, resizeLabBalls } from '../engine/lab'
-import type { LabResult, LabShotSettings, LabVariant } from '../engine/lab'
+import { createLabScenario, DEFAULT_LAB_SHOT_SETTINGS, DEFAULT_LAB_VARIATION_AMOUNTS, generateLabVariations, generateLabVariants, LAB_SHOT_LIMITS, MAX_LAB_BALLS, MAX_LAB_VARIANTS, resizeLabBalls } from '../engine/lab'
+import type { LabResult, LabShotSettings, LabVariant, LabVariationAmounts } from '../engine/lab'
 import type { LabShotLocks } from '../engine/lab-auto'
 import { validateSandboxLayout } from '../engine/sandbox'
 import type { PlayerCharacter, Scenario } from '../engine/types'
@@ -115,17 +115,57 @@ function MorphEditor({ scenario, variants, value, onChange, onGenerate }: { scen
   </div>
 }
 
+interface VariationSettings { sourceId: string; base: LabShotSettings; amounts: LabVariationAmounts }
+
+function previewVariations(value: VariationSettings, scenario: Scenario): { generated: LabVariant[]; error: string | null } {
+  const invalid = settingsError(value.base) ?? (!scenario.balls.some(ball => ball.id !== 0 && ball.id === value.base.ballId) ? 'Choose a base ball that is on the table.' : null)
+  if (invalid) return { generated: [], error: invalid }
+  try { return { generated: generateLabVariations(value.base, value.amounts), error: null } }
+  catch (reason) { return { generated: [], error: reason instanceof Error ? reason.message : 'Check the variation amounts.' } }
+}
+
+function VariationEditor({ scenario, variants, value, onChange, onGenerate }: { scenario: Scenario; variants: LabVariant[]; value: VariationSettings; onChange: (value: VariationSettings) => void; onGenerate: (append: boolean) => void }) {
+  const sourceId = useId()
+  const { generated, error } = previewVariations(value, scenario)
+  const tooMany = variants.length + generated.length > MAX_LAB_VARIANTS
+  return <div className="lab-variations">
+    <p className="lab-note">Keep the base stroke and explore a lower and higher value for each setting, one setting at a time. The ball, pocket, and other settings stay fixed.</p>
+    <label className="lab-field lab-variation-source" htmlFor={sourceId}><span>Base option</span><select id={sourceId} value={value.sourceId} onChange={event => {
+      const source = variants.find(variant => variant.id === event.target.value)
+      if (source) onChange({ ...value, sourceId: source.id, base: { ...source.settings } })
+    }}>{variants.map((variant, index) => <option key={variant.id} value={variant.id}>{index + 1} · {variant.label || `Option ${index + 1}`}</option>)}</select></label>
+    <div className="lab-variation-settings">
+      <fieldset aria-label="Base stroke"><legend>Base stroke</legend>
+        <ShotTarget scenario={scenario} settings={value.base} prefix="Variation " onChange={base => onChange({ ...value, base })} />
+        <NumericFields settings={value.base} onChange={base => onChange({ ...value, base })} />
+      </fieldset>
+      <fieldset aria-label="Variation amounts"><legend>Variation amounts · ±</legend>
+        <p className="lab-note">Add and subtract these amounts. Set an amount to 0 to keep that setting fixed.</p>
+        <div className="lab-numeric-fields">{NUMERIC_FIELDS.map(({ key, label }) => <NumberField key={key} label={label} value={value.amounts[key]} min={0} max={LAB_SHOT_LIMITS[key].max - LAB_SHOT_LIMITS[key].min} onChange={amount => onChange({ ...value, amounts: { ...value.amounts, [key]: amount } })} />)}</div>
+      </fieldset>
+    </div>
+    <p className="lab-note">Values stop at their limits; unchanged duplicates are skipped. Generated options have auto-adapt off and all values locked to preserve the comparison.</p>
+    {error ? <p className="lab-error" role="status">{error}</p> : <p className="lab-variation-summary" role="status">{generated.length} options: the base stroke + {generated.length - 1} variations.</p>}
+    <div className="lab-variation-actions">
+      <Button type="button" variant="outline" disabled={!!error} onClick={() => onGenerate(false)}>Replace options with variations</Button>
+      <Button type="button" variant="outline" disabled={!!error || tooMany} onClick={() => onGenerate(true)}>Append variations</Button>
+    </div>
+    {!error && <p className="lab-note">{tooMany ? `Appending would exceed ${MAX_LAB_VARIANTS} options. Set some amounts to 0, remove options, or replace the current list.` : `Append keeps all ${variants.length} existing options. Replace builds a new list of ${generated.length} options.`}</p>}
+  </div>
+}
+
 export default function LabMode({ character, modeSwitcher }: { character: PlayerCharacter; modeSwitcher: ReactNode }) {
   const [scenario, setScenario] = useState(() => createLabScenario(freshSeed()))
   const [variants, setVariants] = useState<LabVariant[]>(initialVariants)
   const [assistance, setAssistance] = useState<Record<string, ShotAssistance>>(() => Object.fromEntries(initialVariants().map(variant => [variant.id, freshAssistance()])))
   const [samples, setSamples] = useState(64)
   const [morph, setMorph] = useState<MorphSettings>(() => ({ start: { ...DEFAULT_LAB_SHOT_SETTINGS, speed: .7 }, end: { ...DEFAULT_LAB_SHOT_SETTINGS, speed: 2.1 }, steps: 5 }))
+  const [variation, setVariation] = useState<VariationSettings>(() => ({ sourceId: 'lab-option-1', base: { ...DEFAULT_LAB_SHOT_SETTINGS }, amounts: { ...DEFAULT_LAB_VARIATION_AMOUNTS } }))
   const [result, setResult] = useState<LabResult | null>(null)
   const [stale, setStale] = useState(false)
   const [selectedId, setSelectedId] = useState('lab-option-1')
   const [inspectedId, setInspectedId] = useState('lab-option-1')
-  const [dialog, setDialog] = useState<'layout' | 'morph' | 'guide' | null>(null)
+  const [dialog, setDialog] = useState<'layout' | 'morph' | 'variation' | 'guide' | null>(null)
   const [mobileView, setMobileView] = useState<'edit' | 'results'>('edit')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -368,6 +408,22 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'The steps could not be generated.') }
   }
 
+  function generateVariations(append: boolean) {
+    const { generated, error: invalid } = previewVariations(variation, scenario)
+    if (invalid || (append && variantsRef.current.length + generated.length > MAX_LAB_VARIANTS)) return
+    invalidate()
+    const added = generated.map(variant => ({ ...variant, id: `lab-option-${nextId.current++}` }))
+    const locks: LabShotLocks = { ballId: true, pocketId: true, speed: true, topSpin: true, sideSpin: true, aimOffset: true }
+    writeVariants(append ? [...variantsRef.current, ...added] : added)
+    writeAssistance({ ...(append ? assistanceRef.current : {}), ...Object.fromEntries(added.map(variant => [variant.id, freshAssistance(false, { ...locks })])) })
+    if (!append) pendingFits.current.clear()
+    queueFits([])
+    selectVariant(added[0].id)
+    setMobileView('edit')
+    setDialog(null)
+    setNotice(`${added.length} options generated. Auto-adapt is off; all values are locked to preserve the variations.`)
+  }
+
   async function runEnsembles() {
     if (geometryError || variantError || busy || fitting) return
     invalidate()
@@ -415,6 +471,17 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
             <MorphEditor scenario={scenario} variants={variants} value={morph} onChange={setMorph} onGenerate={generateSteps} />
           </DialogContent>
         </Dialog>
+        <Dialog open={dialog === 'variation'} onOpenChange={open => {
+          if (open) setVariation(previous => ({ ...previous, sourceId: selected.id, base: { ...selected.settings } }))
+          setDialog(open ? 'variation' : null)
+        }}>
+          <DialogTrigger asChild><Button type="button" variant="outline" size="sm"><Move size={15} /> Vary stroke</Button></DialogTrigger>
+          <DialogContent className="lab-dialog lab-variation-dialog">
+            <DialogTitle>Vary one stroke</DialogTitle>
+            <DialogDescription>Explore strength, spin, and aim in both directions around a base stroke.</DialogDescription>
+            <VariationEditor scenario={scenario} variants={variants} value={variation} onChange={setVariation} onGenerate={generateVariations} />
+          </DialogContent>
+        </Dialog>
         <Dialog open={dialog === 'guide'} onOpenChange={open => setDialog(open ? 'guide' : null)}>
           <DialogTrigger asChild><Button type="button" variant="ghost" size="icon" aria-label="Lab guide" title="Lab guide"><CircleHelp size={18} /></Button></DialogTrigger>
           <DialogContent className="lab-dialog lab-guide-dialog">
@@ -422,6 +489,7 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
             <DialogDescription>Set up an experiment, vary your strokes, and compare their reliability.</DialogDescription>
             <h3>Set the constraints. Auto finds a stroke.</h3><p>Editing a value locks it. Use the locks to choose what auto can change, including the ball and pocket. Turn auto-adapt off for a fully manual experiment. A playable stroke succeeds in the intended simulation; run ensembles to measure its reliability.</p>
             <h3>Know your controls</h3><dl className="lab-guide-fields"><div><dt>Strength</dt><dd>The cue ball’s launch speed in meters per second.</dd></div><div><dt>Draw / follow</dt><dd>The initial rolling-spin ratio: −1 adds backspin, 0 has no forward or backspin, +1 is natural forward roll. The cloth changes spin along the route.</dd></div><div><dt>Sidespin</dt><dd>Positive values add left English, in radians per second.</dd></div><div><dt>Aim offset</dt><dd>0° points along the direct-pot line. Positive angles turn clockwise on the table.</dd></div></dl>
+            <h3>Explore around a stroke</h3><p>Use Vary stroke to copy an option and create a lower and higher value for each control, one at a time. Choose the variation amounts; 0 skips a control. The base stroke is included, values stop at their limits, and unchanged duplicates are skipped. All generated values are locked with auto-adapt off to keep the comparison intact.</p>
             <h3>Experiment freely</h3><p>A miss, obstruction, or scratch can be the point of the experiment. Each option uses {character.name}’s precision and the same seeded errors for a paired comparison. More trials help investigate close differences.</p><p>Edits cancel an active run. Previous results stay visible until you run again. Use the arrow keys in the result inspector to step through options.</p>
           </DialogContent>
         </Dialog>

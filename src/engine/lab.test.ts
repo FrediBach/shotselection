@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_CHARACTER } from './characters';
 import { TABLE } from './constants';
 import {
-  analyzeLab, createLabScenario, createLabShot, DEFAULT_LAB_SHOT_SETTINGS,
-  generateLabVariants, LAB_SHOT_LIMITS, MAX_LAB_VARIANTS, resizeLabBalls,
+  analyzeLab, createLabScenario, createLabShot, DEFAULT_LAB_SHOT_SETTINGS, DEFAULT_LAB_VARIATION_AMOUNTS,
+  generateLabVariations, generateLabVariants, LAB_SHOT_LIMITS, MAX_LAB_VARIANTS, resizeLabBalls,
 } from './lab';
 import type { LabRequest, LabShotSettings, LabVariant } from './lab';
 import { simulateShot } from './physics';
@@ -78,6 +78,80 @@ describe('lab layouts and shot controls', () => {
     expect(() => createLabShot(overlapping, settings(), 'bad', 'Bad')).toThrow(/overlap/);
     const outside = { ...scenario, balls: [{ id: 0, position: { x: TABLE.length, y: 0.5 } }, scenario.balls[1]] };
     expect(() => createLabShot(outside, settings(), 'bad', 'Bad')).toThrow(/inside/);
+  });
+});
+
+describe('lab variations around one stroke', () => {
+  it('creates a baseline and both directions of each control while preserving the chosen route', () => {
+    const base = settings({ ballId: 3, pocketId: 4, speed: 2, topSpin: 0.5, sideSpin: 10, aimOffset: 3 });
+    const amounts = { speed: 0.4, topSpin: 0.75, sideSpin: 20, aimOffset: 2 };
+    const variants = generateLabVariations(base, amounts);
+    expect(variants.map(option => option.label)).toEqual([
+      'Base stroke', 'Strength −', 'Strength +', 'Draw / follow −', 'Draw / follow +',
+      'Sidespin −', 'Sidespin +', 'Aim offset −', 'Aim offset +',
+    ]);
+    expect(variants.map(option => option.settings)).toEqual([
+      base,
+      { ...base, speed: 1.6 }, { ...base, speed: 2.4 },
+      { ...base, topSpin: -0.25 }, { ...base, topSpin: 1.25 },
+      { ...base, sideSpin: -10 }, { ...base, sideSpin: 30 },
+      { ...base, aimOffset: 1 }, { ...base, aimOffset: 5 },
+    ]);
+    expect(new Set(variants.map(option => option.id)).size).toBe(9);
+    expect(generateLabVariations(base, amounts)).toEqual(variants);
+  });
+
+  it('copies settings for every option without mutating the base or amounts', () => {
+    const base = settings();
+    const original = { ...base };
+    const amounts = { ...DEFAULT_LAB_VARIATION_AMOUNTS };
+    const variants = generateLabVariations(base, amounts);
+    expect(base).toEqual(original);
+    expect(amounts).toEqual(DEFAULT_LAB_VARIATION_AMOUNTS);
+    expect(new Set(variants.map(option => option.settings)).size).toBe(variants.length);
+    variants[0].settings.speed = 4;
+    variants[1].settings.topSpin = 2;
+    expect(base).toEqual(original);
+    expect(variants[2].settings).toEqual({ ...base, speed: base.speed + amounts.speed });
+  });
+
+  it('disables zero-amount controls and requires at least one enabled control', () => {
+    const amounts = { speed: 0, topSpin: 0, sideSpin: 8, aimOffset: 0 };
+    const variants = generateLabVariations(settings(), amounts);
+    expect(variants.map(option => option.label)).toEqual(['Base stroke', 'Sidespin −', 'Sidespin +']);
+    expect(variants.map(option => option.settings.sideSpin)).toEqual([0, -8, 8]);
+    expect(() => generateLabVariations(settings(), { ...amounts, sideSpin: 0 })).toThrow(/at least one.*above zero/);
+  });
+
+  it('clips every control to its limits and omits duplicates at either boundary', () => {
+    const amounts = { speed: 3.9, topSpin: 4, sideSpin: 200, aimOffset: 360 };
+    for (const boundary of ['min', 'max'] as const) {
+      const base = settings(Object.fromEntries(Object.entries(LAB_SHOT_LIMITS).map(([key, limits]) => [key, limits[boundary]])));
+      const variants = generateLabVariations(base, amounts);
+      expect(variants).toHaveLength(5);
+      expect(variants.map(option => option.label)).toEqual([
+        'Base stroke', ...['Strength', 'Draw / follow', 'Sidespin', 'Aim offset'].map(label => `${label} ${boundary === 'min' ? '+' : '−'}`),
+      ]);
+      for (const [index, [key, limits]] of Object.entries(LAB_SHOT_LIMITS).entries()) {
+        expect(variants[index + 1].settings).toEqual({ ...base, [key]: limits[boundary === 'min' ? 'max' : 'min'] });
+      }
+      expect(new Set(variants.map(option => JSON.stringify(option.settings))).size).toBe(variants.length);
+    }
+    const clipped = generateLabVariations(settings({ speed: 0.2 }), { ...amounts, speed: 0.3 });
+    expect(clipped[1].settings.speed).toBe(LAB_SHOT_LIMITS.speed.min);
+    expect(clipped[2].settings.speed).toBe(0.5);
+  });
+
+  it('rejects invalid baselines and nonfinite, negative, or excessive amounts', () => {
+    expect(() => generateLabVariations(settings({ ballId: 0 }), DEFAULT_LAB_VARIATION_AMOUNTS)).toThrow(/object ball/);
+    expect(() => generateLabVariations(settings({ pocketId: 6 }), DEFAULT_LAB_VARIATION_AMOUNTS)).toThrow(/six pockets/);
+    for (const [key, limits] of Object.entries(LAB_SHOT_LIMITS)) {
+      expect(() => generateLabVariations(settings({ [key]: limits.max + 0.1 }), DEFAULT_LAB_VARIATION_AMOUNTS)).toThrow(/between/);
+      expect(() => generateLabVariations(settings({ [key]: Number.NaN }), DEFAULT_LAB_VARIATION_AMOUNTS)).toThrow(/between/);
+      for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -0.1, limits.max - limits.min + 0.1]) {
+        expect(() => generateLabVariations(settings(), { ...DEFAULT_LAB_VARIATION_AMOUNTS, [key]: value })).toThrow(/variation must be between/);
+      }
+    }
   });
 });
 
