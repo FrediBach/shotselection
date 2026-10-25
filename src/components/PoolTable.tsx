@@ -10,6 +10,8 @@ import type { FinishOption, Scenario, ShotAnalysis, SimulationBall, SimulationSo
 import { TABLE, positionToleranceForLevel } from '../engine/constants'
 import { CUSHIONS, POCKET_GEOMETRY } from '../engine/table-geometry'
 import { PlaybackSoundCursor } from '../lib/playback-events'
+import { BallPlacementControls, type BallPlacement } from './table/BallPlacementControls'
+import { FLAT_TABLE_VIEW_BOX, TABLE_VIEW, TABLE_VIEW_BOX } from './table/viewport'
 
 export type TableReplay = Pick<ShotAnalysis, 'plan' | 'nominal' | 'samplePaths' | 'sampleObjectPaths' | 'sampleBallEnds'>
 
@@ -24,6 +26,7 @@ export interface PoolTableProps {
   onSelectOption: (id: string) => void
   selectableBallIds: number[]
   analysis: TableReplay | null
+  showNominal?: boolean
   showEnsemble: boolean
   showFinishes: boolean
   playing: boolean
@@ -31,6 +34,7 @@ export interface PoolTableProps {
   onPlaybackEnd: () => void
   onPlaybackSound?: (event: SimulationSoundEvent) => void
   interactive: boolean
+  placementControls?: BallPlacement
 }
 
 const WIDTH = TABLE.length
@@ -123,7 +127,7 @@ function TopDownCamera() {
     cam.position.set(0, 6, 0.001)
     cam.up.set(0, 1, 0)
     cam.lookAt(0, 0, 0)
-    cam.zoom = Math.min(size.width / 3.23, size.height / 1.9)
+    cam.zoom = Math.min(size.width / TABLE_VIEW.width, size.height / TABLE_VIEW.height)
     cam.updateProjectionMatrix()
   }, [camera, size.width, size.height])
   return null
@@ -448,8 +452,9 @@ function EnsembleFinishes({ trials }: { trials: SimulationBall[][] }) {
   </group>
 }
 
-function SceneAnalysis({ analysis, showEnsemble, showFinishes, playing, objective, requiredPots }: {
+function SceneAnalysis({ analysis, showNominal, showEnsemble, showFinishes, playing, objective, requiredPots }: {
   analysis: TableReplay
+  showNominal: boolean
   showEnsemble: boolean
   showFinishes: boolean
   playing: boolean
@@ -458,24 +463,31 @@ function SceneAnalysis({ analysis, showEnsemble, showFinishes, playing, objectiv
 }) {
   const nominalPaths = useMemo(() => [analysis.nominal.cuePath], [analysis])
   const objectPaths = useMemo(() => [analysis.nominal.objectPath], [analysis])
+  const selectedPocket = showNominal ? POCKET_GEOMETRY.find(pocket => pocket.id === analysis.plan.pocketId) : undefined
   const nominalObjectPotted = (requiredPots ?? [analysis.plan.potBallId ?? analysis.plan.ballId]).every(id => analysis.nominal.potted.includes(id)) && analysis.nominal.firstContact === analysis.plan.ballId
   const pottedObjectPaths = useMemo(() => analysis.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map(trial => trial.path) ?? [], [analysis])
   const missedObjectPaths = useMemo(() => analysis.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map(trial => trial.path) ?? [], [analysis])
   return <>
+    {selectedPocket && <mesh position={toWorld(selectedPocket.center, CLOTH_Y + 0.025)} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null} renderOrder={8}>
+      <ringGeometry args={[selectedPocket.radius + 0.008, selectedPocket.radius + 0.012, 64]} />
+      <meshBasicMaterial color={NOMINAL_FINISH_COLOR} transparent opacity={0.95} depthWrite={false} depthTest={false} toneMapped={false} />
+    </mesh>}
     {showEnsemble && <>
       <PathLines paths={analysis.samplePaths} color={ENSEMBLE_COLORS.cue} opacity={0.14} />
-      <PathLines paths={nominalPaths} color={ENSEMBLE_COLORS.cue} opacity={0.32} dashed height={CLOTH_Y + 0.006} />
-      <PathLines paths={objectPaths} color={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} opacity={0.16} dashed={!nominalObjectPotted} dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.014} />
       <PathLines paths={pottedObjectPaths} color={ENSEMBLE_COLORS.pot} opacity={0.30} height={CLOTH_Y + 0.015} />
       <PathLines paths={missedObjectPaths} color={ENSEMBLE_COLORS.miss} opacity={0.50} dashed dashSize={0.045} gapSize={0.025} height={CLOTH_Y + 0.016} />
     </>}
+    {(showNominal || showEnsemble) && <>
+      <PathLines paths={nominalPaths} color={ENSEMBLE_COLORS.cue} opacity={showNominal ? 1 : 0.32} dashed={!showNominal} height={CLOTH_Y + (showNominal ? 0.022 : 0.006)} />
+      <PathLines paths={objectPaths} color={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} opacity={showNominal ? 1 : 0.16} dashed={!showNominal && !nominalObjectPotted} dashSize={0.045} gapSize={0.025} height={CLOTH_Y + (showNominal ? 0.024 : 0.014)} />
+    </>}
     {showFinishes && !playing && <EnsembleFinishes trials={analysis.sampleBallEnds} />}
-    {objective && analysis.nominal.stopped && !analysis.nominal.scratch && !playing && <NominalCueFinishMarker position={analysis.nominal.cueEnd} />}
+    {(showNominal || objective) && analysis.nominal.stopped && !analysis.nominal.scratch && !playing && <NominalCueFinishMarker position={analysis.nominal.cueEnd} />}
   </>
 }
 
 function Scene(props: PoolTableProps) {
-  const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, playing, interactive } = props
+  const { scenario, selectedBall, target, analysis, showNominal = false, showEnsemble, showFinishes, playing, interactive } = props
   const selectableBalls = new Set(props.selectableBallIds)
   const objective = scenario.objective
   const predictFinish = Boolean(objective || scenario.trick || scenario.finalBall)
@@ -493,13 +505,14 @@ function Scene(props: PoolTableProps) {
     {!predictFinish && !analysis && !playing && <FinishMarkers options={props.finishOptions} selectedOptionId={props.selectedOptionId} onSelect={props.onSelectOption} interactive={interactive} />}
     {objective?.target && (objective.regions ?? [objective.target]).map((target, i) => <PositionZone key={i} target={target} radius={objective.radius} ellipse={objective.ellipse} />)}
     {!predictFinish && target && !playing && <TargetMarker target={target} tolerance={positionToleranceForLevel(scenario.level)} />}
-    {analysis && <SceneAnalysis analysis={analysis} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} objective={predictFinish} requiredPots={scenario.trick?.requiredPots} />}
+    {analysis && <SceneAnalysis analysis={analysis} showNominal={showNominal} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} objective={predictFinish} requiredPots={scenario.trick?.requiredPots} />}
   </>
 }
 
-class CanvasBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
+class CanvasBoundary extends Component<{ children: ReactNode; fallback: ReactNode; onFailure: () => void }, { failed: boolean }> {
   state = { failed: false }
   static getDerivedStateFromError() { return { failed: true } }
+  componentDidCatch() { this.props.onFailure() }
   render() { return this.state.failed ? this.props.fallback : this.props.children }
 }
 
@@ -535,22 +548,27 @@ function useFlatTablePlayback({ scenario, analysis, playing, playbackKey, onPlay
   return frame
 }
 
-function FlatAnalysisOverlay({ analysis, showEnsemble, showFinishes, playing, requiredPots }: {
+function FlatAnalysisOverlay({ analysis, showNominal, showEnsemble, showFinishes, playing, requiredPots }: {
   analysis: TableReplay
+  showNominal: boolean
   showEnsemble: boolean
   showFinishes: boolean
   playing: boolean
   requiredPots?: number[]
 }) {
+  const selectedPocket = showNominal ? POCKET_GEOMETRY.find(pocket => pocket.id === analysis.plan.pocketId) : undefined
   const nominalObjectPotted = (requiredPots ?? [analysis.plan.potBallId ?? analysis.plan.ballId]).every(id => analysis.nominal.potted.includes(id))
     && analysis.nominal.firstContact === analysis.plan.ballId
   return <>
+    {selectedPocket && <circle data-testid="nominal-pocket" data-pocket-id={selectedPocket.id} cx={selectedPocket.center.x * 100} cy={selectedPocket.center.y * 100} r={(selectedPocket.radius + 0.01) * 100} fill="none" stroke={NOMINAL_FINISH_COLOR} strokeWidth="2" vectorEffect="non-scaling-stroke" opacity=".95" pointerEvents="none" role="img" aria-label={`Selected pocket: ${selectedPocket.name}`} />}
     {showEnsemble && <g data-testid="ensemble-paths" fill="none" pointerEvents="none">
       {analysis.samplePaths.map((path, i) => <polyline key={`cue-${i}`} data-testid="cue-ensemble-path" points={path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".14" />)}
-      <polyline points={analysis.nominal.cuePath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".32" strokeDasharray="2.5 1.8" />
-      <polyline points={analysis.nominal.objectPath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".16" strokeDasharray={nominalObjectPotted ? undefined : '4.5 2.5'} />
       {analysis.sampleObjectPaths?.filter(trial => trial.outcome === 'pot').map((trial, i) => <polyline key={`object-pot-${i}`} data-testid="object-pot-path" points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.pot} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".30" />)}
       {analysis.sampleObjectPaths?.filter(trial => trial.outcome !== 'pot').map((trial, i) => <polyline key={`object-miss-${i}`} data-testid={trial.outcome === 'foul' ? 'object-foul-path' : 'object-miss-path'} points={trial.path.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.miss} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity=".50" strokeDasharray="4.5 2.5" />)}
+    </g>}
+    {(showNominal || showEnsemble) && <g data-testid="nominal-paths" fill="none" pointerEvents="none">
+      <polyline data-testid="nominal-cue-path" points={analysis.nominal.cuePath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={ENSEMBLE_COLORS.cue} strokeWidth={showNominal ? 2 : 1} vectorEffect="non-scaling-stroke" opacity={showNominal ? 1 : 0.32} strokeDasharray={showNominal ? undefined : '2.5 1.8'} />
+      <polyline data-testid="nominal-object-path" points={analysis.nominal.objectPath.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} stroke={nominalObjectPotted ? ENSEMBLE_COLORS.pot : ENSEMBLE_COLORS.miss} strokeWidth={showNominal ? 2 : 1} vectorEffect="non-scaling-stroke" opacity={showNominal ? 1 : 0.16} strokeDasharray={showNominal || nominalObjectPotted ? undefined : '4.5 2.5'} />
     </g>}
     {showFinishes && !playing && <g data-testid="ensemble-finishes" pointerEvents="none">
       {analysis.sampleBallEnds.flatMap((trial, trialIndex) => trial.filter(ball => !ball.pocketed).map(ball => <circle key={`${trialIndex}-${ball.id}`} data-testid="ensemble-ball-finish" data-ball-id={ball.id} data-trial-index={trialIndex} cx={ball.position.x * 100} cy={ball.position.y * 100} r={RADIUS * 100} fill={COLORS[ball.id] ?? '#b8c6ab'} fillOpacity=".08" stroke={COLORS[ball.id] ?? '#b8c6ab'} strokeOpacity=".6" strokeWidth=".3" />))}
@@ -560,7 +578,7 @@ function FlatAnalysisOverlay({ analysis, showEnsemble, showFinishes, playing, re
 
 /** Fully interactive 2D fallback for browsers without WebGL. */
 function FlatTable(props: PoolTableProps) {
-  const { scenario, selectedBall, target, analysis, showEnsemble, showFinishes, interactive, playing } = props
+  const { scenario, selectedBall, target, analysis, showNominal = false, showEnsemble, showFinishes, interactive, playing } = props
   const selectableBalls = new Set(props.selectableBallIds)
   const objective = scenario.objective
   const predictFinish = Boolean(objective || scenario.trick || scenario.finalBall)
@@ -578,7 +596,7 @@ function FlatTable(props: PoolTableProps) {
   }, [])
   const balls = frame || scenario.balls.map(ball => ({ ...ball, pocketed: false }))
   const badgePositions = separateBadges(props.finishOptions.map(option => ({ x: option.plan.target.x * 100, y: option.plan.target.y * 100 })), 42 / svgScale, { left: -22 + 19 / svgScale, right: 276 - 19 / svgScale, top: -24 + 19 / svgScale, bottom: 151 - 19 / svgScale })
-  return <svg ref={svgRef} viewBox="-22 -24 298 175" width="100%" height="100%" role="group" aria-label="Interactive pool table, top view" style={{ display: 'block' }}>
+  return <svg ref={svgRef} viewBox={FLAT_TABLE_VIEW_BOX.split(' ').map(Number).map(value => value * 100).join(' ')} width="100%" height="100%" role="group" aria-label="Interactive pool table, top view" style={{ display: 'block' }}>
     <defs>
       <radialGradient id="table-cloth" cx=".45" cy=".38" r=".75"><stop stopColor="#248873" /><stop offset=".7" stopColor="#197763" /><stop offset="1" stopColor="#115a4d" /></radialGradient>
       <linearGradient id="table-walnut" x2=".25" y2="1"><stop stopColor="#7e5034" /><stop offset=".16" stopColor="#54321f" /><stop offset=".48" stopColor="#71472b" /><stop offset=".9" stopColor="#452a1c" /><stop offset="1" stopColor="#9b7050" /></linearGradient>
@@ -609,7 +627,7 @@ function FlatTable(props: PoolTableProps) {
     <g pointerEvents="none" fill="none"><rect x="-16.8" y="-16.8" width="287.6" height="160.6" rx="5.2" stroke="#c09c68" strokeOpacity=".4" strokeWidth=".25" /></g>
     {[-0.953, -0.635, -0.3175, 0.3175, 0.635, 0.953].flatMap((x, i) => [-1, 1].map(sign => <rect key={`${i}-${sign}`} x={(x + WIDTH / 2) * 100 - .6} y={(sign * .772 + DEPTH / 2) * 100 - .6} width="1.2" height="1.2" fill="#bfb9a7" transform={`rotate(45 ${(x + WIDTH / 2) * 100} ${(sign * .772 + DEPTH / 2) * 100})`} />))}
     {scenario.conditions && <g transform="scale(100)"><TableConditionSvg conditions={scenario.conditions} /></g>}
-    {analysis && <FlatAnalysisOverlay analysis={analysis} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} requiredPots={scenario.trick?.requiredPots} />}
+    {analysis && <FlatAnalysisOverlay analysis={analysis} showNominal={showNominal} showEnsemble={showEnsemble} showFinishes={showFinishes} playing={playing} requiredPots={scenario.trick?.requiredPots} />}
     {props.approachOption && !analysis && !playing && <g data-testid="ideal-approach" pointerEvents="none" role="img" aria-label={approachLabel(props.approachOption)}>
       <polyline data-testid="ideal-approach-path" data-option-id={props.approachOption.id} data-ball-id={props.approachOption.plan.ballId} points={props.approachOption.cueApproachPath.map(point => `${point.x * 100},${point.y * 100}`).join(' ')} fill="none" stroke={APPROACH_COLOR} opacity=".85" strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeDasharray="2.5 1.8" />
     </g>}
@@ -628,7 +646,7 @@ function FlatTable(props: PoolTableProps) {
       {!!ball.id && <><circle r="1.48" fill="#f2f0e4" /><text y=".08" textAnchor="middle" dominantBaseline="central" fontFamily="Arial,sans-serif" fontWeight="700" fontSize="2.25" fill="#20271f">{ball.id}</text></>}
       <circle r="5" fill="transparent" />
     </g>)}
-    {predictFinish && analysis?.nominal.stopped && !analysis.nominal.scratch && !playing && <g data-testid="nominal-cue-finish" transform={`translate(${analysis.nominal.cueEnd.x * 100} ${analysis.nominal.cueEnd.y * 100})`} pointerEvents="none" role="img" aria-label="Nominal cue-ball finish for the inspected stroke" fill="none" stroke={NOMINAL_FINISH_COLOR}>
+    {(showNominal || predictFinish) && analysis?.nominal.stopped && !analysis.nominal.scratch && !playing && <g data-testid="nominal-cue-finish" transform={`translate(${analysis.nominal.cueEnd.x * 100} ${analysis.nominal.cueEnd.y * 100})`} pointerEvents="none" role="img" aria-label="Nominal cue-ball finish for the inspected stroke" fill="none" stroke={NOMINAL_FINISH_COLOR}>
       <circle r="1.95" strokeWidth="1.3" vectorEffect="non-scaling-stroke" />
       <path d="M-3.25,0H3.25M0,-3.25V3.25" strokeWidth="1" vectorEffect="non-scaling-stroke" />
     </g>}
@@ -650,7 +668,7 @@ function FlatTable(props: PoolTableProps) {
 }
 
 export default function PoolTable(props: PoolTableProps) {
-  const [available] = useState(() => {
+  const [available, setAvailable] = useState(() => {
     try {
       const canvas = document.createElement('canvas')
       const gl = canvas.getContext('webgl2')
@@ -662,12 +680,13 @@ export default function PoolTable(props: PoolTableProps) {
   // A new scenario, inspected shot or replay starts with the initial ball layout.
   // Keying the fallback discards the previous animation before the next paint.
   const fallback = <FlatTable key={`${props.scenario.level}:${props.scenario.seed}:${props.analysis?.plan.id ?? 'setup'}:${props.playbackKey}`} {...props} />
-  return <div className="pool-table-scene" role={props.scenario.finalBall || props.scenario.objective || props.scenario.plant || props.scenario.trick || props.scenario.conditions ? 'group' : undefined} aria-label={props.scenario.finalBall ? `Pool table. Pot the final ball ${props.scenario.finalBall.ballId} without scratching. No position zone is required.` : props.scenario.conditions ? `Pool table. ${props.scenario.conditions.name}. ${props.scenario.conditions.description}` : props.scenario.trick ? `Pool table. ${props.scenario.trick.description}` : props.scenario.objective ? `Pool table. Pot ball ${props.scenario.objective.ballId} and leave the cue ball in the cyan position zone to play ball ${props.scenario.objective.nextBallId} next.` : props.scenario.plant ? `Pool table. For the plant, hit ball ${props.scenario.plant.ballId} first to pot ball ${props.scenario.plant.targetBallId}, or choose a free ball.` : undefined} style={{ width: '100%', height: '100%', minHeight: 280, position: 'relative' }}>
-    {available ? <CanvasBoundary fallback={fallback}>
+  return <div className="pool-table-scene" role={props.scenario.finalBall || props.scenario.objective || props.scenario.plant || props.scenario.trick || props.scenario.conditions ? 'group' : undefined} aria-label={props.scenario.finalBall ? `Pool table. Pot the final ball ${props.scenario.finalBall.ballId} without scratching. No position zone is required.` : props.scenario.conditions ? `Pool table. ${props.scenario.conditions.name}. ${props.scenario.conditions.description}` : props.scenario.trick ? `Pool table. ${props.scenario.trick.description}` : props.scenario.objective ? `Pool table. Pot ball ${props.scenario.objective.ballId} and leave the cue ball in the cyan position zone to play ball ${props.scenario.objective.nextBallId} next.` : props.scenario.plant ? `Pool table. For the plant, hit ball ${props.scenario.plant.ballId} first to pot ball ${props.scenario.plant.targetBallId}, or choose a free ball.` : undefined} style={{ width: '100%', height: '100%', minHeight: 0, position: 'relative' }}>
+    {available ? <CanvasBoundary fallback={fallback} onFailure={() => setAvailable(false)}>
       <Canvas orthographic camera={{ position: [0, 6, 0.001], zoom: 230, near: 0.1, far: 30 }} shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={fallback} onCreated={({ gl }) => { gl.setClearColor('#0f1713', 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08 }} style={{ touchAction: 'none' }}>
         <Suspense fallback={null}><Scene {...props} /></Suspense>
       </Canvas>
     </CanvasBoundary> : fallback}
+    {props.placementControls && <BallPlacementControls {...props.placementControls} scenario={props.scenario} selectedBall={props.selectedBall} onSelectBall={props.onSelectBall} viewBox={available ? TABLE_VIEW_BOX : FLAT_TABLE_VIEW_BOX} />}
     {available && props.approachOption && !props.analysis && !props.playing && <span className="sr-only" role="img" aria-label={approachLabel(props.approachOption)} />}
     {!available && <span style={{ position: 'absolute', bottom: 8, right: 16, fontSize: 10, color: '#88978b' }}>2D view · WebGL unavailable</span>}
   </div>

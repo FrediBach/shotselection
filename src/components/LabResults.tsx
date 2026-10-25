@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
-import { POCKETS, TABLE } from '../engine/constants'
+import { POCKETS } from '../engine/constants'
 import type { LabResult, LabShotAnalysis } from '../engine/lab'
-import type { Scenario, Vec2 } from '../engine/types'
+import type { Scenario } from '../engine/types'
+import PoolTable from './PoolTable'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from './ui/dialog'
 import './LabResults.css'
@@ -14,37 +15,16 @@ interface Props {
   stale: boolean
 }
 
-const BALL_COLORS = ['#f4f1e7', '#e9b14e', '#6594d2', '#db7466', '#a68cce', '#e59857', '#71aa89', '#b7747d', '#787e79']
-const ballColor = (id: number) => BALL_COLORS[id > 8 ? id - 8 : id] ?? '#c4c0a7'
 const percent = (rate: number) => `${(rate * 100).toFixed(1)}%`
-const points = (path: Vec2[]) => path.map(point => `${point.x},${point.y}`).join(' ')
 const spread = (shot: LabShotAnalysis) => shot.sampleEnds.length ? `${(shot.spread * 100).toFixed(1)} cm` : 'n/a'
+const ignoreTableAction = () => {}
 
 function EnsembleDiagram({ scenario, shot, showPaths, showEnds }: { scenario: Scenario; shot: LabShotAnalysis; showPaths: boolean; showEnds: boolean }) {
-  const titleId = useId()
-  const clipId = useId().replace(/:/g, '')
-  return <svg className="lab-ensemble-table" viewBox="-.13 -.13 2.8 1.53" role="img" aria-labelledby={titleId}>
-    <title id={titleId}>{shot.plan.label}: {shot.samples} simulated trials. Success {percent(shot.successRate)}, scratch {percent(shot.scratchRate)}. The solid lines show the intended stroke.</title>
-    <defs><clipPath id={clipId}><rect x={-.06} y={-.06} width={TABLE.length + .12} height={TABLE.width + .12} /></clipPath></defs>
-    <rect x={-.105} y={-.105} width={TABLE.length + .21} height={TABLE.width + .21} rx={.075} fill="#111a15" stroke="#695f43" strokeWidth={.012} />
-    <rect x={-.04} y={-.04} width={TABLE.length + .08} height={TABLE.width + .08} rx={.02} fill="#39553c" />
-    <rect width={TABLE.length} height={TABLE.width} fill="#48674b" />
-    {POCKETS.map(pocket => <circle key={pocket.id} cx={pocket.position.x} cy={pocket.position.y} r={pocket.kind === 'corner' ? TABLE.cornerPocketRadius : TABLE.sidePocketRadius} fill="#0c110e" stroke={pocket.id === shot.plan.pocketId ? '#f4ce8a' : '#8c7a54'} strokeWidth={pocket.id === shot.plan.pocketId ? .013 : .006} />)}
-    <g clipPath={`url(#${clipId})`} fill="none" strokeLinejoin="round">
-      {showPaths && <>
-        {shot.samplePaths.map((path, index) => <polyline key={`cue-${index}`} points={points(path)} stroke="#99e8ed" strokeOpacity={.14} strokeWidth={.005} />)}
-        {shot.sampleObjectPaths.map((trial, index) => <polyline key={`object-${index}`} points={points(trial.path)} stroke={trial.outcome === 'pot' ? '#f2cc8c' : '#ed9786'} strokeOpacity={.23} strokeWidth={.005} />)}
-      </>}
-      {showEnds && shot.sampleBallEnds.flatMap((balls, index) => balls.filter(ball => !ball.pocketed).map(ball => <circle key={`${index}-${ball.id}`} cx={ball.position.x} cy={ball.position.y} r={.018} stroke={ballColor(ball.id)} strokeOpacity={.5} strokeWidth={.004} />))}
-      <polyline points={points(shot.nominal.cuePath)} stroke="#c0f7fb" strokeWidth={.009} />
-      <polyline points={points(shot.nominal.objectPath)} stroke="#f5cc86" strokeWidth={.009} />
-      {!shot.nominal.scratch && <circle cx={shot.nominal.cueEnd.x} cy={shot.nominal.cueEnd.y} r={.031} stroke="#f4f1e7" strokeWidth={.006} />}
-    </g>
-    {scenario.balls.map(ball => <g key={ball.id} transform={`translate(${ball.position.x} ${ball.position.y})`}>
-      <circle r={TABLE.ballRadius} fill={ballColor(ball.id)} stroke="#1b271d" strokeWidth={.003} />
-      {ball.id !== 0 && <><circle r={TABLE.ballRadius * .6} fill="#f5f0df" /><text textAnchor="middle" dominantBaseline="central" fontFamily="Arial, sans-serif" fontSize={.027} fontWeight={700} fill="#25291f">{ball.id}</text></>}
-    </g>)}
-  </svg>
+  return <div className="lab-ensemble-table" role="img" aria-label={`${shot.plan.label}: ${shot.samples} simulated trials. Success ${percent(shot.successRate)}, scratch ${percent(shot.scratchRate)}. The solid lines show the intended stroke.`}>
+    <div className="lab-ensemble-scene" aria-hidden="true">
+      <PoolTable scenario={scenario} selectedBall={null} target={null} onSelectBall={ignoreTableAction} finishOptions={[]} approachOption={null} selectedOptionId={null} onSelectOption={ignoreTableAction} selectableBallIds={[]} analysis={shot} showEnsemble={showPaths} showFinishes={showEnds} showNominal playing={false} playbackKey={0} onPlaybackEnd={ignoreTableAction} interactive={false} />
+    </div>
+  </div>
 }
 
 function OutcomeDetails({ shot }: { shot: LabShotAnalysis }) {
@@ -112,7 +92,7 @@ export default function LabResults({ result, selectedId, onSelect, stale }: Prop
   return <section className="lab-result-panel" aria-labelledby={headingId} onKeyDown={navigateOptions}>
     <header className="lab-result-heading"><h2 id={headingId}>Results</h2><span className="lab-result-badge">{result.samples} trials / option</span></header>
     {stale && <p className="lab-result-stale" role="status">Results from the previous run. Run again to update.</p>}
-    <div ref={inspector} className="lab-result-inspector" role="group" aria-label="Ensemble inspector" aria-describedby={helpId} aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" tabIndex={0} onPointerDown={event => {
+    <div ref={inspector} className="lab-result-inspector" role="group" aria-label="Ensemble inspector" aria-describedby={helpId} aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" tabIndex={0} onPointerDownCapture={event => {
       if (event.button === 0 && (event.target as Element).closest('.lab-ensemble-table')) inspector.current?.focus({ preventScroll: true })
     }}>
       <div className="lab-result-inspection-heading">

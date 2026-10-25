@@ -10,19 +10,21 @@ type LabObservation = {
 }
 type ObservedWindow = Window & { labObservation: LabObservation; releaseLabRequests: () => void }
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
+test.beforeEach(async ({ page }, testInfo) => {
+  await page.addInitScript(webgl => {
     localStorage.setItem('shot-selection-help-dismissed', 'true')
     localStorage.setItem('shot-selection-sound-enabled', 'false')
     localStorage.setItem('shot-selection-session', JSON.stringify({
       scoringVersion: 2, courseVersion: 5, completedLessons: 0,
       level: 1, score: 0, rounds: 0, perfect: 0, seed: 71431,
     }))
-    const originalContext = HTMLCanvasElement.prototype.getContext
-    HTMLCanvasElement.prototype.getContext = function(type: string, ...args: unknown[]) {
-      if (type === 'webgl2') return null
-      return originalContext.call(this, type as '2d', ...args)
-    } as typeof originalContext
+    if (!webgl) {
+      const originalContext = HTMLCanvasElement.prototype.getContext
+      HTMLCanvasElement.prototype.getContext = function(type: string, ...args: unknown[]) {
+        if (type === 'webgl2') return null
+        return originalContext.call(this, type as '2d', ...args)
+      } as typeof originalContext
+    }
     const observation: LabObservation = { requests: [], results: [], pauseRequests: false, terminatedWorkers: 0 }
     const pending: (() => void)[] = []
     const NativeWorker = window.Worker
@@ -54,7 +56,7 @@ test.beforeEach(async ({ page }) => {
       labObservation: observation,
       releaseLabRequests: () => { observation.pauseRequests = false; pending.splice(0).forEach(dispatch => dispatch()) },
     })
-  })
+  }, testInfo.tags.includes('@webgl'))
 })
 
 async function openLab(page: Page) {
@@ -175,11 +177,16 @@ test('free layouts compare every requested stroke, including failures, with the 
   expect(result.shots[1]).toMatchObject({ potRate: 0, successRate: 0, failures: { misses: 32, wrongContact: 32 } })
   const stats = inspector.locator('.lab-inspection-stats')
   const diagram = inspector.getByRole('img')
+  const scene = diagram.locator('.pool-table-scene')
+  await expect(scene.locator('svg')).toBeVisible()
+  await expect(scene.getByText('2D view · WebGL unavailable')).toBeVisible()
   async function expectSelected(index: number) {
     const shot = result.shots[index]
     await expect(comparison.locator('button[aria-pressed="true"]')).toHaveAccessibleName(`Inspect ${shot.plan.label}`)
     await expect(inspector.getByRole('heading')).toContainText(shot.plan.label)
     await expect(diagram).toHaveAccessibleName(new RegExp(`^${shot.plan.label}:`))
+    await expect(scene.getByTestId('nominal-cue-path')).toHaveAttribute('points', shot.nominal.cuePath.map(point => `${point.x * 100},${point.y * 100}`).join(' '))
+    await expect(scene.getByTestId('nominal-object-path')).toHaveAttribute('points', shot.nominal.objectPath.map(point => `${point.x * 100},${point.y * 100}`).join(' '))
     for (const [label, value] of [
       ['Success', `${(shot.successRate * 100).toFixed(1)}%`],
       ['Pot', `${(shot.potRate * 100).toFixed(1)}%`],
@@ -189,7 +196,7 @@ test('free layouts compare every requested stroke, including failures, with the 
   }
   await expectSelected(0)
   await expect(stats).toHaveAttribute('aria-live', 'polite')
-  expect(await stats.evaluate(element => element.nextElementSibling?.matches('svg.lab-ensemble-table'))).toBe(true)
+  expect(await stats.evaluate(element => element.nextElementSibling?.matches('.lab-ensemble-table'))).toBe(true)
   await inspector.scrollIntoViewIfNeeded()
   const scrollPosition = await page.evaluate(() => scrollY)
   for (const [key, selected] of [['ArrowRight', 1], ['ArrowDown', 0], ['ArrowLeft', 1], ['ArrowUp', 0]] as const) {
@@ -204,7 +211,16 @@ test('free layouts compare every requested stroke, including failures, with the 
   await page.keyboard.press('ArrowRight')
   await expectSelected(0)
   const trialPaths = inspector.getByRole('checkbox', { name: 'Trial paths', exact: true })
+  await expect(scene.getByTestId('cue-ensemble-path')).toHaveCount(result.shots[0].samplePaths.length)
   await trialPaths.uncheck()
+  await expect(scene.getByTestId('ensemble-paths')).toHaveCount(0)
+  await expect(scene.getByTestId('nominal-paths')).toHaveCount(1)
+  const ballFinishes = inspector.getByRole('checkbox', { name: 'Ball finishes', exact: true })
+  await expect(scene.getByTestId('ensemble-ball-finish')).toHaveCount(result.shots[0].sampleBallEnds.flatMap(balls => balls.filter(ball => !ball.pocketed)).length)
+  await ballFinishes.uncheck()
+  await expect(scene.getByTestId('ensemble-finishes')).toHaveCount(0)
+  await expect(scene.getByTestId('nominal-paths')).toHaveCount(1)
+  await ballFinishes.check()
   // Display controls keep their native keyboard behavior; clicking the table
   // returns focus to the inspector for continued option stepping.
   await page.keyboard.press('ArrowRight')
@@ -220,6 +236,7 @@ test('free layouts compare every requested stroke, including failures, with the 
   await inspector.getByRole('button', { name: 'Previous play option', exact: true }).click()
   await expectSelected(1)
   await trialPaths.check()
+  await expect(scene.getByTestId('cue-ensemble-path')).toHaveCount(result.shots[1].samplePaths.length)
   const outcomeTrigger = page.getByRole('button', { name: 'Outcome details', exact: true })
   await outcomeTrigger.click()
   const outcomeDialog = page.getByRole('dialog', { name: 'Outcome details', exact: true })
@@ -298,6 +315,57 @@ test('free layouts compare every requested stroke, including failures, with the 
   await expect(page.getByText('Results from the previous run. Run again to update.', { exact: true })).toHaveCount(0, { timeout: 60_000 })
   await expect(comparison.getByRole('button', { name: /^Inspect / })).toHaveCount(1)
   await expect(inspector.getByRole('button', { name: 'Next play option', exact: true })).toBeDisabled()
+  expect(errors).toEqual([])
+})
+
+test('lab renders the shared 3D table with independent trial paths and ball finishes', { tag: '@webgl' }, async ({ page }, testInfo) => {
+  test.setTimeout(90_000)
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  page.on('console', message => {
+    if (/THREE\.WebGLProgram|WebGL.*(?:error|failed|context lost)|(?:shader|program).*(?:error|failed)/i.test(message.text())) errors.push(message.text())
+  })
+  await openLab(page)
+  const layout = await openLayout(page)
+  await expect(layout.locator('.sandbox-table .pool-table-scene canvas')).toBeVisible()
+  await page.getByRole('combobox', { name: 'Object balls', exact: true }).selectOption('1')
+  await placeBall(page, 0, '127', '95')
+  await placeBall(page, 1, '127', '38')
+  await layout.getByRole('button', { name: 'Done', exact: true }).click()
+  for (const ordinal of [3, 2]) {
+    const selected = await selectOption(page, ordinal)
+    await selected.getByRole('button', { name: `Remove option ${ordinal}`, exact: true }).click()
+  }
+  const selected = await selectOption(page, 1)
+  await selected.getByRole('combobox', { name: 'Ball', exact: true }).selectOption('1')
+  await selected.getByRole('combobox', { name: 'Pocket', exact: true }).selectOption('1')
+  await setStroke(selected, { speed: '1.3', topSpin: '0', sideSpin: '0', aimOffset: '0' })
+  await page.getByRole('button', { name: 'Run ensembles', exact: true }).click()
+  const inspector = page.getByRole('group', { name: 'Ensemble inspector', exact: true })
+  await expect(inspector).toBeVisible({ timeout: 60_000 })
+  const canvas = inspector.locator('.lab-ensemble-table .pool-table-scene canvas')
+  await expect(canvas).toBeVisible()
+  await expect.poll(() => canvas.evaluate(element => {
+    const context = (element as HTMLCanvasElement).getContext('webgl2')
+    return Boolean(context && !context.isContextLost() && context.drawingBufferWidth > 0 && context.drawingBufferHeight > 0)
+  })).toBe(true)
+  await expect(inspector.getByText('2D view · WebGL unavailable')).toHaveCount(0)
+  const capture = async () => {
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+    return canvas.screenshot({ animations: 'disabled' })
+  }
+  const pathsAndFinishes = await capture()
+  await inspector.getByRole('checkbox', { name: 'Trial paths', exact: true }).uncheck()
+  const finishesOnly = await capture()
+  expect(finishesOnly.equals(pathsAndFinishes)).toBe(false)
+  await inspector.getByRole('checkbox', { name: 'Ball finishes', exact: true }).uncheck()
+  const nominalOnly = await capture()
+  expect(nominalOnly.equals(finishesOnly)).toBe(false)
+  await inspector.getByRole('checkbox', { name: 'Trial paths', exact: true }).check()
+  await inspector.getByRole('checkbox', { name: 'Ball finishes', exact: true }).check()
+  const path = '/tmp/shot-selection-lab-3d-ensemble.png'
+  await inspector.screenshot({ path, animations: 'disabled' })
+  await testInfo.attach('Lab ensembles on the shared 3D table', { path, contentType: 'image/png' })
   expect(errors).toEqual([])
 })
 
