@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-034",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 34,
+    "seed": 102677,
+    "title": "Look one shot further",
+    "description": "Compare two opening finishes by following the next shot through to ball 3.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.72,
+          "y": 0.92
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.15,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.88,
+          "y": 0.42
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 2.13,
+          "y": 1
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.39,
+          "y": 0.36
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "Both opening finishes reach the zone and allow a pot on ball 2. Look one shot further: compare the same pocket, pace and spin on ball 2 from each finish, then inspect the route left to ball 3.",
+      "takeaway": "A playable second shot is only part of the plan: inspect the position it leaves for the third.",
+      "learning": {
+        "concept": "Position on ball 2 determines the next route to ball 3.",
+        "prerequisite": "Preserve a key ball for a later target.",
+        "comparison": "look-ahead"
+      },
+      "briefing": {
+        "focus": "Read the finish after ball 2",
+        "gotcha": "The same pocket, pace and spin on ball 2 can leave very different next shots when the incoming angle changes.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.176,
+      "maxCutAngle": 57
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.176
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-094",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 94,
+    "seed": 157817,
+    "title": "The cushion that gave up",
+    "description": "One rail has lost its bounce. Read the finish all the way back.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.72,
+          "y": 0.86
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.14,
+          "y": 0.34
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.55,
+          "y": 0.3
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.92,
+          "y": 0.96
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "The marked cushion absorbs much more speed than a healthy rail. Compare routes that use it with routes that stop in open cloth. The dead rebound can be a useful brake, provided your plan does not need a long return journey. Replay the identical stroke with a healthy rail to inspect the change in rebound and finish.",
+      "takeaway": "A bad cushion can help control a finish when you account for its weak rebound.",
+      "learning": {
+        "concept": "weak-cushion-return",
+        "prerequisite": "local-patch-crossing",
+        "comparison": "healthy-rail"
+      },
+      "briefing": {
+        "focus": "Plan around the dead rebound",
+        "gotcha": "A line reaching the damaged rail will not return with the pace you learned on a normal table.",
+        "stage": "develop"
+      }
+    },
+    "conditions": {
+      "id": "dead-cushion",
+      "name": "Dead cushion",
+      "description": "The marked rail absorbs most rebound speed. Other cushions still respond normally.",
+      "cushions": [
+        {
+          "rail": "top",
+          "restitution": 0.34
+        }
+      ]
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.13679807573413577
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

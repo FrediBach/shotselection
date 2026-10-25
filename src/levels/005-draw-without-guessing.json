@@ -1,0 +1,97 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-005",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 5,
+    "seed": 76026,
+    "title": "Draw without guessing",
+    "description": "Compare backspin with the other finishes on a corner pot.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.2,
+          "y": 0.94
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 0.53,
+          "y": 0.36
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "fundamentals",
+      "chapterTitle": "First strokes",
+      "chapterIndex": 0,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Read the longer corner approach before choosing spin. Predict whether draw will shorten the cue-ball journey or pull it across the table, then inspect the actual finish.",
+      "takeaway": "Draw is a route choice whose result depends on the contact angle as well as the spin.",
+      "briefing": {
+        "focus": "Predict the draw finish",
+        "gotcha": "Backspin and a soft stroke are different controls; one cannot reliably stand in for the other.",
+        "stage": "develop"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.18185810380218587
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

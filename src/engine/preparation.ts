@@ -1,3 +1,5 @@
+import { createLabShot } from './lab';
+import { tuningList, tuningNumber } from './lesson-tuning';
 import { doubleKissPreview } from './double-kiss';
 import { landingRecoveryPreview } from './landing-recovery';
 import { plannedMovementEvidence } from './planned-movement';
@@ -107,6 +109,10 @@ function scenarioFingerprint(scenario: Scenario): string {
   if (scenario.plannedMovement) identity.push(scenario.plannedMovement);
   if (scenario.finalBall) identity.push(scenario.finalBall);
   if (scenario.defense) identity.push(scenario.defense);
+  if (scenario.scoring) identity.push(scenario.scoring);
+  if (scenario.shotGeneration) identity.push(scenario.shotGeneration);
+  if (scenario.lessonTuning) identity.push(scenario.lessonTuning);
+  if (scenario.authoredShots) identity.push(scenario.authoredShots);
   for (const char of JSON.stringify(identity)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return (hash >>> 0).toString(36);
 }
@@ -150,20 +156,20 @@ function directStroke(scenario: Scenario, plan: ShotPlan): FeasiblePlan | null {
 
 /** Distinct endpoints alone are insufficient: every pair also changes strength
  * and longitudinal spin, so the ensembles describe different physical strokes. */
-function pairIsDistinct(a: FeasiblePlan, b: FeasiblePlan): boolean {
-  return Math.abs(a.plan.speed - b.plan.speed) >= 0.12
-    && Math.abs(a.plan.topSpin - b.plan.topSpin) >= 0.35
-    && distance(a.simulation.cueEnd, b.simulation.cueEnd) >= MIN_FINISH_SEPARATION;
+function pairIsDistinct(scenario: Scenario, a: FeasiblePlan, b: FeasiblePlan): boolean {
+  return Math.abs(a.plan.speed - b.plan.speed) >= tuningNumber(scenario, 'minSpeedDifference')
+    && Math.abs(a.plan.topSpin - b.plan.topSpin) >= tuningNumber(scenario, 'minSpinDifference')
+    && distance(a.simulation.cueEnd, b.simulation.cueEnd) >= tuningNumber(scenario, 'minFinishSeparation');
 }
 
-function chooseTriple(plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => boolean, englishPractice = false, contrast: (plans: FeasiblePlan[]) => boolean = () => true): [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null {
+function chooseTriple(scenario: Scenario, plans: FeasiblePlan[], qualifies: (plan: FeasiblePlan) => boolean, englishPractice = false, contrast: (plans: FeasiblePlan[]) => boolean = () => true): [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null {
   let chosen: [FeasiblePlan, FeasiblePlan, FeasiblePlan] | null = null;
   let bestCost = Infinity;
   for (let a = 0; a < plans.length - 2; a++) {
     for (let b = a + 1; b < plans.length - 1; b++) {
-      if (!pairIsDistinct(plans[a], plans[b])) continue;
+      if (!pairIsDistinct(scenario, plans[a], plans[b])) continue;
       for (let c = b + 1; c < plans.length; c++) {
-        if (!pairIsDistinct(plans[a], plans[c]) || !pairIsDistinct(plans[b], plans[c])) continue;
+        if (!pairIsDistinct(scenario, plans[a], plans[c]) || !pairIsDistinct(scenario, plans[b], plans[c])) continue;
         const triple: [FeasiblePlan, FeasiblePlan, FeasiblePlan] = [plans[a], plans[b], plans[c]];
         if (englishPractice && triple.filter(entry => entry.plan.sideSpin !== 0).length !== 1) continue;
         if (!triple.some(qualifies) || !contrast(triple)) continue;
@@ -332,8 +338,8 @@ function prepareBall(scenario: Scenario, ballId: number, expanded = false): { ba
   if (trick && !scenario.bank) {
     const cue = scenario.balls.find(ball => ball.id === 0)!;
     const angle = Math.atan2(trick.aim.y - cue.position.y, trick.aim.x - cue.position.x);
-    for (const speed of [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.25, 2.5, 2.8, 3.1, 3.4, 3.6]) {
-      for (const topSpin of [-1.8, -1.4, -1.0, -0.6, 0, 0.6, 1.05, 1.5, 2.0]) {
+    for (const speed of tuningList(scenario, 'trickSpeeds')) {
+      for (const topSpin of tuningList(scenario, 'trickTopSpins')) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
           const plan: ShotPlan = { id: '', ballId, potBallId: trick.potBallId, pocketId: trick.pocketId,
             angle, speed, topSpin, sideSpin, target: { x: 0, y: 0 }, label: '' };
@@ -345,16 +351,16 @@ function prepareBall(scenario: Scenario, ballId: number, expanded = false): { ba
         }
       }
     }
-    triple = chooseTriple(feasible, qualifies, Boolean(english));
+    triple = chooseTriple(scenario, feasible, qualifies, Boolean(english));
   }
   if (isPlant) {
     const targetBallId = scenario.plant!.targetBallId;
     const targetStart = scenario.balls.find(ball => ball.id === targetBallId)!.position;
     for (const route of plantRoutesFor(scenario, ballId)) {
-      for (const multiplier of [0.8, 0.95, 1.15, 1.4, 1.7, 2.1, 2.6]) {
-        for (const topSpin of [-1.1, 0, 1.05]) {
+      for (const multiplier of tuningList(scenario, 'plantSpeedMultipliers')) {
+        for (const topSpin of tuningList(scenario, 'plantTopSpins')) {
           const plan: ShotPlan = { id: '', ballId, potBallId: targetBallId, pocketId: route.pocketId,
-            angle: route.angle, speed: Math.min(3.6, route.speed * multiplier), topSpin, sideSpin: 0,
+            angle: route.angle, speed: Math.min(tuningNumber(scenario, 'maxCandidateSpeed'), route.speed * multiplier), topSpin, sideSpin: 0,
             target: { x: 0, y: 0 }, label: '' };
           const simulation = simulateShot(scenario, plan, { record: false });
           const targetEnd = simulation.finalBalls.find(ball => ball.id === targetBallId);
@@ -368,16 +374,16 @@ function prepareBall(scenario: Scenario, ballId: number, expanded = false): { ba
     // Successful plants receive proven nominal pots, just like direct shots.
     // A misaligned plant remains selectable with honest simulated miss paths.
     // This checks nominal feasibility only; ensemble quality never picks labels.
-    triple = chooseTriple(pots, qualifies)
-      ?? chooseTriple(feasible, entry => !pots.length || entry.simulation.potted.includes(targetBallId));
+    triple = chooseTriple(scenario, pots, qualifies)
+      ?? chooseTriple(scenario, feasible, entry => !pots.length || entry.simulation.potted.includes(targetBallId));
   }
   if (scenario.bank) {
     for (const route of bankRoutesFor(scenario, ballId)) {
-      for (const speed of [1.3, 1.6, 1.95, 2.35, 2.8, 3.3, 3.45, 3.6, 3.8]) {
-        for (const topSpin of [-1.1, 0, 0.5, 1.05, 1.6]) {
+      for (const speed of tuningList(scenario, 'bankSpeeds')) {
+        for (const topSpin of tuningList(scenario, 'bankTopSpins')) {
           const aimed = bankPlanForStroke(scenario, route, speed, topSpin);
           if (!aimed) continue;
-          for (const correction of [0, -0.0005, 0.0005, -0.001, 0.001, -0.0015, 0.0015, -0.002, 0.002]) {
+          for (const correction of tuningList(scenario, 'bankAngleCorrections')) {
             const plan = { ...aimed, angle: aimed.angle + correction };
             const simulation = simulateShot(scenario, plan, { record: false });
             if (!isFeasible(simulation, ballId) || (simulation.cueBanksBeforeContact ?? 0) < scenario.bank.minCushions
@@ -388,19 +394,19 @@ function prepareBall(scenario: Scenario, ballId: number, expanded = false): { ba
           }
         }
       }
-      triple = chooseTriple(feasible, qualifies);
+      triple = chooseTriple(scenario, feasible, qualifies);
       if (triple) break;
     }
   }
   for (const route of scenario.bank || isPlant || trick ? [] : routesFor(scenario, ballId, expanded)) {
-    const multipliers = comparison === 'planned-movement' || comparison === 'disconnected-position' || comparison === 'elongated-position' || comparison === 'english-routing' || comparison === 'corridor-center' || comparison === 'return-lane' || comparison === 'collision-assistance' || comparison === 'open-corridor' || comparison === 'pocket-change' || comparison === 'spare-graze' || comparison === 'moving-traffic' || comparison === 'fallback-plan' || comparison === 'sequence-reliability' || comparison === 'stepping-stone' || comparison === 'corridor-diagnosis' || comparison === 'angle-travel' || comparison === 'zone-exit' || comparison === 'look-ahead' || comparison === 'key-ball' || comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3];
+    const multipliers = scenario.shotGeneration?.speedMultipliers ?? (comparison === 'planned-movement' || comparison === 'disconnected-position' || comparison === 'elongated-position' || comparison === 'english-routing' || comparison === 'corridor-center' || comparison === 'return-lane' || comparison === 'collision-assistance' || comparison === 'open-corridor' || comparison === 'pocket-change' || comparison === 'spare-graze' || comparison === 'moving-traffic' || comparison === 'fallback-plan' || comparison === 'sequence-reliability' || comparison === 'stepping-stone' || comparison === 'corridor-diagnosis' || comparison === 'angle-travel' || comparison === 'zone-exit' || comparison === 'look-ahead' || comparison === 'key-ball' || comparison === 'cut-paths' || comparison === 'cue-rebound' || comparison === 'avoidable-cushion' || comparison === 'zone-margin' || comparison === 'next-angle-trap' || comparison === 'contact-access' || comparison === 'position-overshoot' || comparison === 'signed-next-angle' || scenario.curriculum?.learning?.pockets ? [0.8, 0.95, 1.1, 1.2, 1.4, 1.5, 1.7, 1.85, 2.1, 2.3, 2.6, 3, 3.5] : [0.95, 1.2, 1.5, 1.85, 2.3]);
     // A short pot needs little object-ball speed, but draw may need a much
     // stronger launch to survive the approach. Keep the original candidates
     // and supplement their distance-based pace with a full absolute speed grid.
-    const speeds = [...new Set([...multipliers.map(multiplier => Math.min(3.6, route.speed * multiplier)),
-      ...(expanded ? Array.from({ length: 16 }, (_, index) => (6 + index * 2) / 10) : [])])];
-    const lessonSpins = comparison === 'disconnected-position' || comparison === 'return-lane' || comparison === 'english-routing' || comparison === 'elongated-position' ? [-1.6, -1.1, -.6, 0, .5, 1.05] : comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05];
-    const spins = [...new Set([...lessonSpins, ...(expanded ? [-1.6, -1.1, -.6, 0, .5, 1.05, 1.6] : [])])];
+    const speeds = [...new Set([...multipliers.map(multiplier => Math.min(tuningNumber(scenario, 'maxCandidateSpeed'), route.speed * multiplier)),
+      ...(expanded ? tuningList(scenario, 'expandedSpeeds') : [])])];
+    const lessonSpins = scenario.shotGeneration?.topSpins ?? (comparison === 'disconnected-position' || comparison === 'return-lane' || comparison === 'english-routing' || comparison === 'elongated-position' ? [-1.6, -1.1, -.6, 0, .5, 1.05] : comparison === 'contact-roll' ? [-1.1, -.75, -.5, -.25, 0, .5, 1.05] : [-1.1, 0, 1.05]);
+    const spins = [...new Set([...lessonSpins, ...(expanded ? tuningList(scenario, 'expandedTopSpins') : [])])];
     for (const speed of speeds) {
       for (const topSpin of spins) {
         for (const sideSpin of english ? [0, -english, english] : [0]) {
@@ -418,7 +424,7 @@ function prepareBall(scenario: Scenario, ballId: number, expanded = false): { ba
     if (comparison === 'english-routing' && !englishRoute(feasible)) continue;
     if (comparison === 'elongated-position' && !elongatedPair(feasible)) continue;
     if (comparison === 'disconnected-position' && !disconnectedPair(feasible)) continue;
-    triple = chooseTriple(feasible, qualifies, Boolean(english), contrast);
+    triple = chooseTriple(scenario, feasible, qualifies, Boolean(english), contrast);
     if (triple) break; // Prefer three strokes to the same pocket when possible.
   }
   if (!triple) return null;
@@ -436,7 +442,7 @@ function prepareBall(scenario: Scenario, ballId: number, expanded = false): { ba
   const englishRouting = comparison === 'english-routing' ? englishRoute(triple)! : null;
   const corridorCenter = comparison === 'corridor-center' ? centerPair(triple)! : null;
   const returnLane = comparison === 'return-lane' ? returnPair(triple)! : null;
-  const target = elongatedPosition ? elongatedPosition.target : englishRouting ? englishRouting.target : corridorCenter ? corridorCenter.target : returnLane ? returnLane.target : assistance ? assistance.target : pocketChange ? pocketChange.target : graze ? graze.target : traffic ? traffic.target : fallback ? fallback.target : zoneExit ? zoneExit.target : lookAhead ? lookAhead.target : positionPair ? positionPair.target : scenario.objective ? { ...(scenario.objective.target ?? (comparison === 'zone-margin' ? marginCenter(triple)! : comparison === 'contact-roll' ? triple.find(entry => isStopContact(scenario, entry.plan, entry.simulation) && qualifies(entry))! : triple.find(qualifies)!).simulation.cueEnd) } : undefined;
+  const target = scenario.objective?.target ?? (elongatedPosition ? elongatedPosition.target : englishRouting ? englishRouting.target : corridorCenter ? corridorCenter.target : returnLane ? returnLane.target : assistance ? assistance.target : pocketChange ? pocketChange.target : graze ? graze.target : traffic ? traffic.target : fallback ? fallback.target : zoneExit ? zoneExit.target : lookAhead ? lookAhead.target : positionPair ? positionPair.target : scenario.objective ? { ...(scenario.objective.target ?? (comparison === 'zone-margin' ? marginCenter(triple)! : comparison === 'contact-roll' ? triple.find(entry => isStopContact(scenario, entry.plan, entry.simulation) && qualifies(entry))! : triple.find(qualifies)!).simulation.cueEnd) } : undefined);
   // Labels are fixed by stroke strength, never by score or success probability.
   triple.sort((a, b) => a.plan.speed - b.plan.speed || a.plan.topSpin - b.plan.topSpin);
   const fingerprint = scenarioFingerprint(scenario);
@@ -454,6 +460,42 @@ function prepareBall(scenario: Scenario, ballId: number, expanded = false): { ba
     ...signedAngleEvidence(scenario, entry.simulation, positionPair!.signedAnglePreview!.pocketId)!,
     optionId: options[triple.indexOf(entry)].id, label: options[triple.indexOf(entry)].label, cue: entry.simulation.cueEnd,
   })).sort((a, b) => a.label.localeCompare(b.label)) } } : {}), ...(comparison === 'contact-access' ? { contactAccessPocket: positionPair!.pocketId } : {}) };
+}
+
+/** Authored choices are replayed verbatim, including deliberate misses. The
+ * simulator supplies paths; preparation never re-aims or optimizes a saved stroke. */
+function prepareAuthoredRound(scenario: Scenario): PreparedRound {
+  if (scenario.curriculum?.learning) {
+    throw new Error('Authored strokes cannot yet supply this teaching comparison. Keep generated choices, or remove the teaching comparison to play the saved strokes.');
+  }
+  if (scenario.objective && !scenario.objective.target) {
+    throw new Error('Authored position lessons need an explicit landing-zone target.');
+  }
+  const grouped = new Map<number, FinishOption[]>();
+  const ids = new Set<string>();
+  for (const variant of scenario.authoredShots ?? []) {
+    if (!variant.id || ids.has(variant.id)) throw new Error('Every authored stroke needs a unique ID.');
+    ids.add(variant.id);
+    const options = grouped.get(variant.settings.ballId) ?? [];
+    if (options.length >= 3) throw new Error('To play authored strokes, provide exactly three choices for each selected ball. Keep other counts as a lab draft.');
+    const plan = createLabShot(scenario, variant.settings, variant.id, variant.label, variant);
+    const nominal = simulateShot(scenario, plan, { record: false, recordPaths: true });
+    options.push({ id: variant.id, label: (['A', 'B', 'C'] as const)[options.length],
+      plan: { ...plan, target: variant.target ? { ...variant.target } : { ...nominal.cueEnd } },
+      cueApproachPath: nominal.cueApproachPath });
+    grouped.set(variant.settings.ballId, options);
+  }
+  if (!grouped.size || [...grouped.values()].some(options => options.length !== 3)) {
+    throw new Error('To play authored strokes, provide exactly three choices for each selected ball. Keep other counts as a lab draft.');
+  }
+  const requiredBall = scenario.objective?.ballId ?? scenario.bank?.ballId ?? scenario.trick?.ballId ?? scenario.finalBall?.ballId;
+  if (requiredBall !== undefined && (grouped.size !== 1 || !grouped.has(requiredBall))) {
+    throw new Error(`This objective requires three authored choices for ball ${requiredBall}.`);
+  }
+  if (scenario.plant && (!grouped.has(scenario.plant.ballId) || ![...grouped.keys()].some(id => id !== scenario.plant!.ballId && id !== scenario.plant!.targetBallId))) {
+    throw new Error('A plant decision needs authored choices for the plant ball and a free ball.');
+  }
+  return { scenario, balls: [...grouped].map(([ballId, options]) => ({ ballId, options: options as BallFinishOptions['options'] })) };
 }
 
 function prepareLayout(scenario: Scenario, expandDirectSearch = false): PreparedRound {
@@ -563,22 +605,22 @@ function prepareLayout(scenario: Scenario, expandDirectSearch = false): Prepared
     if (prepared && scenario.curriculum?.learning?.comparison === 'player-profile') {
       // Fixed authored adjustment, never selected using sampled profile rankings.
       const [a, b] = prepared.ball.options;
-      const target = { x: a.plan.target.x + (b.plan.target.x - a.plan.target.x) * .65, y: a.plan.target.y + (b.plan.target.y - a.plan.target.y) * .65 };
-      const plan = { ...a.plan, speed: a.plan.speed * 1.02 };
+      const target = scenario.objective.target ?? { x: a.plan.target.x + (b.plan.target.x - a.plan.target.x) * tuningNumber(scenario, 'playerProfileTargetFraction'), y: a.plan.target.y + (b.plan.target.y - a.plan.target.y) * tuningNumber(scenario, 'playerProfileTargetFraction') };
+      const plan = { ...a.plan, speed: a.plan.speed * tuningNumber(scenario, 'playerProfileSpeedMultiplier') };
       const nominal = simulateShot(scenario, plan, { record: false, recordPaths: true });
       prepared.ball.options[0] = { ...a, plan: { ...plan, target: nominal.cueEnd }, cueApproachPath: nominal.cueApproachPath };
       const ready = { ...scenario, objective: { ...scenario.objective, target } };
-      if (prepared.ball.options.some((o, i, all) => all.slice(i + 1).some(other => distance(o.plan.target, other.plan.target) < MIN_FINISH_SEPARATION))
+      if (prepared.ball.options.some((o, i, all) => all.slice(i + 1).some(other => distance(o.plan.target, other.plan.target) < tuningNumber(scenario, 'minFinishSeparation')))
         || !prepared.ball.options.slice(0, 2).every(o => evaluateShotObjective(ready, o.plan, simulateShot(ready, o.plan, { record: false })).success) || !hasProvenNextShot(ready, simulateShot(ready, b.plan, { record: false }))) return { scenario, balls: [] };
       return { scenario: ready, balls: [prepared.ball] };
     }
     if (prepared && scenario.curriculum?.learning?.comparison === 'defensive-outcome') {
       // Fixed authored controls, independent of player talents or sampled scores.
       const middle = prepared.ball.options[1], reference = prepared.ball.options[2];
-      const plan = { ...reference.plan, id: middle.id, label: reference.plan.label.replace(' · C · ', ' · B · '), speed: reference.plan.speed * .95, topSpin: reference.plan.topSpin - .2 };
+      const plan = { ...reference.plan, id: middle.id, label: reference.plan.label.replace(' · C · ', ' · B · '), speed: reference.plan.speed * tuningNumber(scenario, 'defenseSpeedMultiplier'), topSpin: reference.plan.topSpin + tuningNumber(scenario, 'defenseTopSpinOffset') };
       const nominal = simulateShot(scenario, plan, { record: false, recordPaths: true });
       prepared.ball.options[1] = { ...middle, plan: { ...plan, target: nominal.cueEnd }, cueApproachPath: nominal.cueApproachPath };
-      if (prepared.ball.options.some((o, i, all) => all.slice(i + 1).some(other => distance(o.plan.target, other.plan.target) < MIN_FINISH_SEPARATION))) return { scenario, balls: [] };
+      if (prepared.ball.options.some((o, i, all) => all.slice(i + 1).some(other => distance(o.plan.target, other.plan.target) < tuningNumber(scenario, 'minFinishSeparation')))) return { scenario, balls: [] };
       const ready = { ...scenario, objective: { ...scenario.objective, target: prepared.target } };
       if (![prepared.ball.options[1], reference].every(o => evaluateShotObjective(ready, o.plan, simulateShot(ready, o.plan, { record: false })).success)) return { scenario, balls: [] };
       return { scenario: ready, balls: [prepared.ball], defenseOptionIds: [middle.id, reference.id] };
@@ -588,7 +630,7 @@ function prepareLayout(scenario: Scenario, expandDirectSearch = false): Prepared
       const evidence = disconnectedPositionFinder(scenario)(entries);
       if (!evidence) return { scenario, balls: [] };
       const { a, b, ...preview } = evidence;
-      return { scenario: { ...scenario, objective: { ...scenario.objective, target: evidence.centers[0], regions: evidence.centers } }, balls: [prepared.ball], disconnectedPosition: { ...preview, optionIds: [a.plan.id, b.plan.id] } };
+      return { scenario: { ...scenario, objective: { ...scenario.objective, target: scenario.objective.target ?? evidence.centers[0], regions: scenario.objective.regions ?? evidence.centers } }, balls: [prepared.ball], disconnectedPosition: { ...preview, optionIds: [a.plan.id, b.plan.id] } };
     }
     if (prepared && scenario.curriculum?.learning?.comparison === 'landing-recovery') {
       const ready = { ...scenario, objective: { ...scenario.objective, target: prepared.target } };
@@ -608,7 +650,7 @@ function prepareLayout(scenario: Scenario, expandDirectSearch = false): Prepared
     if (prepared && scenario.curriculum?.learning?.comparison === 'conditional-continuation') {
       // Fixed authored pace adjustment keeps the slower/nominal/faster reference pots playable.
       const original = prepared.ball.options[2];
-      const plan = { ...original.plan, speed: original.plan.speed * 1.02 };
+      const plan = { ...original.plan, speed: original.plan.speed * tuningNumber(scenario, 'continuationSpeedMultiplier') };
       const nominal = simulateShot(scenario, plan, { record: false, recordPaths: true });
       // Retain the original proven zone stroke as B; C is the stronger diagnostic reference.
       const middle = prepared.ball.options[1];
@@ -698,7 +740,9 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
   if (objective && (!scenario.balls.some(ball => ball.id === objective.ballId) || !scenario.balls.some(ball => ball.id === objective.nextBallId))) {
     throw new Error('The position lesson needs both its first object ball and its reserved next ball on the table.');
   }
-  const attempts = options.regenerate === false || ((scenario.finalBall || objective || bank || plant || trick) && !scenario.curriculum) ? 1 : 4;
+  if (scenario.authoredShots !== undefined) return prepareAuthoredRound(scenario);
+  const fixedLayout = Boolean(scenario.authoring && (scenario.authoring.imported || (!scenario.authoring.variation.mirrorX && !scenario.authoring.variation.mirrorY)));
+  const attempts = fixedLayout || options.regenerate === false || ((scenario.finalBall || objective || bank || plant || trick) && !scenario.curriculum) ? 1 : 4;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const generated = attempt === 0 ? scenario : generateScenario(scenario.level, (scenario.seed + Math.imul(attempt, 0x9E3779B1)) >>> 0);
     const originalCue = attempt > 0 && scenario.conditions && scenario.curriculum ? generateScenario(scenario.level, scenario.seed).balls[0].position : undefined;
@@ -733,7 +777,7 @@ export function prepareRound(scenario: Scenario, options: { regenerate?: boolean
       if (experiment) return { ...prepared, experiment };
     }
   }
-  if (options.regenerate === false || scenario.curriculum || scenario.finalBall || objective || bank || plant || trick) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
+  if (fixedLayout || options.regenerate === false || scenario.curriculum || scenario.finalBall || objective || bank || plant || trick) throw new Error('No feasible three-finish layout could be prepared for this lesson and its objective.');
   const openLayout: Scenario = { ...scenario, seed: 72350, balls: generateScenario(1, 72350).balls };
   const prepared = prepareLayout(openLayout);
   if (!prepared.balls.length) throw new Error('No feasible three-finish layout could be prepared.');

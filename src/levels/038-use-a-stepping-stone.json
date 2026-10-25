@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-038",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 38,
+    "seed": 106353,
+    "title": "Use a stepping stone",
+    "description": "Compare going directly to the distant ball with using a nearer ball to reach it.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.49,
+          "y": 1.02
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.13,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.26518,
+          "y": 0.755502
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.142785,
+          "y": 0.634508
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.36,
+          "y": 0.36
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 7,
+      "lessonCount": 10,
+      "lesson": "From one reference opening finish, compare two complete orders: 2 then 3, or 3 then 2. Both pot both balls. Check how using the nearer ball changes the approach distance and cut on distant ball 2.",
+      "takeaway": "A nearer ball is a useful stepping stone when its finish creates a better shot on the distant ball.",
+      "learning": {
+        "concept": "Use a nearer ball to reach a shorter, fuller shot on a distant ball.",
+        "prerequisite": "Compare two-shot continuations from an actual opening finish.",
+        "comparison": "stepping-stone"
+      },
+      "briefing": {
+        "focus": "Compare direct play with a stepping stone",
+        "gotcha": "A shorter shot on the distant ball is a geometry benefit, not proof that the complete order is more reliable.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.168,
+      "maxCutAngle": 54
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.168
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

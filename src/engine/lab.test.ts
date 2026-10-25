@@ -156,6 +156,29 @@ describe('lab variations around one stroke', () => {
 });
 
 describe('lab ensemble analysis', () => {
+  it('preserves authored finishes and scores a combination using its separate pot ball', () => {
+    const source = request([{
+      ...variant('combination', { speed: 1.1 }),
+      potBallId: 2,
+      target: { x: 1.27, y: 0.6 },
+    }]);
+    source.scenario.balls = [
+      { id: 0, position: { x: 1.27, y: 0.95 } },
+      { id: 1, position: { x: 1.27, y: 0.38 } },
+      { id: 2, position: { x: 1.27, y: 0.20 } },
+    ];
+    source.talents = { anglePrecision: 100, strengthPrecision: 100, englishPrecision: 100, spinPrecision: 100 };
+    const before = structuredClone(source);
+    const shot = analyzeLab(source).shots[0];
+    expect(shot.plan).toMatchObject({ ballId: 1, potBallId: 2, target: source.variants[0].target });
+    expect(shot.nominal.firstContact).toBe(1);
+    expect(shot.nominal.pocketEvents).toContainEqual(expect.objectContaining({ ballId: 2, pocketId: 1 }));
+    expect(shot.successRate).toBeGreaterThan(0);
+    expect(shot.failures.wrongContact).toBe(0);
+    expect(source).toEqual(before);
+    expect(() => analyzeLab({ ...source, variants: [{ ...source.variants[0], potBallId: 3 }] })).toThrow(/ball to pot/);
+  });
+
   it('retains failed strokes and their exact manual layout without searching for playable replacements', () => {
     const source = request([variant('too-soft', { speed: 0.1 }), variant('backwards', { speed: 0.1, aimOffset: 180 })]);
     const original = structuredClone(source);

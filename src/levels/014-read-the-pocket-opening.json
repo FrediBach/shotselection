@@ -1,0 +1,127 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-014",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 14,
+    "seed": 84297,
+    "title": "Read the pocket opening",
+    "description": "An oblique side-pocket entry competes with a straight-on corner entry.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.4,
+          "y": 0.83
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 0.98,
+          "y": 0.34
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.9,
+          "y": 0.64
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "open-table",
+      "chapterTitle": "Everyday pool",
+      "chapterIndex": 1,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "Separate the cut at the object ball from its entry into the pocket. Look along each object-ball route and predict which pocket mouth offers more room across that direction of travel. Then compare the whole strokes, including their different cuts and finishes.",
+      "takeaway": "An oblique entry reduces the opening seen along the ball’s path; a cleaner pocket entry can still require a harder cut.",
+      "learning": {
+        "concept": "pocket-entry-angle",
+        "prerequisite": "cut-paths",
+        "comparison": "pocket-entry",
+        "pockets": [
+          {
+            "ballId": 1,
+            "pocketId": 1
+          },
+          {
+            "ballId": 2,
+            "pocketId": 2
+          }
+        ]
+      },
+      "briefing": {
+        "focus": "Read pocket entry separately from cut angle",
+        "gotcha": "The side pocket is wider nose to nose, but its opening looks narrower from an oblique approach. Mouth clearance alone does not predict a pot: jaws, shelf, pace and cut still matter.",
+        "stage": "develop"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.1647917773793811
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

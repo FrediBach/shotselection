@@ -1,0 +1,118 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-092",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 92,
+    "seed": 155979,
+    "title": "The leaning local",
+    "description": "One leg is short. Slow rolls bend downhill.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.74,
+          "y": 0.84
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.16,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.85,
+          "y": 0.39
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 1,
+      "lessonCount": 10,
+      "lesson": "The downhill arrow shows how the uneven surface bends moving balls. A gentle, long approach has more time to drift than a brisk, short one. Compare both balls and all three strokes, including the final slow part of each cue-ball route. In the result, zoom into the highlighted slow tail and compare its bend with its initial direction.",
+      "takeaway": "On an uneven surface, time spent rolling matters as much as distance.",
+      "learning": {
+        "concept": "slow-roll-drift",
+        "prerequisite": "global-cloth-drag",
+        "comparison": "slow-drift"
+      },
+      "briefing": {
+        "focus": "Read the downhill drift",
+        "gotcha": "The aim is compensated for this table, but small speed changes also change how much the ball curves.",
+        "stage": "develop"
+      }
+    },
+    "conditions": {
+      "id": "short-leg",
+      "name": "Uneven surface",
+      "description": "Moving balls drift in the arrow direction. Slower journeys bend further; resting balls stay put.",
+      "nap": {
+        "x": 0.025,
+        "y": 0.012
+      }
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.15185880729274961
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

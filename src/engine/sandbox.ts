@@ -65,7 +65,7 @@ export function validateSandboxLayout(scenario: Scenario): string | null {
 function clearLandingZone(scenario: Scenario): Scenario {
   // The zone is a result of preparation. Editing balls must establish a new
   // reachable zone, while preserving the objective's ball roles and difficulty.
-  if (!scenario.objective) return scenario;
+  if (!scenario.objective || (scenario.authoring?.fixedObjective ?? scenario.authoring?.imported)) return scenario;
   const objective = { ...scenario.objective };
   delete objective.target;
   delete objective.regions;
@@ -88,7 +88,9 @@ export function prepareSandboxRound(request: SandboxRequest): PreparedRound {
     }
   }
   if (request.placement !== 'random') throw new Error('Choose random or manual ball placement.');
-  const base = createSandboxScenario(request.scenario.level, request.scenario.seed);
+  // Random placement varies the supplied definition. Reloading by course number
+  // would discard imported objectives, tuning, conditions and custom layouts.
+  const base = clearLandingZone(request.scenario);
   const random = seededRandom((base.seed ^ 0x6D2B79F5) >>> 0);
   // Set-up tricks depend on the authored object-ball alignment. Vary the cue's
   // approach distance instead, preserving the line and complete trick contract.

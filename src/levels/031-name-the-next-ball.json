@@ -1,0 +1,123 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-031",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 31,
+    "seed": 99920,
+    "title": "Name the next ball",
+    "description": "Choose a later ball, then compare openers by the connection they leave.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.68,
+          "y": 0.81
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.12,
+          "y": 0.31
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.91,
+          "y": 0.42
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 2.12,
+          "y": 0.98
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.4,
+          "y": 0.34
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 0,
+      "lessonCount": 10,
+      "lesson": "Nominate ball 2 or 3 as your next ball, then reserve it while choosing an opener. Compare an easier opening cut that loses the connection with a harder cut that preserves it. After the shot, inspect access to your nominated ball from the actual settled layout. The connection check is separate from the opening-shot score; you do not execute a sequence.",
+      "takeaway": "An easy opening pot can lose the ball you planned to play next.",
+      "learning": {
+        "concept": "nominated-next-ball",
+        "prerequisite": "intended-next-pocket",
+        "comparison": "nominated-next-ball"
+      },
+      "briefing": {
+        "focus": "Reserve and verify a named next ball",
+        "gotcha": "A smaller opening cut can leave no permitted route to the nominated ball.",
+        "stage": "introduce"
+      }
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.1368032869905668
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

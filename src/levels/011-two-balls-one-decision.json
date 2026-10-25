@@ -1,0 +1,104 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-011",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 11,
+    "seed": 81540,
+    "title": "Two balls, one decision",
+    "description": "Choose between two open pots and their cue-ball finishes.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.73,
+          "y": 0.83
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.16,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.84,
+          "y": 0.39
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "open-table",
+      "chapterTitle": "Everyday pool",
+      "chapterIndex": 1,
+      "lessonIndex": 0,
+      "lessonCount": 10,
+      "lesson": "You now choose the opening ball as well as its finish. Compare both pots: their cut angles, distances and the cue-ball travel each one needs.",
+      "takeaway": "The closest ball is not always the most forgiving shot.",
+      "briefing": {
+        "focus": "Compare before choosing",
+        "gotcha": "The nearest ball can demand the thinner cut. Check the route to the pocket before favoring a short shot.",
+        "stage": "introduce"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.1702947442781677
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

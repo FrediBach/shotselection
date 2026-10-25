@@ -1,0 +1,170 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-060",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 60,
+    "seed": 126571,
+    "title": "The three-cushion escape",
+    "description": "Finish the chapter by reaching the screened 1 after three cushion rebounds.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.7,
+          "y": 0.9
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 0.22,
+          "y": 0.16
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.72541,
+          "y": 0.99154
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.62389,
+          "y": 0.95685
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 1.61943,
+          "y": 0.84967
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 1.71772,
+          "y": 0.80667
+        }
+      },
+      {
+        "id": 6,
+        "position": {
+          "x": 1.79355,
+          "y": 0.88344
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "Trace R1, R2 and R3 in order, then identify the cue ball’s incoming direction at ball 1. Read that direction from the final leg after R3 before comparing the reliability of complete strokes.",
+      "takeaway": "A multiple-cushion kick succeeds when every rebound preserves the angle and speed needed for the next.",
+      "learning": {
+        "concept": "three-rebound-final-approach",
+        "prerequisite": "ordered-kick-rebounds",
+        "comparison": "kick-final"
+      },
+      "briefing": {
+        "focus": "Connect three rebounds into one shot",
+        "gotcha": "Count only cue-ball rebounds before the first object-ball contact. Three cushions and a pot still need a safe finish.",
+        "stage": "apply"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 3
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09958517694967975
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

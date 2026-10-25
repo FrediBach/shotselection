@@ -1,0 +1,141 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-097",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 97,
+    "seed": 160574,
+    "title": "The patchwork quilt",
+    "description": "Two repairs, two different speeds, and very little consistency.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.68,
+          "y": 0.85
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.18,
+          "y": 0.3
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.86,
+          "y": 0.43
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.89,
+          "y": 0.94
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 6,
+      "lessonCount": 10,
+      "lesson": "Start with the pale slick patch: its lower friction lets a moving ball retain more speed than ordinary cloth. Contrast it with the familiar dark sticky repair. After your shot, highlight both crossings and replace only the slick area with ordinary cloth to inspect its effect on the same stroke.",
+      "takeaway": "Mixed cloth rewards a route that keeps its behavior when the stroke is slightly imperfect.",
+      "learning": {
+        "concept": "slick-patch-retention",
+        "prerequisite": "local-patch-crossing",
+        "comparison": "slick-patch"
+      },
+      "briefing": {
+        "focus": "Find where slick cloth preserves speed",
+        "gotcha": "A soft finish near a patch edge can be more sensitive than a longer route over one consistent surface.",
+        "stage": "apply"
+      }
+    },
+    "conditions": {
+      "id": "patchwork",
+      "name": "Mixed repairs",
+      "description": "The dark repair is sticky; the pale worn patch is slick. Crossing either boundary changes the roll.",
+      "patches": [
+        {
+          "id": "repair",
+          "center": {
+            "x": 1.02,
+            "y": 0.57
+          },
+          "radius": 0.18,
+          "friction": 2.4
+        },
+        {
+          "id": "bare",
+          "center": {
+            "x": 1.62,
+            "y": 0.72
+          },
+          "radius": 0.25,
+          "friction": 0.6
+        }
+      ]
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.11696070952851464
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

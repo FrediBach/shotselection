@@ -1,0 +1,98 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-010",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 10,
+    "seed": 80621,
+    "title": "Let the cue ball travel",
+    "description": "A long approach brings the contact line, pace and cue-ball route together.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.34,
+          "y": 1.08
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.55,
+          "y": 0.48
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "fundamentals",
+      "chapterTitle": "First strokes",
+      "chapterIndex": 0,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "Put the potting line, pace and cue-ball finish together. Read the left or right English setting alongside draw and follow, and picture the cue ball crossing the potting line and rebounding before it stops.",
+      "takeaway": "An easy pot can still send the cue ball a long way. Read its route before choosing the finish.",
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Follow the whole route",
+        "gotcha": "Backspin does not always bring the cue ball straight back. The cut angle also shapes its route.",
+        "stage": "apply"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.17216960392449704
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

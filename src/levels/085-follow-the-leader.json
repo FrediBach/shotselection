@@ -1,0 +1,163 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-085",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 85,
+    "seed": 149546,
+    "title": "Follow the leader",
+    "description": "Pot the 2 with a combination, then follow through to pot the 1 too.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.25,
+          "y": 0.7
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.24
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.16
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Topspin lets the cue ball catch the 1 again after the combination sends the 2 ahead. Both object balls follow the same pocket route. Mark the first cue → 1 impact, the 1 → 2 transfer and the later cue → 1 catch-up separately. Compare each stroke’s displayed follow and pace with its catch-up timing; both controls change together.",
+      "takeaway": "Follow can create a useful second contact when you plan the whole sequence.",
+      "learning": {
+        "concept": "repeat-cue-contact",
+        "prerequisite": "cue-ball-second-contact",
+        "comparison": "follow-contact"
+      },
+      "briefing": {
+        "focus": "Plan the catch-up contact",
+        "gotcha": "Both balls must fall, and the cue ball must catch the 1 again. Too much forward travel can turn the finish into a scratch.",
+        "stage": "develop"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 2,
+      "pocketId": 1,
+      "aim": {
+        "x": 1.27,
+        "y": 0.29715
+      },
+      "requiredPots": [
+        1,
+        2
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "description": "Pot the 2 through the 1, then follow into the 1 again and pot it too."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.14079643395321315
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

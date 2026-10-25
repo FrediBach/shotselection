@@ -1,0 +1,142 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-052",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 52,
+    "seed": 119219,
+    "title": "Read the rebound angle",
+    "description": "A wider approach changes the angle coming off the cushion.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.89,
+          "y": 0.76
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.25,
+          "y": 0.3
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.07,
+          "y": 0.53
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 1,
+      "lessonCount": 10,
+      "lesson": "Trace the cue ball to the rail and back toward the contact point on the 1. Compare the three finishes while keeping the rebound angle in your picture of the shot.",
+      "takeaway": "The useful rebound is the one that reaches the correct side of the object ball.",
+      "learning": {
+        "concept": "Reach the potting side, not just the object ball.",
+        "prerequisite": "Trace a cushion-first approach.",
+        "comparison": "kick-contact"
+      },
+      "briefing": {
+        "focus": "Connect the rebound to the pot",
+        "gotcha": "Reaching the 1 is only half the task. Its contact angle still has to send it into a pocket.",
+        "stage": "develop"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.10870176212771383
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

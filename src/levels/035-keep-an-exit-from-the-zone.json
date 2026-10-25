@@ -1,0 +1,131 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-035",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 35,
+    "seed": 103596,
+    "title": "Keep an exit from the zone",
+    "description": "The zone is smaller and the next-ball lane deserves a second look.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.63,
+          "y": 0.94
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.11,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.96,
+          "y": 0.43
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.75468,
+          "y": 0.233524
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Compare two finishes inside the same zone. One has a clear approach to ball 2; a spare ball screens the other. Identify the blocked exit, then check which ball causes it.",
+      "takeaway": "A landing zone needs an exit toward the next contact point.",
+      "learning": {
+        "concept": "A finish inside the zone still needs a clear approach to the next contact.",
+        "prerequisite": "Inspect the next shot from a settled cue-ball finish.",
+        "comparison": "zone-exit"
+      },
+      "briefing": {
+        "focus": "Read out of the zone as well as into it",
+        "gotcha": "The object ball can have a clear pocket line while a spare ball blocks the cue ball from reaching the required contact point.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.174,
+      "maxCutAngle": 56
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.174
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

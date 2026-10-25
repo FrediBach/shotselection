@@ -1,0 +1,191 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-059",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 59,
+    "seed": 125652,
+    "title": "Hold the line across two rails",
+    "description": "Track how a small aim change separates two paths through successive rebounds.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.55,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.12
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.91,
+          "y": 0.26
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 0.691066,
+          "y": 0.264776
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.599059,
+          "y": 0.59308
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 0.352476,
+          "y": 0.368627
+        }
+      },
+      {
+        "id": 6,
+        "position": {
+          "x": 0.74924,
+          "y": 0.382582
+        }
+      },
+      {
+        "id": 7,
+        "position": {
+          "x": 0.6983,
+          "y": 0.5758
+        }
+      },
+      {
+        "id": 8,
+        "position": {
+          "x": 0.367,
+          "y": 0.262
+        }
+      },
+      {
+        "id": 9,
+        "position": {
+          "x": 0.8844,
+          "y": 0.5034
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Compare equal and opposite aim changes with pace and spin fixed. Predict which leg adds the most separation, then measure the two paths at R1, R2 and first contact before judging complete strokes.",
+      "takeaway": "Longer rebound routes reward the stroke that stays reliable under small errors.",
+      "learning": {
+        "concept": "kick-angular-error",
+        "prerequisite": "ordered-kick-rebounds",
+        "comparison": "kick-error"
+      },
+      "briefing": {
+        "focus": "Choose margin over an exact replay",
+        "gotcha": "A nominal two-cushion kick can look perfect while nearby strokes miss. Judge the ensemble as well as the replay.",
+        "stage": "apply"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 2
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.10068155975601312
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-064",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 64,
+    "seed": 130247,
+    "title": "Approach the pair from an angle",
+    "description": "A wider cue-ball approach changes the plant without moving its pocket.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.4,
+          "y": 0.98
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.41
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.34
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.55,
+          "y": 0.97
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "Read the contact on the 1 as well as the line from the 1 through the 2. Compare how much precision the angled first contact needs with the available direct pot.",
+      "takeaway": "A useful pair alignment still depends on delivering the first ball along that line.",
+      "learning": {
+        "concept": "plant-angled-delivery",
+        "prerequisite": "plant-offset-margin",
+        "comparison": "plant-delivery"
+      },
+      "briefing": {
+        "focus": "Include the first contact",
+        "gotcha": "The pair can point toward a pocket while the approach to the first ball remains demanding.",
+        "stage": "develop"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.0953177444572311
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

@@ -1,14 +1,17 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { CircleHelp, Copy, FlaskConical, Layers3, LoaderCircle, LockKeyhole, Move, Plus, RotateCcw, SlidersHorizontal, Sparkles, Trash2, UnlockKeyhole } from 'lucide-react'
+import { ArrowRight, CircleHelp, Copy, FlaskConical, Layers3, LoaderCircle, LockKeyhole, Move, Plus, RotateCcw, SlidersHorizontal, Sparkles, Trash2, UnlockKeyhole } from 'lucide-react'
 import { analyzeLabAsync, fitLabShotAsync } from '../engine/client'
 import { POCKETS } from '../engine/constants'
 import { createLabScenario, DEFAULT_LAB_SHOT_SETTINGS, DEFAULT_LAB_VARIATION_AMOUNTS, generateLabVariations, generateLabVariants, LAB_SHOT_LIMITS, MAX_LAB_BALLS, MAX_LAB_VARIANTS, resizeLabBalls } from '../engine/lab'
 import type { LabResult, LabShotSettings, LabVariant, LabVariationAmounts } from '../engine/lab'
 import type { LabShotLocks } from '../engine/lab-auto'
 import { validateSandboxLayout } from '../engine/sandbox'
-import type { PlayerCharacter, Scenario } from '../engine/types'
+import type { CharacterTalents, PlayerCharacter, Scenario } from '../engine/types'
+import { levelFromScenario, parseLevelJson, scenarioFromLevel, serializeLevelJson } from '../engine/level-config'
+import type { LevelDefinition } from '../engine/level-config'
 import BallLayoutEditor from './BallLayoutEditor'
 import LabResults from './LabResults'
+import LevelJsonTools from './LevelJsonTools'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from './ui/dialog'
 import { Button } from './ui/button'
 import './LabMode.css'
@@ -29,6 +32,15 @@ interface ShotAssistance { enabled: boolean; locks: LabShotLocks; status: FitSta
 const freshAssistance = (enabled = true, locks: LabShotLocks = {}): ShotAssistance => ({ enabled, locks, status: 'idle', message: '' })
 const FIELD_NAMES: Record<keyof LabShotSettings, string> = { ballId: 'ball', pocketId: 'pocket', speed: 'strength', topSpin: 'draw / follow', sideSpin: 'sidespin', aimOffset: 'aim' }
 type FieldLock = { locked: boolean; onToggle: () => void }
+
+function replaceVariantSettings(variant: LabVariant, settings: LabShotSettings): LabVariant {
+  const next = { ...variant, settings }
+  if (variant.settings.ballId !== settings.ballId || variant.settings.pocketId !== settings.pocketId) {
+    delete next.target
+    delete next.potBallId
+  }
+  return next
+}
 
 function LockButton({ label, lock }: { label: string; lock?: FieldLock }) {
   if (!lock) return null
@@ -71,6 +83,7 @@ function ShotOptionEditor({ scenario, variant, assistance, index, canAdd, canRem
   onUpdate: (changes: Partial<LabVariant>, field?: keyof LabShotSettings) => void; onDuplicate: () => void; onRemove: () => void; onToggleLock: (field: keyof LabShotSettings) => void; onToggleAuto: () => void; onFit: () => void
 }) {
   const fitting = assistance.status === 'queued' || assistance.status === 'fitting'
+  const indirect = variant.potBallId !== undefined && variant.potBallId !== variant.settings.ballId
   return <fieldset className="lab-option" aria-label={`Option ${index + 1}`}>
     <legend><span className="lab-option-number">{String(index + 1).padStart(2, '0')}</span> Shot option</legend>
     <div className="lab-option-heading">
@@ -78,16 +91,28 @@ function ShotOptionEditor({ scenario, variant, assistance, index, canAdd, canRem
       <Button type="button" variant="ghost" size="icon" aria-label={`Duplicate option ${index + 1}`} title="Duplicate option" disabled={!canAdd} onClick={onDuplicate}><Copy size={16} /></Button>
       <Button type="button" variant="ghost" size="icon" aria-label={`Remove option ${index + 1}`} title="Remove option" disabled={!canRemove} onClick={onRemove}><Trash2 size={16} /></Button>
     </div>
-    <label className="lab-auto-toggle"><input type="checkbox" aria-label={`Auto-adapt option ${index + 1}`} checked={assistance.enabled} onChange={onToggleAuto} /><span>Auto-adapt</span><small>{assistance.enabled ? 'Unlocked values can change' : 'Manual experiment'}</small></label>
+    <label className="lab-auto-toggle"><input type="checkbox" aria-label={`Auto-adapt option ${index + 1}`} checked={assistance.enabled && !indirect} disabled={indirect} onChange={onToggleAuto} /><span>Auto-adapt</span><small>{indirect ? 'Indirect shot · manual controls' : assistance.enabled ? 'Unlocked values can change' : 'Manual experiment'}</small></label>
     <ShotTarget scenario={scenario} settings={variant.settings} locks={assistance.locks} onToggleLock={onToggleLock} onChange={(settings, field) => onUpdate({ settings }, field)} />
     <NumericFields settings={variant.settings} locks={assistance.locks} onToggleLock={onToggleLock} onChange={(settings, field) => onUpdate({ settings }, field)} />
-    <div className="lab-option-fit"><Button type="button" variant="outline" size="sm" disabled={fitting || !!validateSandboxLayout(scenario)} onClick={onFit}>{fitting ? <LoaderCircle size={14} className="sandbox-spinner" /> : <Sparkles size={14} />} Find playable shot</Button><p className="lab-fit-status" data-status={assistance.status} role="status">{assistance.message || (assistance.enabled ? 'Set a value to lock it; auto adapts the rest.' : 'Values stay as entered. Fit once or enable auto to adapt unlocked values.')}</p></div>
+    {indirect && <p className="lab-note">Contact ball {variant.settings.ballId} to pot ball {variant.potBallId}. Adjust this indirect stroke manually; auto-fit supports direct pots.</p>}
+    <div className="lab-option-fit"><Button type="button" variant="outline" size="sm" disabled={indirect || fitting || !!validateSandboxLayout(scenario)} onClick={onFit}>{fitting ? <LoaderCircle size={14} className="sandbox-spinner" /> : <Sparkles size={14} />} Find playable shot</Button><p className="lab-fit-status" data-status={assistance.status} role="status">{assistance.message || (assistance.enabled && !indirect ? 'Set a value to lock it; auto adapts the rest.' : 'Values stay as entered. Fit once or enable auto to adapt unlocked values.')}</p></div>
   </fieldset>
 }
 
-interface MorphSettings { start: LabShotSettings; end: LabShotSettings; steps: number }
-function morphValidation({ start, end, steps }: MorphSettings) {
-  return settingsError(start) ?? settingsError(end) ?? (!Number.isInteger(steps) || steps < 2 || steps > MAX_LAB_VARIANTS ? `Choose 2–${MAX_LAB_VARIANTS} steps.` : null)
+type ShotMetadata = Pick<LabVariant, 'target' | 'potBallId'>
+function shotMetadata(variant: LabVariant): ShotMetadata {
+  return { ...(variant.target ? { target: variant.target } : {}), ...(variant.potBallId !== undefined ? { potBallId: variant.potBallId } : {}) }
+}
+interface MorphSettings { start: LabShotSettings; end: LabShotSettings; steps: number; metadata?: ShotMetadata; incompatibleEndpoints?: boolean }
+function morphEndpoints(variants: LabVariant[]): Pick<MorphSettings, 'start' | 'end' | 'metadata' | 'incompatibleEndpoints'> {
+  const first = variants[0]
+  const last = variants[variants.length - 1]
+  const hasMetadata = first.target || last.target || first.potBallId !== undefined || last.potBallId !== undefined
+  const incompatibleEndpoints = Boolean(hasMetadata && (first.settings.ballId !== last.settings.ballId || first.settings.pocketId !== last.settings.pocketId || JSON.stringify(shotMetadata(first)) !== JSON.stringify(shotMetadata(last))))
+  return { start: { ...first.settings }, end: { ...last.settings, ballId: first.settings.ballId, pocketId: first.settings.pocketId }, metadata: shotMetadata(first), incompatibleEndpoints }
+}
+function morphValidation({ start, end, steps, incompatibleEndpoints }: MorphSettings) {
+  return incompatibleEndpoints ? 'These endpoints have different pot balls or finish targets. Use Vary stroke to preserve one option, or choose a new ball or pocket for a direct-stroke morph.' : settingsError(start) ?? settingsError(end) ?? (!Number.isInteger(steps) || steps < 2 || steps > MAX_LAB_VARIANTS ? `Choose 2–${MAX_LAB_VARIANTS} steps.` : null)
 }
 
 function MorphEditor({ scenario, variants, value, onChange, onGenerate }: { scenario: Scenario; variants: LabVariant[]; value: MorphSettings; onChange: (value: MorphSettings) => void; onGenerate: (append: boolean) => void }) {
@@ -98,9 +123,10 @@ function MorphEditor({ scenario, variants, value, onChange, onGenerate }: { scen
     <div className="lab-morph-content">
       <p className="lab-note">Set a start and an end. Every numeric value changes together in equal steps; the ball and pocket stay fixed. Both endpoints are included. Generated options start with auto-adapt off. Their target and varied values are locked, so fitting later preserves your series while adapting the other values.</p>
       <div className="lab-morph-toolbar">
-        <ShotTarget scenario={scenario} settings={start} prefix="Morph " onChange={settings => onChange({ ...value, start: settings, end: { ...end, ballId: settings.ballId, pocketId: settings.pocketId } })} />
-        <Button type="button" variant="outline" size="sm" onClick={() => onChange({ ...value, start: { ...variants[0].settings }, end: { ...variants[variants.length - 1].settings, ballId: variants[0].settings.ballId, pocketId: variants[0].settings.pocketId } })}>Use first and last options</Button>
+        <ShotTarget scenario={scenario} settings={start} prefix="Morph " onChange={settings => onChange({ ...value, metadata: {}, incompatibleEndpoints: false, start: settings, end: { ...end, ballId: settings.ballId, pocketId: settings.pocketId } })} />
+        <Button type="button" variant="outline" size="sm" onClick={() => onChange({ ...value, ...morphEndpoints(variants) })}>Use first and last options</Button>
       </div>
+      {value.metadata?.potBallId !== undefined && value.metadata.potBallId !== start.ballId && <p className="lab-note">Generated steps keep ball {value.metadata.potBallId} as the pot ball. Changing the ball or pocket starts a direct-stroke morph.</p>}
       <div className="lab-morph-endpoints">
         <fieldset aria-label="Morph start"><legend>From · start</legend><NumericFields settings={start} onChange={settings => onChange({ ...value, start: settings })} /></fieldset>
         <fieldset aria-label="Morph end"><legend>To · end</legend><NumericFields settings={end} onChange={settings => onChange({ ...value, end: settings })} /></fieldset>
@@ -126,10 +152,13 @@ function previewVariations(value: VariationSettings, scenario: Scenario): { gene
 
 function VariationEditor({ scenario, variants, value, onChange, onGenerate }: { scenario: Scenario; variants: LabVariant[]; value: VariationSettings; onChange: (value: VariationSettings) => void; onGenerate: (append: boolean) => void }) {
   const sourceId = useId()
+  const source = variants.find(variant => variant.id === value.sourceId)
+  const indirectPot = source && source.settings.ballId === value.base.ballId && source.settings.pocketId === value.base.pocketId && source.potBallId !== value.base.ballId ? source.potBallId : undefined
   const { generated, error } = previewVariations(value, scenario)
   const tooMany = variants.length + generated.length > MAX_LAB_VARIANTS
   return <div className="lab-variations">
     <p className="lab-note">Keep the base stroke and explore a lower and higher value for each setting, one setting at a time. The ball, pocket, and other settings stay fixed.</p>
+    {indirectPot !== undefined && <p className="lab-note">Variations keep ball {indirectPot} as the pot ball. Changing the ball or pocket starts a direct-stroke experiment.</p>}
     <label className="lab-field lab-variation-source" htmlFor={sourceId}><span>Base option</span><select id={sourceId} value={value.sourceId} onChange={event => {
       const source = variants.find(variant => variant.id === event.target.value)
       if (source) onChange({ ...value, sourceId: source.id, base: { ...source.settings } })
@@ -154,24 +183,60 @@ function VariationEditor({ scenario, variants, value, onChange, onGenerate }: { 
   </div>
 }
 
-export default function LabMode({ character, modeSwitcher }: { character: PlayerCharacter; modeSwitcher: ReactNode }) {
-  const [scenario, setScenario] = useState(() => createLabScenario(freshSeed()))
-  const [variants, setVariants] = useState<LabVariant[]>(initialVariants)
-  const [assistance, setAssistance] = useState<Record<string, ShotAssistance>>(() => Object.fromEntries(initialVariants().map(variant => [variant.id, freshAssistance()])))
-  const [samples, setSamples] = useState(64)
-  const [morph, setMorph] = useState<MorphSettings>(() => ({ start: { ...DEFAULT_LAB_SHOT_SETTINGS, speed: .7 }, end: { ...DEFAULT_LAB_SHOT_SETTINGS, speed: 2.1 }, steps: 5 }))
-  const [variation, setVariation] = useState<VariationSettings>(() => ({ sourceId: 'lab-option-1', base: { ...DEFAULT_LAB_SHOT_SETTINGS }, amounts: { ...DEFAULT_LAB_VARIATION_AMOUNTS } }))
-  const [result, setResult] = useState<LabResult | null>(null)
-  const [stale, setStale] = useState(false)
-  const [selectedId, setSelectedId] = useState('lab-option-1')
-  const [inspectedId, setInspectedId] = useState('lab-option-1')
+export interface LabDraft {
+  scenario: Scenario
+  variants: LabVariant[]
+  assistance: Record<string, ShotAssistance>
+  samples: number
+  talents: CharacterTalents
+  morph: MorphSettings
+  variation: VariationSettings
+  result: LabResult | null
+  stale: boolean
+  selectedId: string
+  inspectedId: string
+}
+
+type LabModeProps = {
+  character: PlayerCharacter
+  modeSwitcher: ReactNode
+  initialDraft?: LabDraft | null
+  initialDocument?: LevelDefinition | null
+  onDraftChange?: (draft: LabDraft) => void
+  onUseInScenario?: (document: LevelDefinition) => void
+}
+
+function documentVariants(scenario: Scenario): LabVariant[] {
+  return scenario.authoredShots?.length ? structuredClone(scenario.authoredShots) : initialVariants().map(variant => ({ ...variant, settings: { ...variant.settings, ballId: scenario.balls.find(ball => ball.id !== 0)?.id ?? 1 } }))
+}
+
+function documentAssistance(variants: LabVariant[], document?: LevelDefinition | null): Record<string, ShotAssistance> {
+  return Object.fromEntries(variants.map(variant => {
+    const saved = document?.lab?.assistance?.[variant.id]
+    return [variant.id, freshAssistance(saved?.enabled ?? !document, { ...saved?.locks })]
+  }))
+}
+
+export default function LabMode({ character, modeSwitcher, initialDraft, initialDocument, onDraftChange, onUseInScenario }: LabModeProps) {
+  const [scenario, setScenario] = useState(() => initialDraft?.scenario ?? (initialDocument ? scenarioFromLevel(initialDocument) : createLabScenario(freshSeed())))
+  const [variants, setVariants] = useState<LabVariant[]>(() => initialDraft?.variants ?? documentVariants(scenario))
+  const [assistance, setAssistance] = useState<Record<string, ShotAssistance>>(() => initialDraft ? Object.fromEntries(Object.entries(initialDraft.assistance).map(([id, value]) => [id, freshAssistance(value.enabled, value.locks)])) : documentAssistance(variants, initialDocument))
+  const [samples, setSamples] = useState(initialDraft?.samples ?? initialDocument?.lab?.samples ?? 64)
+  const [talents, setTalents] = useState(initialDraft?.talents ?? initialDocument?.lab?.talents ?? character.talents)
+  const usingSavedTalents = Object.keys(talents).some(key => talents[key as keyof CharacterTalents] !== character.talents[key as keyof CharacterTalents])
+  const [morph, setMorph] = useState<MorphSettings>(() => initialDraft?.morph ?? (initialDocument ? { ...morphEndpoints(variants), steps: 5 } : { start: { ...variants[0].settings, speed: .7 }, end: { ...variants[0].settings, speed: 2.1 }, steps: 5 }))
+  const [variation, setVariation] = useState<VariationSettings>(() => initialDraft?.variation ?? ({ sourceId: variants[0].id, base: { ...variants[0].settings }, amounts: { ...DEFAULT_LAB_VARIATION_AMOUNTS } }))
+  const [result, setResult] = useState<LabResult | null>(initialDraft?.result ?? null)
+  const [stale, setStale] = useState(initialDraft?.stale ?? false)
+  const [selectedId, setSelectedId] = useState(initialDraft?.selectedId ?? variants[0].id)
+  const [inspectedId, setInspectedId] = useState(initialDraft?.inspectedId ?? variants[0].id)
   const [dialog, setDialog] = useState<'layout' | 'morph' | 'variation' | 'guide' | null>(null)
   const [mobileView, setMobileView] = useState<'edit' | 'results'>('edit')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState('')
+  const [notice, setNotice] = useState(initialDocument ? initialDocument.scenario.authoredShots?.length ? 'Saved layout and strokes loaded. Values stay unchanged until you edit or request a fit.' : 'Layout loaded with three starter strokes. Adjust the controls or request a fit to develop your options.' : '')
   const selectedIdRef = useRef(selectedId)
-  const nextId = useRef(4)
+  const nextId = useRef(Math.max(4, ...variants.map(variant => Number(/^lab-option-(\d+)$/.exec(variant.id)?.[1] ?? 0) + 1)))
   const version = useRef(0)
   const controller = useRef<AbortController | null>(null)
   const scenarioRef = useRef(scenario)
@@ -194,8 +259,12 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
   const fitting = Object.values(assistance).some(value => value.status === 'queued' || value.status === 'fitting')
 
   useEffect(() => {
+    onDraftChange?.({ scenario, variants, assistance, samples, talents, morph, variation, result, stale, selectedId, inspectedId })
+  }, [scenario, variants, assistance, samples, talents, morph, variation, result, stale, selectedId, inspectedId, onDraftChange])
+
+  useEffect(() => {
     heading.current?.focus({ preventScroll: true })
-    queueFits(variantsRef.current.map(variant => variant.id))
+    if (!initialDraft && !initialDocument) queueFits(variantsRef.current.map(variant => variant.id))
     return () => { version.current += 1; controller.current?.abort(); cancelFitWork() }
   }, [])
 
@@ -257,7 +326,10 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
   // old worker results from replacing a more recent value, lock, or layout.
   function queueFits(ids: string[], delay = 450) {
     cancelFitWork()
-    ids.forEach(id => pendingFits.current.add(id))
+    ids.forEach(id => {
+      const variant = variantsRef.current.find(entry => entry.id === id)
+      if (variant && (variant.potBallId === undefined || variant.potBallId === variant.settings.ballId)) pendingFits.current.add(id)
+    })
     const nextAssistance = { ...assistanceRef.current }
     for (const id of pendingFits.current) {
       if (!nextAssistance[id] || !variantsRef.current.some(variant => variant.id === id)) { pendingFits.current.delete(id); continue }
@@ -290,7 +362,7 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
         if (abort.signal.aborted || fitVersion.current !== requestVersion) return
         pendingFits.current.delete(id)
         if (fitted.status === 'found') {
-          writeVariants(variantsRef.current.map(entry => entry.id === id ? { ...entry, settings: fitted.settings } : entry))
+          writeVariants(variantsRef.current.map(entry => entry.id === id ? replaceVariantSettings(entry, fitted.settings) : entry))
           patchAssistance(id, { status: 'found', message: `Playable stroke found. ${fitted.changed.length ? `Adapted ${fitted.changed.map(key => FIELD_NAMES[key]).join(', ')}.` : 'Current values work.'}` })
         } else {
           patchAssistance(id, { status: 'not-found', message: 'No playable stroke found with these locks. Try unlocking a value or moving a ball. Your settings are unchanged.' })
@@ -324,8 +396,10 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
     try {
       const nextScenario = resizeLabBalls(scenario, count)
       const remaining = new Set(nextScenario.balls.map(ball => ball.id))
+      const missingPot = variantsRef.current.find(variant => variant.potBallId !== undefined && !remaining.has(variant.potBallId))
+      if (missingPot) throw new Error(`Ball ${missingPot.potBallId} is the pot ball for “${missingPot.label}”. Remove that option or change its potBallId in Edit level JSON before removing the ball.`)
       const retarget = (settings: LabShotSettings) => remaining.has(settings.ballId) ? settings : { ...settings, ballId: 1 }
-      writeVariants(variantsRef.current.map(variant => assistanceRef.current[variant.id].locks.ballId ? variant : { ...variant, settings: retarget(variant.settings) }))
+      writeVariants(variantsRef.current.map(variant => assistanceRef.current[variant.id].locks.ballId ? variant : replaceVariantSettings(variant, retarget(variant.settings))))
       changeLayout(nextScenario)
       setMorph(previous => ({ ...previous, start: retarget(previous.start), end: retarget(previous.end) }))
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'The ball count could not be changed.') }
@@ -333,7 +407,7 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
 
   function updateVariant(id: string, changes: Partial<LabVariant>, field?: keyof LabShotSettings) {
     invalidate()
-    writeVariants(variantsRef.current.map(variant => variant.id === id ? { ...variant, ...changes } : variant))
+    writeVariants(variantsRef.current.map(variant => variant.id === id ? { ...(changes.settings ? replaceVariantSettings(variant, changes.settings) : variant), ...changes } : variant))
     if (field) {
       const current = assistanceRef.current[id]
       patchAssistance(id, { locks: { ...current.locks, [field]: true }, status: 'idle', message: '' })
@@ -361,11 +435,12 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
   function addVariant(source?: LabVariant) {
     if (variants.length >= MAX_LAB_VARIANTS) return
     invalidate()
-    const number = nextId.current++
+    let number = nextId.current++
+    while (variantsRef.current.some(variant => variant.id === `lab-option-${number}`)) number = nextId.current++
     const id = `lab-option-${number}`
     const sourceAssistance = source ? assistanceRef.current[source.id] : undefined
     const addedAssistance = freshAssistance(sourceAssistance?.enabled ?? true, { ...sourceAssistance?.locks })
-    writeVariants([...variantsRef.current, { id, label: source ? `${source.label} copy` : `Option ${number}`, settings: { ...(source?.settings ?? DEFAULT_LAB_SHOT_SETTINGS) } }])
+    writeVariants([...variantsRef.current, { ...source, id, label: source ? `${source.label} copy` : `Option ${number}`, settings: { ...(source?.settings ?? DEFAULT_LAB_SHOT_SETTINGS) } }])
     writeAssistance({ ...assistanceRef.current, [id]: addedAssistance })
     pendingEditorFocus.current = id
     selectVariant(id)
@@ -394,7 +469,7 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
     if (morphValidation(morph) || (append && variants.length + morph.steps > MAX_LAB_VARIANTS)) return
     invalidate()
     try {
-      const generated = generateLabVariants(morph.start, morph.end, morph.steps).map(variant => ({ ...variant, id: `lab-option-${nextId.current++}` }))
+      const generated = generateLabVariants(morph.start, morph.end, morph.steps).map(variant => ({ ...variant, ...morph.metadata, id: `lab-option-${nextId.current++}` }))
       const locks: LabShotLocks = { ballId: true, pocketId: true }
       for (const { key } of NUMERIC_FIELDS) if (morph.start[key] !== morph.end[key]) locks[key] = true
       writeVariants(append ? [...variantsRef.current, ...generated] : generated)
@@ -412,7 +487,9 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
     const { generated, error: invalid } = previewVariations(variation, scenario)
     if (invalid || (append && variantsRef.current.length + generated.length > MAX_LAB_VARIANTS)) return
     invalidate()
-    const added = generated.map(variant => ({ ...variant, id: `lab-option-${nextId.current++}` }))
+    const source = variantsRef.current.find(variant => variant.id === variation.sourceId)
+    const metadata = source && source.settings.ballId === variation.base.ballId && source.settings.pocketId === variation.base.pocketId ? shotMetadata(source) : {}
+    const added = generated.map(variant => ({ ...variant, ...metadata, id: `lab-option-${nextId.current++}` }))
     const locks: LabShotLocks = { ballId: true, pocketId: true, speed: true, topSpin: true, sideSpin: true, aimOffset: true }
     writeVariants(append ? [...variantsRef.current, ...added] : added)
     writeAssistance({ ...(append ? assistanceRef.current : {}), ...Object.fromEntries(added.map(variant => [variant.id, freshAssistance(false, { ...locks })])) })
@@ -432,7 +509,7 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
     controller.current = abort
     setBusy(true)
     try {
-      const analysis = await analyzeLabAsync({ scenario, variants, samples, talents: character.talents }, { signal: abort.signal })
+      const analysis = await analyzeLabAsync({ scenario, variants, samples, talents }, { signal: abort.signal })
       if (abort.signal.aborted || version.current !== runVersion) return
       setResult(analysis)
       setInspectedId(selectedIdRef.current)
@@ -447,6 +524,36 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
     }
   }
 
+  function currentDocument() {
+    return levelFromScenario({ ...scenario, authoredShots: variants }, {
+      kind: geometryError ? 'draft' : scenario.authoring?.kind ?? 'draft',
+      lab: { samples, talents, assistance: Object.fromEntries(Object.entries(assistance).map(([id, value]) => [id, { enabled: value.enabled, locks: value.locks }])) },
+    })
+  }
+
+  function importLevel(json: string) {
+    const document = parseLevelJson(json)
+    const nextScenario = scenarioFromLevel(document)
+    const nextVariants = documentVariants(nextScenario)
+    invalidate()
+    cancelFitWork()
+    pendingFits.current.clear()
+    scenarioRef.current = nextScenario
+    setScenario(nextScenario)
+    writeVariants(nextVariants)
+    nextId.current = Math.max(4, ...nextVariants.map(variant => Number(/^lab-option-(\d+)$/.exec(variant.id)?.[1] ?? 0) + 1))
+    writeAssistance(documentAssistance(nextVariants, document))
+    setSamples(document.lab?.samples ?? 64)
+    setTalents(document.lab?.talents ?? character.talents)
+    setMorph({ ...morphEndpoints(nextVariants), steps: 5 })
+    setVariation({ sourceId: nextVariants[0].id, base: { ...nextVariants[0].settings }, amounts: { ...DEFAULT_LAB_VARIATION_AMOUNTS } })
+    setResult(null)
+    setStale(false)
+    selectVariant(nextVariants[0].id)
+    setInspectedId(nextVariants[0].id)
+    setNotice(document.scenario.authoredShots?.length ? 'Saved layout and strokes loaded. Values stay unchanged until you edit or request a fit.' : 'Layout loaded with three starter strokes. Adjust the controls or request a fit to develop your options.')
+  }
+
   return <div className="lab-mode">
     <div className="lab-workspace-heading">
       <div><h2 ref={heading} tabIndex={-1}><FlaskConical size={21} /> Shot lab</h2><p>Adjust a stroke. Run it. Compare the odds.</p></div>
@@ -457,9 +564,10 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
           <DialogContent className="lab-dialog lab-layout-dialog">
             <DialogTitle>Table layout</DialogTitle>
             <DialogDescription>Move the balls to set up your experiment. Changes apply immediately.</DialogDescription>
-            <div className="lab-layout-toolbar"><label className="lab-field" htmlFor="lab-ball-count"><span>Object balls</span><select id="lab-ball-count" value={scenario.balls.length - 1} onChange={event => changeCount(Number(event.target.value))}>{Array.from({ length: MAX_LAB_BALLS }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} {index === 0 ? 'object ball' : 'object balls'}</option>)}</select></label><Button type="button" variant="outline" size="sm" onClick={() => { changeLayout(resizeLabBalls(createLabScenario(freshSeed()), scenario.balls.length - 1)); setNotice('The layout has been reset. Your shot options are kept.') }}><RotateCcw size={14} /> Reset layout</Button></div>
+            <div className="lab-layout-toolbar"><label className="lab-field" htmlFor="lab-ball-count"><span>Object balls</span><select id="lab-ball-count" value={scenario.balls.length - 1} onChange={event => changeCount(Number(event.target.value))}>{Array.from({ length: MAX_LAB_BALLS }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} {index === 0 ? 'object ball' : 'object balls'}</option>)}</select></label><Button type="button" variant="outline" size="sm" onClick={() => { changeLayout({ ...scenario, balls: resizeLabBalls(createLabScenario(freshSeed()), scenario.balls.length - 1).balls }); setNotice('The layout has been reset. Your shot options are kept.') }}><RotateCcw size={14} /> Reset layout</Button></div>
             <div className="sandbox-editor lab-layout-editor"><BallLayoutEditor scenario={scenario} onChange={changeLayout} /></div>
             {geometryError && <p className="lab-error" role="status">{geometryError}</p>}
+            {error && <p className="lab-error" role="alert">{error}</p>}
             <div className="lab-dialog-footer"><span>The cue ball is always included.</span><Button type="button" onClick={() => setDialog(null)}>Done</Button></div>
           </DialogContent>
         </Dialog>
@@ -495,9 +603,15 @@ export default function LabMode({ character, modeSwitcher }: { character: Player
         </Dialog>
       </div>
     </div>
-    <div className="lab-run">
-      <div className="lab-run-summary"><span className="lab-badge">{variants.length} options · {scenario.balls.length - 1} {scenario.balls.length === 2 ? 'ball' : 'balls'}</span><span>{character.name}’s precision</span></div>
-      <div className="lab-run-actions"><label className="lab-field" htmlFor="lab-samples"><span>Trials per option</span><select id="lab-samples" value={samples} onChange={event => { invalidate(); setSamples(Number(event.target.value)) }}>{[32, 64, 128].map(count => <option key={count} value={count}>{count} trials</option>)}</select></label>{busy ? <><span className="lab-running" role="status"><LoaderCircle size={15} className="sandbox-spinner" /> {variants.length * samples} trials…</span><Button type="button" variant="outline" onClick={() => { invalidate(); setNotice('Run cancelled. Edit your options or run again.') }}>Cancel run</Button></> : <Button type="button" disabled={!!geometryError || !!variantError || fitting} onClick={() => { void runEnsembles() }}>{fitting ? <LoaderCircle size={16} className="sandbox-spinner" /> : <FlaskConical size={16} />} {error ? 'Retry ensembles' : 'Run ensembles'}</Button>}</div>
+    <LevelJsonTools getJson={() => serializeLevelJson(currentDocument())} onImport={importLevel} filename={`${scenario.authoring?.id ?? 'lab-draft'}.json`}>
+      {onUseInScenario && <Button type="button" variant="outline" size="sm" onClick={() => {
+        try { onUseInScenario(parseLevelJson(serializeLevelJson(currentDocument()))) }
+        catch (reason) { setError(reason instanceof Error ? reason.message : 'This draft could not be applied to the scenario.') }
+      }}>Use in scenario <ArrowRight size={14} /></Button>}
+    </LevelJsonTools>
+    <div className={`lab-run${usingSavedTalents ? ' lab-run-saved' : ''}`}>
+      <div className="lab-run-summary"><span className="lab-badge">{variants.length} options · {scenario.balls.length - 1} {scenario.balls.length === 2 ? 'ball' : 'balls'}</span><span>{usingSavedTalents ? 'Saved player precision' : `${character.name}’s precision`}</span>{usingSavedTalents && <Button type="button" variant="ghost" size="sm" onClick={() => { invalidate(); setTalents(character.talents) }}>Use {character.name}’s precision</Button>}</div>
+      <div className="lab-run-actions"><label className="lab-field" htmlFor="lab-samples"><span>Trials per option</span><select id="lab-samples" value={samples} onChange={event => { invalidate(); setSamples(Number(event.target.value)) }}>{[...new Set([32, 64, 128, samples])].sort((a, b) => a - b).map(count => <option key={count} value={count}>{count} trials</option>)}</select></label>{busy ? <><span className="lab-running" role="status"><LoaderCircle size={15} className="sandbox-spinner" /> {variants.length * samples} trials…</span><Button type="button" variant="outline" onClick={() => { invalidate(); setNotice('Run cancelled. Edit your options or run again.') }}>Cancel run</Button></> : <Button type="button" disabled={!!geometryError || !!variantError || fitting} onClick={() => { void runEnsembles() }}>{fitting ? <LoaderCircle size={16} className="sandbox-spinner" /> : <FlaskConical size={16} />} {error ? 'Retry ensembles' : 'Run ensembles'}</Button>}</div>
     </div>
     <div className="lab-feedback" aria-live="polite">{error ? <p className="lab-error" role="alert">{error}</p> : geometryError ? <p className="lab-error">{geometryError} Open Edit layout to fix it.</p> : variantError ? <p className="lab-error">{variantError}</p> : <p className="lab-run-notice" role="status">{busy ? 'Simulating your strokes… You can keep editing to cancel this run.' : fitting ? 'Adapting unlocked values…' : notice || 'Ready to experiment. Editing a value locks it; auto adapts the rest.'}</p>}</div>
     <div className="lab-mobile-navigation" role="group" aria-label="Lab workspace view"><button type="button" aria-pressed={mobileView === 'edit'} onClick={() => setMobileView('edit')}>Edit strokes</button><button type="button" aria-pressed={mobileView === 'results'} onClick={() => setMobileView('results')}>{result ? 'View results' : 'View table'}{result && stale && <span> · Previous run</span>}</button></div>

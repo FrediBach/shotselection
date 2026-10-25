@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-037",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 37,
+    "seed": 105434,
+    "title": "Diagnose the blocked corridor",
+    "description": "Two spare balls obstruct different parts of the next shot.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.57,
+          "y": 0.98
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.12,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.95,
+          "y": 0.42
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.576446,
+          "y": 0.657902
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.213914,
+          "y": 0.796198
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 6,
+      "lessonCount": 10,
+      "lesson": "Diagnose two predicted finishes before choosing your stroke. Identify whether the highlighted spare ball blocks the cue approach or ball 2’s pocket line, then inspect a removal check that restores that route.",
+      "takeaway": "The lane between shots matters as much as the lane from the object ball to the pocket.",
+      "learning": {
+        "concept": "Distinguish a blocked cue approach from a blocked object-to-pocket line.",
+        "prerequisite": "Read both corridors of a direct next shot.",
+        "comparison": "corridor-diagnosis"
+      },
+      "briefing": {
+        "focus": "Identify which corridor fails",
+        "gotcha": "A ball that misses the pocket line may still crowd the cue-ball approach.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.17,
+      "maxCutAngle": 54
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.17
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

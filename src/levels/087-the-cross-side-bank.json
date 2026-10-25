@@ -1,0 +1,148 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-087",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 87,
+    "seed": 151384,
+    "title": "The cross-side bank",
+    "description": "Send the object ball off the opposite cushion into the side pocket.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.62,
+          "y": 0.26
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.55,
+          "y": 0.75
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 6,
+      "lessonCount": 10,
+      "lesson": "This time the object ball makes the bank. Read the 1 to the cushion and back toward the side pocket, then include the cue-ball finish in your choice. Pause at the recorded rebound and identify ball 1 as the cushion-contacting ball. A kick would send the cue to a cushion before its object-ball contact.",
+      "takeaway": "An object-ball bank needs a complete rebound line and enough speed left after the cushion.",
+      "learning": {
+        "concept": "object-ball-cushion",
+        "prerequisite": "draw-return-speed",
+        "comparison": "object-bank"
+      },
+      "briefing": {
+        "focus": "Bank the object ball",
+        "gotcha": "The required cushion belongs to the 1. A cue-ball rebound does not satisfy this trick.",
+        "stage": "apply"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 1,
+      "pocketId": 1,
+      "aim": {
+        "x": 1.55,
+        "y": 0.75
+      },
+      "requiredPots": [
+        1
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ]
+      ],
+      "minObjectCushions": 1,
+      "description": "Bank the 1 off a cushion and pocket it, leaving the cue ball safe."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.13207708995578507
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

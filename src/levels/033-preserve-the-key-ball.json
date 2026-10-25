@@ -1,0 +1,131 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-033",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 33,
+    "seed": 101758,
+    "title": "Preserve the key ball",
+    "description": "Keep ball 2 in place as the link from the opening pot to ball 3.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.69,
+          "y": 0.91
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.12,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.408739,
+          "y": 0.236301
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.800568,
+          "y": 0.382198
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 2,
+      "lessonCount": 10,
+      "lesson": "Compare an opener that moves ball 2 out of reach with one that preserves a simulated 2-to-3 continuation. Ball 2 is the only intermediate ball after the opening pot.",
+      "takeaway": "A key ball matters for the position it can provide on a later target.",
+      "learning": {
+        "concept": "Preserve the intermediate ball that provides access to a third target.",
+        "prerequisite": "Play a second shot from the settled opening layout.",
+        "comparison": "key-ball"
+      },
+      "briefing": {
+        "focus": "Preserve the link to ball 3",
+        "gotcha": "Potting the 1 is not enough: moving the 2 can remove the connection to the 3 even though both balls remain on the table.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.178,
+      "maxCutAngle": 57
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.178
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

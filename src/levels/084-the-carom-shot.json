@@ -1,0 +1,158 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-084",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 84,
+    "seed": 148627,
+    "title": "The carom shot",
+    "description": "Glance the cue ball off the 1 to pocket the waiting 2.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.15,
+          "y": 0.8
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.0976,
+          "y": 0.31
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.055
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "A carom uses the cue ball itself to make the second contact. It glances off the 1 and reaches the 2 near the side pocket. Step through cue → 1 and cue → 2, tracking the white cue ball between the contacts. Compare this with a plant, where ball 1 makes the second contact.",
+      "takeaway": "The cue-ball path after contact can be the scoring path, not just the finish.",
+      "learning": {
+        "concept": "cue-ball-second-contact",
+        "prerequisite": "kiss-redirection",
+        "comparison": "carom-contact"
+      },
+      "briefing": {
+        "focus": "Connect two cue-ball contacts",
+        "gotcha": "The cue ball must touch the 1 first and then the 2. Sending the 1 into the 2 is a different shot.",
+        "stage": "develop"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 2,
+      "pocketId": 1,
+      "aim": {
+        "x": 1.15,
+        "y": 0.33
+      },
+      "requiredPots": [
+        2
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "description": "Carom the cue ball off the 1, then contact and pot the 2."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.14536964742657119
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

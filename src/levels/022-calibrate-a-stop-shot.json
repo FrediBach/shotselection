@@ -1,0 +1,134 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-022",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 22,
+    "seed": 91649,
+    "title": "Calibrate a stop shot",
+    "description": "Distinguish sliding from forward roll at a nearly full contact.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.27,
+          "y": 1.05
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.94,
+          "y": 0.85
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "position",
+      "chapterTitle": "Play for position",
+      "chapterIndex": 2,
+      "lessonIndex": 1,
+      "lessonCount": 10,
+      "lesson": "A stop shot needs almost no forward or backward rotation at contact, not necessarily a center-ball hit at launch. Compare the measured roll state at this nearly full contact. Predict which stroke stops close to contact and which carries forward, then check the actual paths.",
+      "takeaway": "Calibrate the rotation that arrives at the object ball: sliding with little rotation can stop at a full contact, while forward roll carries on.",
+      "learning": {
+        "concept": "contact-roll-state",
+        "prerequisite": "position-zone",
+        "comparison": "contact-roll",
+        "pockets": [
+          {
+            "ballId": 1,
+            "pocketId": 1
+          }
+        ]
+      },
+      "briefing": {
+        "focus": "Read spin at contact, not just at launch",
+        "gotcha": "Sliding is not the same as rolling. Cloth changes rotation during the approach; these complete strokes vary pace and launch spin together.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.198,
+      "maxCutAngle": 64
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.198
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        -0.75,
+        -0.5,
+        -0.25,
+        0,
+        0.5,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

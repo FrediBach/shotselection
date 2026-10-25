@@ -1,0 +1,124 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-017",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 17,
+    "seed": 87054,
+    "title": "Avoid an unnecessary rail",
+    "description": "Compare stopping before a cushion with landing at the rebound boundary.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.7,
+          "y": 0.83
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.16,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.84,
+          "y": 0.39
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.88,
+          "y": 0.95
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "open-table",
+      "chapterTitle": "Everyday pool",
+      "chapterIndex": 1,
+      "lessonIndex": 6,
+      "lessonCount": 10,
+      "lesson": "A small pace error can decide whether a route reaches the rail at all. Compare two demonstrations with the same aim and spin, then inspect five speed-only probes around each. Choose a scored stroke after accounting for this extra route change.",
+      "takeaway": "Leaving room before the rail avoids a boundary where a small speed change adds a rebound.",
+      "learning": {
+        "concept": "avoidable-cushion-variation",
+        "prerequisite": "post-contact-rebound",
+        "comparison": "avoidable-cushion"
+      },
+      "briefing": {
+        "focus": "Protect against an avoidable rebound",
+        "gotcha": "A rail can help some shots. Here, count which speed probes rebound and inspect their endpoints rather than assuming every rebound is worse.",
+        "stage": "apply"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.1594666353736498
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

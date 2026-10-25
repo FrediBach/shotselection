@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-036",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 36,
+    "seed": 104515,
+    "title": "Leave enough angle",
+    "description": "Compare fuller and thinner second contacts on the same useful side of ball 2.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.94,
+          "y": 0.96
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.39,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.49,
+          "y": 0.42
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.597097,
+          "y": 0.246935
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.14,
+          "y": 0.37
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 5,
+      "lessonCount": 10,
+      "lesson": "Both opening finishes leave the cue on the useful side of ball 2. Compare matched second strokes: the fuller contact leaves too little travel toward the third-shot setup, while the thinner contact carries far enough to leave ball 3 playable.",
+      "takeaway": "The useful side is only the start: leave enough angle for the cue ball to reach the next setup.",
+      "learning": {
+        "concept": "Use the magnitude of the second cut to create enough cue-ball travel toward ball 3.",
+        "prerequisite": "Read the useful side of the next ball and look ahead through its pot.",
+        "comparison": "angle-travel"
+      },
+      "briefing": {
+        "focus": "Compare the amount of angle on ball 2",
+        "gotcha": "A fuller pot can leave the cue ball short even when its departure points toward the next setup.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.172,
+      "maxCutAngle": 55
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.172
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

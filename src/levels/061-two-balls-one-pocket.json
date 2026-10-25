@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-061",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 61,
+    "seed": 127490,
+    "title": "Two balls, one pocket",
+    "description": "Compare the 1–2 plant with a long cut on the free 3.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1,
+          "y": 1.05
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.37
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.3
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.85,
+          "y": 0.85
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 0,
+      "lessonCount": 10,
+      "lesson": "Trace two contacts: the cue ball hits 1, then ball 1 hits 2 toward the pocket. Predict which ball is potted and inspect the numbered contact snapshots, then compare the complete plant with the free-ball alternative.",
+      "takeaway": "Two contacts can be a sensible choice when the pair points naturally into the pocket.",
+      "learning": {
+        "concept": "plant-contact-sequence",
+        "prerequisite": "cut-paths",
+        "comparison": "plant-introduction"
+      },
+      "briefing": {
+        "focus": "Read through the pair",
+        "gotcha": "Select the 1 to play the plant. The 2 is its potting target; a direct pot on the free 3 is the alternative.",
+        "stage": "introduce"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09850073332328096
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

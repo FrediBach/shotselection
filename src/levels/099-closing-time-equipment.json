@@ -1,0 +1,133 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-099",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 99,
+    "seed": 162412,
+    "title": "Closing time equipment",
+    "description": "The last cue, dirty balls and a dead rail are all that remain.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.73,
+          "y": 0.89
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.15,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.9,
+          "y": 0.42
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.94,
+          "y": 0.95
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Predict which single repair would change the preferred offered shot: fix the cue, clean the balls or restore the rail. Compare each repair against the unchanged equipment using the same offered strokes and player execution trials. This diagnoses which equipment fault the choice depends on.",
+      "takeaway": "With several faults, reduce the number of delicate contacts and returns your plan depends on.",
+      "learning": {
+        "concept": "equipment-intervention",
+        "prerequisite": "reduced-spin-delivery",
+        "comparison": "equipment-repair"
+      },
+      "briefing": {
+        "focus": "Predict which repair changes the choice",
+        "gotcha": "Adding power cannot restore a dead rebound or clean up a dirty collision. Check what each part of the route needs.",
+        "stage": "apply"
+      }
+    },
+    "conditions": {
+      "id": "closing-time",
+      "name": "Battered equipment",
+      "description": "A tired cue delivers 88% power and 75% spin; grimy balls and the marked dead rail waste more energy.",
+      "cue": {
+        "power": 0.88,
+        "angleBias": -0.007,
+        "spin": 0.75
+      },
+      "dirt": 0.45,
+      "cushions": [
+        {
+          "rail": "right",
+          "restitution": 0.38
+        }
+      ]
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.10536102768906647
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-032",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 32,
+    "seed": 100839,
+    "title": "Connect the first two",
+    "description": "Play the 1 to the 2 while keeping the remaining balls in view.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.76,
+          "y": 0.87
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.14,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.86,
+          "y": 0.43
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 2.1,
+          "y": 1
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 1,
+      "lessonCount": 10,
+      "lesson": "Turn your whole-table scan into a two-ball plan. Work backward from a playable shot on the 2, then predict which stroke on the 1 reaches its setup zone. After scoring, choose and play the second shot from that settled layout.",
+      "takeaway": "Planning backward turns two separate pots into a deliberate sequence.",
+      "briefing": {
+        "focus": "Work backward from the 2",
+        "gotcha": "Keep the 2 on the table. Accidentally potting it while playing the 1 removes the next shot this lesson requires.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.18,
+      "maxCutAngle": 58
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.18
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

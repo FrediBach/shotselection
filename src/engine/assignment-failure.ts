@@ -1,5 +1,6 @@
 import { simulateShot } from './physics';
 import { subtract } from './math';
+import { tuningNumber } from './lesson-tuning';
 import type { Scenario, FinishOption } from './types';
 import type { ShotAnalysis } from './types';
 export const ASSIGNMENT_CONDITIONS = ['Legal pot', 'Landing zone', 'Next-shot access'] as const;
@@ -30,8 +31,8 @@ export function assignmentPotProblem(source: Scenario, middle: FinishOption, las
   const incoming = subtract(first, cue), onward = subtract(next, first);
   // A reflection reverses the angular offset; a rotation does not.
   const orientation = Math.sign(incoming.x * onward.y - incoming.y * onward.x) || 1;
-  const plan = { ...middle.plan, id: last.id, label: `Ball ${middle.plan.ballId} · C · center`, speed: middle.plan.speed * 1.04,
-    angle: middle.plan.angle - orientation * .01 };
+  const plan = { ...middle.plan, id: last.id, label: `Ball ${middle.plan.ballId} · C · center`, speed: middle.plan.speed * tuningNumber(source, 'assignmentSpeedMultiplier'),
+    angle: middle.plan.angle - orientation * tuningNumber(source, 'assignmentAngleOffset') };
   const simulation = simulateShot(source, plan, { record: false, recordPaths: true });
   return { ...last, plan: { ...plan, target: simulation.cueEnd }, cueApproachPath: simulation.cueApproachPath };
 }

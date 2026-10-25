@@ -1,0 +1,97 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-008",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 8,
+    "seed": 78783,
+    "title": "Pace the diagonal",
+    "description": "Balance potting pace with cue-ball travel on a long diagonal.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.26,
+          "y": 1.1
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.18,
+          "y": 0.31
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "fundamentals",
+      "chapterTitle": "First strokes",
+      "chapterIndex": 0,
+      "lessonIndex": 7,
+      "lessonCount": 10,
+      "lesson": "This approach asks you to carry enough speed to the object ball without losing control afterward. Compare the strength of all three strokes before deciding where each one stops.",
+      "takeaway": "Longer approaches need deliberate pace, not an automatic choice of the hardest stroke.",
+      "briefing": {
+        "focus": "Budget speed for the whole shot",
+        "gotcha": "Extra strength can rescue a slow object ball while sending the cue ball well beyond the intended finish.",
+        "stage": "apply"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.17598147425767782
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-090",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 90,
+    "seed": 154141,
+    "title": "The carom-combination finale",
+    "description": "Carom off the 1 into the 2, then send the 3 into the side pocket.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.15,
+          "y": 0.8
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.0976,
+          "y": 0.36
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.14
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.27,
+          "y": 0.06
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "Follow the handoff: the cue glances off ball 1, then contacts ball 2. Ball 2 takes over as the striker and sends ball 3 into the side pocket. Reveal cue → 2 and 2 → 3 separately. English and finish control are familiar tools for completing this sequence.",
+      "takeaway": "The cue starts the carom; ball 2 takes over to complete the plant.",
+      "learning": {
+        "concept": "carom-plant-handoff",
+        "prerequisite": "two-object-ball-cushions",
+        "comparison": "carom-plant"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Hand off from the cue to ball 2",
+        "gotcha": "The cue ball must contact the 1 then the 2, and the 2 must send the 3 into a pocket. A lucky pot without that sequence is incomplete.",
+        "stage": "apply"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 3,
+      "pocketId": 1,
+      "aim": {
+        "x": 1.15,
+        "y": 0.4
+      },
+      "requiredPots": [
+        3
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "description": "Carom off the 1 into the 2, then send the 2 into the 3 to pot the 3."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.12
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-079",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 79,
+    "seed": 144032,
+    "title": "Finish the game, not the position",
+    "description": "Only the winning ball remains. Pot it and keep the cue on the table.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.62,
+          "y": 0.94
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.11,
+          "y": 0.31
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "tournament",
+      "chapterTitle": "Tournament table",
+      "chapterIndex": 7,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Predict whether a legal final pot should fail for missing a position target. Compare the actual winning-pot rates with a hypothetical positional requirement, using the same trials.",
+      "takeaway": "When there is no next ball, choose the repeatable legal pot without inventing a landing requirement.",
+      "learning": {
+        "concept": "final-ball-objective",
+        "prerequisite": "player-error-profile",
+        "comparison": "final-ball"
+      },
+      "briefing": {
+        "focus": "Change the objective for the last ball",
+        "gotcha": "The cue may finish anywhere on the table, but a scratch still loses the shot. Position accuracy earns no extra credit.",
+        "stage": "apply"
+      }
+    },
+    "finalBall": {
+      "ballId": 1
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.08088075983990056
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

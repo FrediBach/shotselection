@@ -1,0 +1,159 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-082",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 82,
+    "seed": 146789,
+    "title": "The split shot",
+    "description": "Split the close pair and pocket both balls in one stroke.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.91555357,
+          "y": 1.08
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.91555357,
+          "y": 0.64222123
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.87571777,
+          "y": 0.59849673
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 1,
+      "lessonCount": 10,
+      "lesson": "A split shot turns one incoming line into two outgoing lines. The 1 clips the 2 and carries on toward a different pocket. Pause at the 1–2 contact, then trace the motion left in ball 1 and the motion transferred to ball 2 separately. Both must reach their pockets while the cue stays safe.",
+      "takeaway": "Read both outgoing paths: the transferred motion and the motion left in the first ball.",
+      "learning": {
+        "concept": "split-outgoing-paths",
+        "prerequisite": "ordered-contact-chain",
+        "comparison": "split-paths"
+      },
+      "briefing": {
+        "focus": "Account for both pots",
+        "gotcha": "One ball dropping is only half the trick. Both the 1 and 2 must be pocketed safely.",
+        "stage": "develop"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 2,
+      "pocketId": 1,
+      "aim": {
+        "x": 1.91555357,
+        "y": 0.64222123
+      },
+      "requiredPots": [
+        1,
+        2
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "description": "Hit the 1 into the 2 and pocket both object balls in the same stroke."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.1549665272724357
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

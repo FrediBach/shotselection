@@ -1,0 +1,123 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-019",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 19,
+    "seed": 88892,
+    "title": "Shortlist four open balls",
+    "description": "Record two promising balls, compare their routes and strokes, then pick an opener.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.73,
+          "y": 0.8
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.16,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.84,
+          "y": 0.39
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.88,
+          "y": 0.95
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.41,
+          "y": 0.38
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "open-table",
+      "chapterTitle": "Everyday pool",
+      "chapterIndex": 1,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Mark exactly two balls for your shortlist. Compare their contact lines and three familiar draw, center and follow strokes side by side. Choose your opener from that pair; you can return and change the shortlist before committing.",
+      "takeaway": "A deliberate shortlist keeps a larger table from turning into a rushed guess.",
+      "learning": {
+        "concept": "two-ball-shortlist",
+        "prerequisite": "opening-ball-choice",
+        "comparison": "shortlist"
+      },
+      "briefing": {
+        "focus": "Narrow the field deliberately",
+        "gotcha": "The first playable ball is only a candidate; another ball may offer a much simpler finish.",
+        "stage": "apply"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.15601248692377995
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

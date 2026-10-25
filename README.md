@@ -80,7 +80,34 @@ Enter strokes individually or generate evenly spaced steps between two sets of s
 
 Use **Vary stroke** to explore around a single option. It starts from the selected option, lets you choose another base and edit its settings, then includes the base plus a lower and higher value for strength, draw/follow, sidespin, and aim offset independently. Adjust each ± amount, or set it to 0 to skip that control. Values stop at their limits and unchanged duplicates are skipped, giving up to nine options. Append the generated options or replace the current list, within the 16-option limit. These options have Auto-adapt off and all values locked to preserve the comparison; unlock a value if you want fitting to change it later.
 
-Lab comparisons use the selected player's talents and the same seeded errors for every stroke. Success requires the nominated ball to enter the nominated pocket, correct first contact, no scratch, and all balls settled. Compare sampled success, pots, scratches, cue-ball spread, ensemble paths, and failure counts. Use the arrow keys or the previous/next buttons in the ensemble inspector to cycle through options without scrolling away from the table. A compact line above the table shows the selected option's success, pot, scratch, and cue-spread statistics. Failure categories can overlap. Editing the experiment cancels pending work and clears old results so they cannot describe a different setup. Lab experiments are unscored and remain in memory for the current lab visit.
+Lab comparisons use the player's talents and the same seeded errors for every stroke. Success requires the nominated ball to enter the nominated pocket, correct first contact, no scratch, and all balls settled. Imported combination shots can specify a separate first-contact ball and ball to pot. Compare sampled success, pots, scratches, cue-ball spread, ensemble paths, and failure counts. Use the arrow keys or the previous/next buttons in the ensemble inspector to cycle through options without scrolling away from the table. A compact line above the table shows the selected option's success, pot, scratch, and cue-spread statistics. Failure categories can overlap. Editing the experiment cancels pending work and clears old results so they cannot describe a different setup. Lab experiments are unscored; export JSON to keep them after leaving the app.
+
+## Level authoring with JSON
+
+The course reads one versioned JSON file per level from `src/levels/`. These are the authoritative definitions for ball positions, instructional text, objectives, table conditions, scoring, orientation variations, shot-generation settings, and the extracted lesson tuning parameters. `src/levels/index.ts` supplies the ordered course definitions. Physics and teaching-comparison algorithms remain in TypeScript.
+
+Both sandbox modes offer JSON import, export, and editing. Start from a course scenario, adjust its layout or JSON settings, and test it. Open the setup in the lab to edit individual strokes, then send the work back to scenario mode. Switching modes preserves each mode's draft during that sandbox visit. Export downloads a file; it does not overwrite repository files. To update the built-in course, replace the corresponding JSON file in `src/levels/` and run the checks below.
+
+The common document has these fields:
+
+| Field | Purpose |
+| --- | --- |
+| `schemaVersion` | File format version, currently `1`. |
+| `id`, `kind` | Stable identity and `level` or unfinished `draft`. |
+| `variation` | Whether course generation may reflect the layout horizontally or vertically. |
+| `scenario` | Layout, seed, teaching text, objectives, conditions, scoring, generation, and tuning. |
+| `scenario.authoredShots` | Optional exact strokes with names, ball/pocket IDs, speed, spin, aim offset, and optional target/pot-ball overrides. Omit this field to generate course choices. |
+| `lab` | Optional trial count, player precision, and per-option auto-adapt/lock settings. |
+
+Positions and radii are in metres. Stroke speed is metres per second; sidespin is radians per second; aim offset is degrees from the geometric direct-pot line. Objective cut angles use degrees, while ellipse angles and cue angle bias use radians. Ball `0` is the cue ball; object-ball IDs are `1`–`15`; pocket IDs are `0`–`5`.
+
+`scenario.scoring.position` explicitly enables finish scoring and `scenario.scoring.tolerance` supplies the finish radius when there is no position objective. Position objectives use their own `radius`. `shotGeneration.speedMultipliers` and `shotGeneration.topSpins` control the automatic direct-shot search. `lessonTuning` contains named controls for additional searches and particular teaching demonstrations; the JSON Schema documents supported fields and limits.
+
+Imports reopen the exact saved orientation and strokes. They do not automatically mirror, refit, or replace a custom layout with a built-in level. Generated course layouts export in their visible orientation with mirroring disabled. Explicit variation settings in imported or JSON-edited files are retained; moving balls fixes the new layout's orientation. Derived trajectories and ensemble results are recalculated.
+
+Partial lab work can be saved as a draft without proving a playable course round. Unfinished ball placements automatically export as drafts, including when they began as a course lesson. JSON validation checks structure, finite values, and ball/pocket references; testing a layout additionally checks physical placement and course requirements. Playing authored strokes requires complete groups of three per offered ball. Specialized teaching comparisons may require automatically generated choices; the engine reports unsupported authored combinations instead of silently changing saved strokes. Keep `authoredShots` absent to retain that lesson's automatic preparation, or remove its teaching comparison when authoring an independent exercise.
+
+Run `npm run typecheck`, `npm test`, and `npm run test:e2e -- e2e/level-authoring.spec.ts` after changing definitions. The course tests exercise all 100 levels in four orientations, including their objectives and teaching comparisons.
 
 ## Course progression and position lessons
 

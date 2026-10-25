@@ -1,0 +1,119 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-095",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 95,
+    "seed": 158736,
+    "title": "The house cue",
+    "description": "A tired tip and crooked cue make familiar settings feel different.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.66,
+          "y": 0.89
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.19,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.89,
+          "y": 0.95
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Focus on the worn tip: it delivers only 68% of the requested spin setting. Compare a strong-spin route with a low-spin route, then inspect requested versus delivered spin and the spin-restored replay. Power loss and compensated aim bias are supplied context; both stay fixed in that comparison.",
+      "takeaway": "Judge the motion the equipment delivers, especially when a route depends on strong draw or follow.",
+      "learning": {
+        "concept": "reduced-spin-delivery",
+        "prerequisite": "weak-cushion-return",
+        "comparison": "house-cue"
+      },
+      "briefing": {
+        "focus": "Compare requested and delivered spin",
+        "gotcha": "The same displayed stroke produces less speed and spin with this cue. Do not rely on a familiar setting alone.",
+        "stage": "develop"
+      }
+    },
+    "conditions": {
+      "id": "house-cue",
+      "name": "Bad cue",
+      "description": "A weak tip delivers 82% power and 68% spin. A small fixed aiming bias is included in the offered shots.",
+      "cue": {
+        "power": 0.82,
+        "angleBias": 0.009,
+        "spin": 0.68
+      }
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.1298374538808068
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

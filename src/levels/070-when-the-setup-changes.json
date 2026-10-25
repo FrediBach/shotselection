@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-070",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 70,
+    "seed": 135761,
+    "title": "When the setup changes",
+    "description": "Compare the same strokes before and after a 2 mm change to the plant pair.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.7,
+          "y": 1.02
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.274,
+          "y": 0.41
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.85,
+          "y": 0.85
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "Predict whether moving only ball 1 changes the preferred route. The free ball, cue ball, target ball, controls, finish targets and indexed stroke errors stay fixed. Judge each route by its best offered weighted score.",
+      "takeaway": "Setup sensitivity differs from execution error. A small alignment change can change which route scores better.",
+      "learning": {
+        "concept": "plant-setup-sensitivity",
+        "prerequisite": "plant-scoring-quality",
+        "comparison": "plant-setup"
+      },
+      "briefing": {
+        "focus": "Separate setup from execution",
+        "gotcha": "The comparison repeats the same strokes without re-aiming. The changed setup can alter both delivery and transfer, and the route ranking need not flip for every player or sample.",
+        "stage": "apply"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.08925701180285153
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

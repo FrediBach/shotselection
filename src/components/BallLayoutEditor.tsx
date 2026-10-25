@@ -26,9 +26,12 @@ export default function BallLayoutEditor({ scenario, onChange, editable = true }
   const selectedBall = scenario.balls.find(ball => ball.id === selectedBallId) ?? scenario.balls[0]
 
   function moveBall(ballId: number, position: Vec2) {
+    const fixedObjective = scenario.authoring?.fixedObjective ?? Boolean(scenario.authoring?.imported);
     onChange({ ...scenario,
       balls: scenario.balls.map(ball => ball.id === ballId ? { ...ball, position } : ball),
-      ...(scenario.objective ? { objective: { ...scenario.objective, target: undefined, regions: undefined } } : {}),
+      authoring: { ...(scenario.authoring ?? { id: `custom-${scenario.level}`, kind: 'draft' }),
+        variation: { mirrorX: false, mirrorY: false }, imported: true, fixedObjective },
+      ...(scenario.objective && !fixedObjective ? { objective: { ...scenario.objective, target: undefined, regions: undefined } } : {}),
     })
   }
 

@@ -1,0 +1,115 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-091",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 91,
+    "seed": 155060,
+    "title": "The shag-pile special",
+    "description": "The cloth feels like carpet. Choose a pot that earns its travel.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.71,
+          "y": 0.87
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.17,
+          "y": 0.31
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.89,
+          "y": 0.42
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 0,
+      "lessonCount": 10,
+      "lesson": "Welcome to Broken table. Each table has visible faults that affect the actual shot. This slow cloth takes speed from every ball: compare a short pot with the longer option, then balance enough pace to reach the pocket against a cue-ball finish you can repeat. After your shot, replay the identical launch on normal cloth to see what the extra drag changed.",
+      "takeaway": "Slow cloth makes distance expensive for both balls. Judge the whole journey before adding power.",
+      "learning": {
+        "concept": "global-cloth-drag",
+        "prerequisite": "carom-plant-handoff",
+        "comparison": "cloth-drag"
+      },
+      "briefing": {
+        "focus": "Budget for the heavy cloth",
+        "gotcha": "A stronger stroke can reach the pocket and still overshoot its finish. Read the pace and spin together.",
+        "stage": "introduce"
+      }
+    },
+    "conditions": {
+      "id": "heavy-cloth",
+      "name": "Slow cloth",
+      "description": "Thick, tired cloth drains speed everywhere. Longer routes need more pace.",
+      "cloth": 1.75
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.16
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

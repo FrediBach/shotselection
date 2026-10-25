@@ -1,0 +1,130 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-041",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 41,
+    "seed": 109110,
+    "title": "Find the open corridor",
+    "description": "More balls create competing routes and crowded finishes.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.73,
+          "y": 0.83
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.16,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.84,
+          "y": 0.39
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.88,
+          "y": 0.95
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.41,
+          "y": 0.38
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 2.091467,
+          "y": 0.632216
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 0,
+      "lessonCount": 10,
+      "lesson": "Compare two illustrated routes to the same ball. Both center lines miss the spare balls, but only one leaves room for the full moving ball. Predict the wide corridor, then reveal the swept width and inspect a simulated pot through it.",
+      "takeaway": "A clear center line is not enough: the moving ball needs its full width.",
+      "learning": {
+        "concept": "Check the full swept ball width, not only a clear center line.",
+        "prerequisite": "Distinguish cue approach from object-to-pocket clearance.",
+        "comparison": "ball-width"
+      },
+      "briefing": {
+        "focus": "Find room for the whole ball",
+        "gotcha": "A visible gap may still be too narrow. Picture the full width of the moving ball, not just its center line.",
+        "stage": "introduce"
+      }
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.12261516197090189
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

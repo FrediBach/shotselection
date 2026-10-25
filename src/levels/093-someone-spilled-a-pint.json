@@ -1,0 +1,125 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-093",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 93,
+    "seed": 156898,
+    "title": "Someone spilled a pint",
+    "description": "A sticky stain turns part of the cloth into a brake.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.69,
+          "y": 0.9
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.18,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.84,
+          "y": 0.43
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 2,
+      "lessonCount": 10,
+      "lesson": "The stained patch adds drag only while a ball crosses it. Compare the routes into both balls and the space beyond contact. A stroke that crosses the edge of the spill may react very differently to a small change in pace. Inspect the highlighted cue and object-ball segments inside the spill after your shot.",
+      "takeaway": "A local fault makes route choice important: count which parts of the shot cross it.",
+      "learning": {
+        "concept": "local-patch-crossing",
+        "prerequisite": "global-cloth-drag",
+        "comparison": "patch-route"
+      },
+      "briefing": {
+        "focus": "Trace the route through the spill",
+        "gotcha": "A clean approach can still leave the cue ball in the sticky patch after the pot.",
+        "stage": "develop"
+      }
+    },
+    "conditions": {
+      "id": "sticky-spill",
+      "name": "Sticky patch",
+      "description": "The marked spill adds heavy drag. A ball slows sharply while crossing it.",
+      "patches": [
+        {
+          "id": "pint",
+          "center": {
+            "x": 1.03,
+            "y": 0.59
+          },
+          "radius": 0.2,
+          "friction": 2.8
+        }
+      ]
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.14413185845235288
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

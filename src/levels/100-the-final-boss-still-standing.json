@@ -1,0 +1,157 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-100",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 100,
+    "seed": 163331,
+    "title": "The final boss: still standing",
+    "description": "Everything is a little broken. Find the shot that makes the best of it.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.72,
+          "y": 0.88
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.16,
+          "y": 0.31
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.91,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.93,
+          "y": 0.93
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "The final table combines all six familiar defects and adds one question: what if its condition report is slightly wrong? Compare the favorite at the reported settings with the stroke that keeps the highest minimum score when cloth drag or drift is varied. A strong worst-case result matters more than simply changing little.",
+      "takeaway": "Test the report as well as the stroke: prefer a strong minimum result across plausible condition errors.",
+      "learning": {
+        "concept": "condition-uncertainty",
+        "prerequisite": "equipment-intervention",
+        "comparison": "condition-robustness"
+      },
+      "briefing": {
+        "focus": "Allow for uncertainty in the table report",
+        "gotcha": "Every fault is active at once. The most ambitious route is only worthwhile if its whole result survives small errors.",
+        "stage": "apply"
+      }
+    },
+    "conditions": {
+      "id": "final-boss",
+      "name": "The final boss",
+      "description": "Slow cloth, downhill drift, a sticky spill, a dead rail, a weak cue and dirty balls: use the visible faults to choose your route.",
+      "cloth": 1.4,
+      "nap": {
+        "x": 0.02,
+        "y": 0.012
+      },
+      "patches": [
+        {
+          "id": "last-spill",
+          "center": {
+            "x": 1.52,
+            "y": 0.65
+          },
+          "radius": 0.21,
+          "friction": 2.3
+        }
+      ],
+      "cushions": [
+        {
+          "rail": "top",
+          "restitution": 0.4
+        }
+      ],
+      "cue": {
+        "power": 0.88,
+        "angleBias": 0.006,
+        "spin": 0.78
+      },
+      "dirt": 0.4
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.1
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "robustnessClothMultipliers": [
+        0.9,
+        1.1
+      ],
+      "robustnessNapMultipliers": [
+        0.8,
+        1.2
+      ]
+    }
+  }
+}

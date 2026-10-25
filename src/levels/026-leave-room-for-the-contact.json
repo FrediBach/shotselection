@@ -1,0 +1,124 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-026",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 26,
+    "seed": 95325,
+    "title": "Leave room for the contact",
+    "description": "Seeing the next ball does not guarantee access to its contact point.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.86,
+          "y": 0.91
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.39,
+          "y": 0.35
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.3,
+          "y": 0.1
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "position",
+      "chapterTitle": "Play for position",
+      "chapterIndex": 2,
+      "lessonIndex": 5,
+      "lessonCount": 10,
+      "lesson": "Compare two finishes inside the same zone. From the close finish, the cue can see ball 2 but hits it before reaching the contact center required for the highlighted pocket. A more distant finish reaches that contact from the correct side. Inspect the enlarged clearance diagram before judging closeness as an advantage.",
+      "takeaway": "Useful position leaves access to the next contact point, not just a view of the ball.",
+      "learning": {
+        "concept": "contact-point-access",
+        "prerequisite": "next-angle-trap",
+        "comparison": "contact-access"
+      },
+      "briefing": {
+        "focus": "Allow room before the next contact",
+        "gotcha": "Finishing almost on top of the 2 can make an otherwise visible pot awkward or unavailable.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.19,
+      "maxCutAngle": 62
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.19
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

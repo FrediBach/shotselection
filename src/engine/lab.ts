@@ -39,7 +39,15 @@ export const DEFAULT_LAB_SHOT_SETTINGS: LabShotSettings = {
   ballId: 1, pocketId: 1, speed: 1.3, topSpin: 0, sideSpin: 0, aimOffset: 0,
 };
 
-export interface LabVariant { id: string; label: string; settings: LabShotSettings }
+export interface LabVariant {
+  id: string;
+  label: string;
+  settings: LabShotSettings;
+  /** Optional authored course finish; omitted lab finishes are calculated. */
+  target?: Vec2;
+  /** Combinations can contact one ball and pot another. */
+  potBallId?: number;
+}
 export interface LabRequest { scenario: Scenario; variants: LabVariant[]; samples: number; talents: CharacterTalents }
 /** Failure counts overlap: a trial can miss and scratch, for example. */
 export interface LabFailures {
@@ -107,19 +115,26 @@ function validateSettings(settings: LabShotSettings) {
 }
 
 /** Invalid layouts are rejected; blocked routes, poor cuts and misses are valid experiments. */
-export function createLabShot(scenario: Scenario, settings: LabShotSettings, id: string, label: string): ShotPlan {
+export function createLabShot(scenario: Scenario, settings: LabShotSettings, id: string, label: string, authored?: Pick<LabVariant, 'target' | 'potBallId'>): ShotPlan {
   const error = validateSandboxLayout(scenario);
   if (error) throw new Error(error);
   validateSettings(settings);
   const cue = scenario.balls.find(ball => ball.id === 0)!;
   const object = scenario.balls.find(ball => ball.id === settings.ballId);
   if (!object) throw new Error(`Place ball ${settings.ballId} on the table or choose another ball.`);
+  if (authored?.potBallId !== undefined && !scenario.balls.some(ball => ball.id === authored.potBallId && ball.id > 0)) {
+    throw new Error('The ball to pot must be an object ball on the table.');
+  }
+  if (authored?.target && ![authored.target.x, authored.target.y].every(Number.isFinite)) {
+    throw new Error('The authored finish must have finite coordinates.');
+  }
   const pocket = POCKET_GEOMETRY.find(candidate => candidate.id === settings.pocketId)!;
   const direction = normalize(subtract(pocket.center, object.position));
   const ghost = { x: object.position.x - direction.x * TABLE.ballDiameter, y: object.position.y - direction.y * TABLE.ballDiameter };
   return {
     id, label, ballId: settings.ballId, pocketId: settings.pocketId,
-    target: { ...cue.position },
+    target: { ...(authored?.target ?? cue.position) },
+    ...(authored?.potBallId !== undefined ? { potBallId: authored.potBallId } : {}),
     angle: Math.atan2(ghost.y - cue.position.y, ghost.x - cue.position.x) + settings.aimOffset * Math.PI / 180,
     speed: settings.speed, topSpin: settings.topSpin, sideSpin: settings.sideSpin,
   };
@@ -198,7 +213,7 @@ function analyzeVariant(scenario: Scenario, plan: ShotPlan, samples: number, tal
   let successes = 0;
   for (let index = 0; index < samples; index++) {
     const simulation = simulateShot(scenario, perturbShot(plan, random, talents), { record: false, recordPaths: true });
-    const capture = simulation.pocketEvents?.find(event => event.ballId === plan.ballId);
+    const capture = simulation.pocketEvents?.find(event => event.ballId === (plan.potBallId ?? plan.ballId));
     const dropped = capture !== undefined;
     const nominatedPocket = capture?.pocketId === plan.pocketId;
     const correctContact = simulation.firstContact === plan.ballId;
@@ -230,7 +245,7 @@ function analyzeVariant(scenario: Scenario, plan: ShotPlan, samples: number, tal
     targetQuality: successRate, scratchRate: failures.scratch / samples, positionRate: successRate,
     meanEnd, spread, samplePaths, sampleObjectPaths, sampleEnds, sampleBallEnds, trialSuccesses,
     trialLegalPots: [...trialSuccesses], score: successRate,
-    explanation: `Success means ball ${plan.ballId} enters the ${POCKETS[plan.pocketId].name} pocket after correct first contact, without a scratch, and all balls settle. Failure counts can overlap.`,
+    explanation: `Success means ball ${plan.potBallId ?? plan.ballId} enters the ${POCKETS[plan.pocketId].name} pocket after first contacting ball ${plan.ballId}, without a scratch, and all balls settle. Failure counts can overlap.`,
   };
 }
 
@@ -249,6 +264,6 @@ export function analyzeLab(request: LabRequest): LabResult {
     }
   }
   // Validate the whole comparison before starting any expensive simulations.
-  const plans = variants.map(variant => createLabShot(scenario, variant.settings, variant.id, variant.label));
+  const plans = variants.map(variant => createLabShot(scenario, variant.settings, variant.id, variant.label, variant));
   return { scenario, shots: plans.map(plan => analyzeVariant(scenario, plan, samples, talents)), samples };
 }

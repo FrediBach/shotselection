@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-042",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 42,
+    "seed": 110029,
+    "title": "Position through moving traffic",
+    "description": "A spare ball can become new traffic after the opening pot.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.74,
+          "y": 0.83
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.15,
+          "y": 0.34
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.85,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.514694,
+          "y": 0.350873
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.4,
+          "y": 0.39
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 1,
+      "lessonCount": 10,
+      "lesson": "Compare two in-zone finishes. One stroke nudges ball 3 into the next-shot corridor; the other leaves it clear. Predict which moves the blocker, then reset only ball 3 while keeping the settled cue and all other balls fixed to check why access to ball 2 disappears.",
+      "takeaway": "Judge traffic by where the balls finish, not just where they start.",
+      "learning": {
+        "concept": "Recheck next-shot access after a spare ball moves.",
+        "prerequisite": "Check both swept corridors from the settled cue position.",
+        "comparison": "moving-traffic"
+      },
+      "briefing": {
+        "focus": "Protect the next-ball lane",
+        "gotcha": "A spare ball that starts clear can move into the next corridor. Recheck the actual settled positions.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.162,
+      "maxCutAngle": 51
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.162
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

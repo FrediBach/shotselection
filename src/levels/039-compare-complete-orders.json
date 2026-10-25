@@ -1,0 +1,139 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-039",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 39,
+    "seed": 107272,
+    "title": "Compare complete orders",
+    "description": "The more reliable first pot can hide a weaker second shot. Compare both complete orders.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.99,
+          "y": 1.02
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.39,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.239091,
+          "y": 0.150209
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.677568,
+          "y": 0.445749
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.15,
+          "y": 0.35
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Choose an opener from the English and no-English strokes, then compare two orders from a fixed reference finish. Both orders pot both balls nominally. Use the sampled first-pot, conditional continuation and complete two-shot rates to judge the whole connection.",
+      "takeaway": "Judge the whole order: a dependable first pot can still lead to a weak second shot.",
+      "learning": {
+        "concept": "Compare combined completion rates instead of choosing by the first pot alone.",
+        "prerequisite": "Compare complete two-shot orders from a common opening finish.",
+        "comparison": "sequence-reliability"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Compare complete two-shot rates",
+        "gotcha": "The best first-pot rate can belong to the weaker complete order. Count trials that finish both shots.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.166,
+      "maxCutAngle": 53
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.166
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

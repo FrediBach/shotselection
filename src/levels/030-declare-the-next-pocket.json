@@ -1,0 +1,117 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-030",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 30,
+    "seed": 99001,
+    "title": "Declare the next pocket",
+    "description": "Choose a pocket for ball 2 before committing to ball 1.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.42,
+          "y": 1.01
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.15,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.97,
+          "y": 0.43
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "position",
+      "chapterTitle": "Play for position",
+      "chapterIndex": 2,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "Declare the intended pocket for ball 2 before choosing your opening stroke. Include English alongside pace and draw or follow, then check whether the actual finish supports that particular next route. Another available pocket does not verify your declared plan. This planning check is separate from the usual any-pocket score.",
+      "takeaway": "Verify the pocket you planned, not just the existence of some next shot.",
+      "learning": {
+        "concept": "intended-next-pocket",
+        "prerequisite": "signed-next-angle",
+        "comparison": "intended-next-pocket"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Name and verify the next pocket",
+        "gotcha": "A finish may offer another next pocket while losing the one you intended.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.182,
+      "maxCutAngle": 59
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.182
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

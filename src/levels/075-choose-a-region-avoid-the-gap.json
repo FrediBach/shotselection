@@ -1,0 +1,162 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-075",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 75,
+    "seed": 140356,
+    "title": "Choose a region, avoid the gap",
+    "description": "Two good landing regions can have an unusable midpoint.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.54,
+          "y": 0.96
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.12,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.94,
+          "y": 0.42
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.52,
+          "y": 0.78
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.34,
+          "y": 0.37
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 2.15,
+          "y": 1.01
+        }
+      },
+      {
+        "id": 6,
+        "position": {
+          "x": 0.91,
+          "y": 1.08
+        }
+      },
+      {
+        "id": 7,
+        "position": {
+          "x": 1.6253557865473482,
+          "y": 0.43302874266970914
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "tournament",
+      "chapterTitle": "Tournament table",
+      "chapterIndex": 7,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Choose a stroke into one of two separate regions. Predict whether their midpoint leaves a shot, then inspect the blocker and the actual trial endpoints in the gap.",
+      "takeaway": "Do not average two good finishes. The space between them can leave no next shot.",
+      "learning": {
+        "concept": "disconnected-position-regions",
+        "prerequisite": "mirrored-english-sign",
+        "comparison": "disconnected-position"
+      },
+      "briefing": {
+        "focus": "Choose one of two separate regions",
+        "gotcha": "A single circle around both finishes would wrongly include the blocked gap. Each trial must land in either region and retain a clear next shot.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.132,
+      "maxCutAngle": 43
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.132
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

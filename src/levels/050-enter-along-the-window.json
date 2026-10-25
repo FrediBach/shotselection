@@ -1,0 +1,153 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-050",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 50,
+    "seed": 117381,
+    "title": "Enter along the window",
+    "description": "Compare arriving along an elongated target with crossing its narrow direction.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 2.07,
+          "y": 0.83
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.45,
+          "y": 0.37
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.32,
+          "y": 0.25
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.102655,
+          "y": 0.600895
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.1,
+          "y": 0.9
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 2.4,
+          "y": 0.8
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "Compare two successful finishes in the same elliptical region. Predict which arrival direction gives a wider useful speed range, then test speed alone while holding each stroke’s aim, draw or follow, and English fixed. Every tested success must pot ball 1, stay inside the ellipse and leave ball 2 available.",
+      "takeaway": "Entering along a region’s length can leave more room for speed error than crossing its width.",
+      "learning": {
+        "concept": "Enter an elongated useful-position region along its length.",
+        "prerequisite": "Preserve clearance and next-shot access while controlling pace.",
+        "comparison": "elongated-position"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Leave room for a small error",
+        "gotcha": "A finish near the edge of the zone has little spare room. One good replay does not show the whole spread.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.146,
+      "maxCutAngle": 46,
+      "ellipse": {
+        "longRadius": 0.34,
+        "angle": 2.1803049464253874
+      }
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.146
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

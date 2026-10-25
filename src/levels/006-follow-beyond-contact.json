@@ -1,0 +1,97 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-006",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 6,
+    "seed": 76945,
+    "title": "Follow beyond contact",
+    "description": "Track the cue ball after a longer pot toward the far corner.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.04,
+          "y": 1.07
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.89,
+          "y": 0.39
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "fundamentals",
+      "chapterTitle": "First strokes",
+      "chapterIndex": 0,
+      "lessonIndex": 5,
+      "lessonCount": 10,
+      "lesson": "Topspin carries the cue ball onward after contact. Compare its whole route with center ball and draw, including the space between the object ball and the cushion.",
+      "takeaway": "Follow needs enough room beyond contact for the cue ball to slow safely.",
+      "briefing": {
+        "focus": "Allow room for forward travel",
+        "gotcha": "The object ball leaving the table does not stop the cue ball; forward roll continues into the space behind it.",
+        "stage": "develop"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.17987774018163522
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

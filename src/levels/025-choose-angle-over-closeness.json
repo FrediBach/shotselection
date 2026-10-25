@@ -1,0 +1,124 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-025",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 25,
+    "seed": 94406,
+    "title": "Choose angle over closeness",
+    "description": "Pot the 1 and leave a manageable cut on the 2.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.86,
+          "y": 0.91
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.39,
+          "y": 0.35
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.9,
+          "y": 0.15
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "position",
+      "chapterTitle": "Play for position",
+      "chapterIndex": 2,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Two offered finishes reach the same zone. The nearer finish leaves no next route within the cut limit, while a farther finish preserves a playable angle. Predict which in-zone stroke falls into that trap, then compare the actual next-shot angles.",
+      "takeaway": "Closer is not always better: a finish can reach the zone but leave only excessive next-shot cuts.",
+      "learning": {
+        "concept": "next-angle-trap",
+        "prerequisite": "backward-contact-planning",
+        "comparison": "next-angle-trap"
+      },
+      "briefing": {
+        "focus": "Leave an angle you can use",
+        "gotcha": "Getting close to the 2 is not the goal. You need the zone and an open shot within the stated cut limit.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.192,
+      "maxCutAngle": 62
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.192
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

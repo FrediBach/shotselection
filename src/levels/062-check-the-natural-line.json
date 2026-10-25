@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-062",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 62,
+    "seed": 128409,
+    "title": "Check the natural line",
+    "description": "A tempting pair competes with another demanding free-ball cut.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.7,
+          "y": 1.02
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.288,
+          "y": 0.37
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.3
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.55,
+          "y": 0.97
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 1,
+      "lessonCount": 10,
+      "lesson": "Extend the initial line through the centers of 1 and 2 to the pocket mouth. Predict whether it reaches the opening, then compare the geometric crossing with ball 2’s actual miss path and the free-ball alternative.",
+      "takeaway": "A nearby pair can point outside the pocket opening. Read the pair line, then check the actual stroke and target-ball path.",
+      "learning": {
+        "concept": "plant-pair-line",
+        "prerequisite": "plant-contact-sequence",
+        "comparison": "plant-line"
+      },
+      "briefing": {
+        "focus": "Extend the line to the pocket",
+        "gotcha": "Two nearby balls can look aligned at a glance. Check where their line reaches the pocket mouth.",
+        "stage": "develop"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09742809886381708
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

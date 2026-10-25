@@ -1,0 +1,145 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-046",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 46,
+    "seed": 113705,
+    "title": "Avoid borrowing a collision",
+    "description": "A helpful nudge and a clean route both work in the nominal replay.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.6,
+          "y": 0.98
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.14,
+          "y": 0.34
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.94,
+          "y": 0.65
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.567562,
+          "y": 0.262517
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.38,
+          "y": 0.38
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 2.14,
+          "y": 1.02
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 5,
+      "lessonCount": 10,
+      "lesson": "Compare two nominal successes: one needs ball 3’s nudge to reach the zone, while the other passes clear. Predict which repeats more often under your player’s stroke errors, then check the measured collision and success counts. Remove only ball 3 to test the nominal nudge’s role.",
+      "takeaway": "A planned route is easier to repeat when it does not rely on an accidental nudge.",
+      "learning": {
+        "concept": "Compare the repeatability of collision-assisted and clean position.",
+        "prerequisite": "Recognize a post-pot graze and its effect on the finish.",
+        "comparison": "collision-assistance"
+      },
+      "briefing": {
+        "focus": "Test whether the helping nudge repeats",
+        "gotcha": "A helpful collision in one replay can become a harmful deflection after a tiny aiming change.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.154,
+      "maxCutAngle": 49
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.154
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

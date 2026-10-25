@@ -1,4 +1,5 @@
 import { normalize, subtract } from './math';
+import { tuningList } from './lesson-tuning';
 import type { BallFinishOptions, Scenario, ShotAnalysis } from './types';
 /** Fixed finish requirements in the plant's local frame; never fitted to a live sample. */
 export function authorPlantQualityTargets(source: Scenario, balls: BallFinishOptions[]): BallFinishOptions[] {
@@ -7,7 +8,7 @@ export function authorPlantQualityTargets(source: Scenario, balls: BallFinishOpt
   const tangent = { x: -direction.y, y: direction.x };
   return balls.map(ball => ({ ...ball, options: ball.options.map(option => {
     if (option.label !== 'C') return option;
-    const [across, along] = ball.ballId === plant.ballId ? [.02, 0] : [.12, -.04];
+    const [across, along] = tuningList(source, ball.ballId === plant.ballId ? 'plantQualityPlantOffset' : 'plantQualityFreeOffset');
     return { ...option, plan: { ...option.plan, target: {
       x: option.plan.target.x + across * tangent.x + along * direction.x,
       y: option.plan.target.y + across * tangent.y + along * direction.y,

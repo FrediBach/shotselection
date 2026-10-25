@@ -1,0 +1,139 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-040",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 40,
+    "seed": 108191,
+    "title": "Keep a fallback plan",
+    "description": "One finish leaves a single narrow route; another preserves two next-ball choices.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.45,
+          "y": 1.01
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.1,
+          "y": 0.34
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.95,
+          "y": 0.42
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.57,
+          "y": 0.74
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.12,
+          "y": 1.01
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "patterns",
+      "chapterTitle": "Build a pattern",
+      "chapterIndex": 3,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "Compare the English and no-English opening strokes. Two finishes reach the same zone, but one leaves only a high-cut route to ball 2. Count the playable next balls from each finish, then inspect independent next-pot examples to see which preserves a fallback.",
+      "takeaway": "A useful finish can preserve a second playable ball as a fallback.",
+      "learning": {
+        "concept": "Preserve two playable next balls instead of one narrow continuation.",
+        "prerequisite": "Check next-shot access from the actual settled finish.",
+        "comparison": "fallback-plan"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Preserve two next-ball choices",
+        "gotcha": "Reaching the zone does not tell you how many next balls remain playable. Check every remaining ball.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.164,
+      "maxCutAngle": 52
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.164
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

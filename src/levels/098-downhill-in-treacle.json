@@ -1,0 +1,119 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-098",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 98,
+    "seed": 161493,
+    "title": "Downhill in treacle",
+    "description": "Heavy cloth and a sloping bed disagree about where the ball should stop.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.7,
+          "y": 0.91
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.17,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.92,
+          "y": 0.41
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 7,
+      "lessonCount": 10,
+      "lesson": "Combine the slow-cloth and uneven-surface checks. More pace helps overcome drag and shortens the time available for drift, but it also changes the cue-ball finish. Predict the pace tradeoff, then compare the same launch under slow cloth alone, drift alone and both together. Inspect slower and faster practice paces without moving the original finish target.",
+      "takeaway": "Combined faults need one complete plan; solving the speed problem alone does not solve the line.",
+      "learning": {
+        "concept": "coupled-drag-drift",
+        "prerequisite": "slow-roll-drift",
+        "comparison": "drag-drift"
+      },
+      "briefing": {
+        "focus": "Balance drag against drift",
+        "gotcha": "The cloth slows the ball while the slope bends it. The final slow roll can move sideways even after the pot is made.",
+        "stage": "apply"
+      }
+    },
+    "conditions": {
+      "id": "slow-slope",
+      "name": "Slow and uneven",
+      "description": "Heavy cloth drains speed while the uneven bed bends moving balls in the arrow direction.",
+      "cloth": 1.55,
+      "nap": {
+        "x": -0.028,
+        "y": 0.014
+      }
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.1110094615569623
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

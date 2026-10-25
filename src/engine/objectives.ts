@@ -78,11 +78,11 @@ export function hasProvenNextShot(scenario: Scenario, simulation: Simulation): b
 
 /** First two chapters teach potting; their finish markers are predictions, not scoring zones. */
 export function scoresPosition(scenario: Scenario): boolean {
-  return !scenario.finalBall && (Boolean(scenario.objective || scenario.bank || scenario.plant || scenario.trick || scenario.conditions) || scenario.level > 20);
+  return !scenario.finalBall && (scenario.scoring?.position ?? (Boolean(scenario.objective || scenario.bank || scenario.plant || scenario.trick || scenario.conditions) || scenario.level > 20));
 }
 
 export function positionToleranceForScenario(scenario: Scenario): number {
-  return !scoresPosition(scenario) ? 0 : scenario.objective?.radius ?? positionToleranceForLevel(scenario.level);
+  return !scoresPosition(scenario) ? 0 : scenario.objective?.radius ?? scenario.scoring?.tolerance ?? positionToleranceForLevel(scenario.level);
 }
 
 export function satisfiesTrick(scenario: Scenario, plan: ShotPlan, simulation: Simulation): boolean {

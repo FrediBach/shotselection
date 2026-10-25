@@ -1,0 +1,124 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-028",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 28,
+    "seed": 97163,
+    "title": "Stop on the useful side",
+    "description": "A longer cue route can carry the finish past a useful next angle.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.48,
+          "y": 1
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.13,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.92,
+          "y": 0.86
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "position",
+      "chapterTitle": "Play for position",
+      "chapterIndex": 2,
+      "lessonIndex": 7,
+      "lessonCount": 10,
+      "lesson": "Compare two opening pots that finish inside the same zone. One cue route carries farther past contact and loses every next shot within the cut limit. Inspect the actual cue paths and next angles to see why reaching the zone alone is not enough.",
+      "takeaway": "Stop while the next angle is useful: extra cue travel can lose the next shot even inside the zone.",
+      "learning": {
+        "concept": "position-overshoot",
+        "prerequisite": "draw-decay",
+        "comparison": "position-overshoot"
+      },
+      "briefing": {
+        "focus": "Avoid carrying past the useful next angle",
+        "gotcha": "A legal pot and an in-zone finish can still leave the next cut beyond the limit.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.186,
+      "maxCutAngle": 60
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.186
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

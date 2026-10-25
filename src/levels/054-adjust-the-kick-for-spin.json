@@ -1,0 +1,142 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-054",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 54,
+    "seed": 121057,
+    "title": "Adjust the kick for spin",
+    "description": "Keep launch speed fixed, change draw to follow, then adjust the aim.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.65,
+          "y": 0.8
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.28,
+          "y": 0.31
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.465,
+          "y": 0.555
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "Compare a successful kick with a spin-only change at the same aim and speed. Trace the travel after the cushion, then inspect the corrected aim that restores the pot. Spin can change the effective route even when the immediate rebound direction is nearly unchanged.",
+      "takeaway": "Changing draw or follow can require a new aim and rail contact point.",
+      "learning": {
+        "concept": "Draw and follow can require different kick aims.",
+        "prerequisite": "Budget pace and find the potting side.",
+        "comparison": "kick-spin"
+      },
+      "briefing": {
+        "focus": "Recalculate the cushion contact",
+        "gotcha": "Copying the previous rail point can miss the target even when the pocket looks the same.",
+        "stage": "develop"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.10634721302550326
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

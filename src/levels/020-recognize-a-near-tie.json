@@ -1,0 +1,124 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-020",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 20,
+    "seed": 89811,
+    "title": "Recognize a near tie",
+    "description": "Learn when a small sampled success-rate difference is too weak to trust.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.73,
+          "y": 0.83
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.16,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.84,
+          "y": 0.39
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.88,
+          "y": 0.95
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.41,
+          "y": 0.38
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "open-table",
+      "chapterTitle": "Everyday pool",
+      "chapterIndex": 1,
+      "lessonIndex": 9,
+      "lessonCount": 10,
+      "lesson": "Choose a whole stroke using the familiar pace, draw, follow and English controls. After the trials, compare two close options under the same indexed stroke errors. Decide whether their small success-rate gap establishes an advantage or calls for more evidence.",
+      "takeaway": "A tiny sampled edge is not proof of a safer stroke, and a near tie does not prove identical chances.",
+      "learning": {
+        "concept": "sampling-near-tie",
+        "prerequisite": "two-ball-shortlist",
+        "comparison": "near-tie"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Recognize uncertainty in a near tie",
+        "gotcha": "The game score also rewards finish quality. This comparison asks only about complete success rates; it does not erase differences in cue-ball control.",
+        "stage": "apply"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.1543135719620823
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

@@ -1,0 +1,1238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shot Selection level",
+  "description": "One editable level or lab draft. Distances use metres, angles use radians unless explicitly called aimOffset (degrees).",
+  "$defs": {
+    "vector": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    },
+    "point": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2.54
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.27
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    },
+    "ball": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "position": {
+          "$ref": "#/$defs/point"
+        }
+      },
+      "required": [
+        "id",
+        "position"
+      ],
+      "additionalProperties": false
+    },
+    "learning": {
+      "type": "object",
+      "properties": {
+        "concept": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prerequisite": {
+          "type": "string",
+          "minLength": 1
+        },
+        "comparison": {
+          "enum": [
+            "cut-paths",
+            "cue-rebound",
+            "next-shot-blocker",
+            "object-travel",
+            "off-center-cue",
+            "pocket-entry",
+            "scratch-line",
+            "avoidable-cushion",
+            "cut-transfer",
+            "shortlist",
+            "near-tie",
+            "contact-roll",
+            "zone-margin",
+            "backward-plan",
+            "next-angle-trap",
+            "contact-access",
+            "draw-decay",
+            "position-overshoot",
+            "signed-next-angle",
+            "intended-next-pocket",
+            "nominated-next-ball",
+            "key-ball",
+            "look-ahead",
+            "zone-exit",
+            "angle-travel",
+            "corridor-diagnosis",
+            "stepping-stone",
+            "sequence-reliability",
+            "fallback-plan",
+            "ball-width",
+            "moving-traffic",
+            "spare-graze",
+            "pocket-change",
+            "open-corridor",
+            "collision-assistance",
+            "return-lane",
+            "corridor-center",
+            "english-routing",
+            "elongated-position",
+            "kick-introduction",
+            "kick-contact",
+            "kick-pace",
+            "kick-spin",
+            "kick-corridor",
+            "kick-finish",
+            "kick-sequence",
+            "kick-middle",
+            "kick-error",
+            "kick-final",
+            "plant-introduction",
+            "plant-line",
+            "plant-margin",
+            "plant-delivery",
+            "plant-distance",
+            "plant-throw",
+            "plant-gap",
+            "plant-failure",
+            "plant-quality",
+            "plant-setup",
+            "assignment-failure",
+            "conditional-continuation",
+            "strength-asymmetry",
+            "mirror-english",
+            "disconnected-position",
+            "defensive-outcome",
+            "planned-movement",
+            "player-profile",
+            "final-ball",
+            "landing-recovery",
+            "contact-chain",
+            "split-paths",
+            "kiss-path",
+            "carom-plant",
+            "carom-contact",
+            "follow-contact",
+            "draw-return",
+            "object-bank",
+            "double-kiss",
+            "two-object-bank",
+            "cloth-drag",
+            "slow-drift",
+            "patch-route",
+            "healthy-rail",
+            "house-cue",
+            "dirty-contact",
+            "slick-patch",
+            "drag-drift",
+            "equipment-repair",
+            "condition-robustness"
+          ]
+        },
+        "pockets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ballId": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 15
+              },
+              "pocketId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5
+              }
+            },
+            "required": [
+              "ballId",
+              "pocketId"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 90
+        }
+      },
+      "required": [
+        "concept",
+        "prerequisite",
+        "comparison"
+      ],
+      "additionalProperties": false
+    },
+    "briefing": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "enum": [
+            "introduce",
+            "develop",
+            "apply"
+          ]
+        },
+        "focus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gotcha": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "stage",
+        "focus",
+        "gotcha"
+      ],
+      "additionalProperties": false
+    },
+    "curriculum": {
+      "type": "object",
+      "properties": {
+        "learning": {
+          "$ref": "#/$defs/learning"
+        },
+        "chapterId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chapterTitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chapterIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "lessonIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999
+        },
+        "lessonCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "englishPractice": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "lesson": {
+          "type": "string",
+          "minLength": 1
+        },
+        "takeaway": {
+          "type": "string",
+          "minLength": 1
+        },
+        "briefing": {
+          "$ref": "#/$defs/briefing"
+        }
+      },
+      "required": [
+        "chapterId",
+        "chapterTitle",
+        "chapterIndex",
+        "lessonIndex",
+        "lessonCount",
+        "lesson",
+        "takeaway"
+      ],
+      "additionalProperties": false
+    },
+    "conditions": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cloth": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 6
+        },
+        "nap": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": -0.1,
+              "maximum": 0.1
+            },
+            "y": {
+              "type": "number",
+              "minimum": -0.1,
+              "maximum": 0.1
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "patches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "center": {
+                "$ref": "#/$defs/point"
+              },
+              "radius": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 3
+              },
+              "friction": {
+                "type": "number",
+                "minimum": 0.2,
+                "maximum": 6
+              }
+            },
+            "required": [
+              "id",
+              "center",
+              "radius",
+              "friction"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 32
+        },
+        "cushions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rail": {
+                "enum": [
+                  "top",
+                  "bottom",
+                  "left",
+                  "right"
+                ]
+              },
+              "restitution": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1.5
+              }
+            },
+            "required": [
+              "rail",
+              "restitution"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 4
+        },
+        "cue": {
+          "type": "object",
+          "properties": {
+            "power": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1.5
+            },
+            "angleBias": {
+              "type": "number",
+              "minimum": -3.141592653589793,
+              "maximum": 3.141592653589793
+            },
+            "spin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": [
+            "power",
+            "angleBias",
+            "spin"
+          ],
+          "additionalProperties": false
+        },
+        "dirt": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "objective": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "position"
+          ]
+        },
+        "ballId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "nextBallId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "radius": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1.27
+        },
+        "ellipse": {
+          "type": "object",
+          "properties": {
+            "longRadius": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 2.54
+            },
+            "angle": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "longRadius",
+            "angle"
+          ],
+          "additionalProperties": false
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "maxCutAngle": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 90
+        },
+        "target": {
+          "$ref": "#/$defs/point"
+        }
+      },
+      "required": [
+        "kind",
+        "ballId",
+        "nextBallId",
+        "radius",
+        "maxCutAngle"
+      ],
+      "additionalProperties": false
+    },
+    "trick": {
+      "type": "object",
+      "properties": {
+        "ballId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "potBallId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "pocketId": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aim": {
+          "$ref": "#/$defs/point"
+        },
+        "requiredPots": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 15
+          },
+          "minItems": 1,
+          "maxItems": 15
+        },
+        "requiredContacts": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "minItems": 1,
+          "maxItems": 64
+        },
+        "minObjectCushions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "ballId",
+        "potBallId",
+        "pocketId",
+        "description",
+        "aim",
+        "requiredPots",
+        "requiredContacts"
+      ],
+      "additionalProperties": false
+    },
+    "labShotSettings": {
+      "type": "object",
+      "properties": {
+        "ballId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "pocketId": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 4
+        },
+        "topSpin": {
+          "type": "number",
+          "minimum": -2,
+          "maximum": 2
+        },
+        "sideSpin": {
+          "type": "number",
+          "minimum": -100,
+          "maximum": 100
+        },
+        "aimOffset": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        }
+      },
+      "required": [
+        "ballId",
+        "pocketId",
+        "speed",
+        "topSpin",
+        "sideSpin",
+        "aimOffset"
+      ],
+      "additionalProperties": false
+    },
+    "labVariant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "settings": {
+          "$ref": "#/$defs/labShotSettings"
+        },
+        "target": {
+          "$ref": "#/$defs/point"
+        },
+        "potBallId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "settings"
+      ],
+      "additionalProperties": false
+    },
+    "talents": {
+      "type": "object",
+      "properties": {
+        "anglePrecision": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "englishPrecision": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "strengthPrecision": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "spinPrecision": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "anglePrecision",
+        "englishPrecision",
+        "strengthPrecision",
+        "spinPrecision"
+      ],
+      "additionalProperties": false
+    },
+    "assistance": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "locks": {
+          "type": "object",
+          "properties": {
+            "ballId": {
+              "type": "boolean"
+            },
+            "pocketId": {
+              "type": "boolean"
+            },
+            "speed": {
+              "type": "boolean"
+            },
+            "topSpin": {
+              "type": "boolean"
+            },
+            "sideSpin": {
+              "type": "boolean"
+            },
+            "aimOffset": {
+              "type": "boolean"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "enabled",
+        "locks"
+      ],
+      "additionalProperties": false
+    },
+    "lab": {
+      "type": "object",
+      "properties": {
+        "samples": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 128
+        },
+        "talents": {
+          "$ref": "#/$defs/talents"
+        },
+        "assistance": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/assistance"
+          }
+        }
+      },
+      "required": [
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "seed": {
+          "type": "number"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "balls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ball"
+          },
+          "minItems": 2,
+          "maxItems": 16
+        },
+        "conditions": {
+          "$ref": "#/$defs/conditions"
+        },
+        "curriculum": {
+          "$ref": "#/$defs/curriculum"
+        },
+        "objective": {
+          "$ref": "#/$defs/objective"
+        },
+        "finalBall": {
+          "type": "object",
+          "properties": {
+            "ballId": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "ballId"
+          ],
+          "additionalProperties": false
+        },
+        "plannedMovement": {
+          "type": "object",
+          "properties": {
+            "blockerId": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "blockerId"
+          ],
+          "additionalProperties": false
+        },
+        "defense": {
+          "type": "object",
+          "properties": {
+            "ballId": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15
+            },
+            "maxCutAngle": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 90
+            }
+          },
+          "required": [
+            "ballId",
+            "maxCutAngle"
+          ],
+          "additionalProperties": false
+        },
+        "bank": {
+          "type": "object",
+          "properties": {
+            "ballId": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15
+            },
+            "minCushions": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            }
+          },
+          "required": [
+            "ballId",
+            "minCushions"
+          ],
+          "additionalProperties": false
+        },
+        "plant": {
+          "type": "object",
+          "properties": {
+            "ballId": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15
+            },
+            "targetBallId": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15
+            },
+            "pocketId": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            }
+          },
+          "required": [
+            "ballId",
+            "targetBallId",
+            "pocketId"
+          ],
+          "additionalProperties": false
+        },
+        "trick": {
+          "$ref": "#/$defs/trick"
+        },
+        "scoring": {
+          "type": "object",
+          "properties": {
+            "position": {
+              "type": "boolean"
+            },
+            "tolerance": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 2.54
+            }
+          },
+          "required": [
+            "position",
+            "tolerance"
+          ],
+          "additionalProperties": false
+        },
+        "shotGeneration": {
+          "type": "object",
+          "properties": {
+            "speedMultipliers": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 10
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "topSpins": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2,
+                "maximum": 2
+              },
+              "minItems": 1,
+              "maxItems": 32
+            }
+          },
+          "required": [
+            "speedMultipliers",
+            "topSpins"
+          ],
+          "additionalProperties": false
+        },
+        "lessonTuning": {
+          "type": "object",
+          "properties": {
+            "minFinishSeparation": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "minSpeedDifference": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "minSpinDifference": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "maxCandidateSpeed": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 4
+            },
+            "expandedSpeeds": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "expandedTopSpins": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2,
+                "maximum": 2
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "trickSpeeds": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "trickTopSpins": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2,
+                "maximum": 2
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "plantSpeedMultipliers": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 10
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "plantTopSpins": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2,
+                "maximum": 2
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "bankSpeeds": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "bankTopSpins": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2,
+                "maximum": 2
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "bankAngleCorrections": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -3.141592653589793,
+                "maximum": 3.141592653589793
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "assignmentSpeedMultiplier": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 10
+            },
+            "assignmentAngleOffset": {
+              "type": "number",
+              "minimum": -3.141592653589793,
+              "maximum": 3.141592653589793
+            },
+            "plantQualityPlantOffset": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2.54,
+                "maximum": 2.54
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "plantQualityFreeOffset": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2.54,
+                "maximum": 2.54
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "playerProfileTargetFraction": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "playerProfileSpeedMultiplier": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 10
+            },
+            "defenseSpeedMultiplier": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 10
+            },
+            "defenseTopSpinOffset": {
+              "type": "number",
+              "minimum": -4,
+              "maximum": 4
+            },
+            "continuationSpeedMultiplier": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 10
+            },
+            "continuationProbeMultipliers": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 10
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "continuationReplySpeeds": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "continuationReplyTopSpins": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2,
+                "maximum": 2
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "landingRecoveryPaceMultipliers": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 10
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "landingRecoveryReplySpeeds": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "landingRecoveryReplyTopSpins": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -2,
+                "maximum": 2
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "landingRecoveryMinTargetOffset": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "landingRecoveryMinLeafSeparation": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "landingRecoveryMinCutDifference": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 90
+            },
+            "robustnessClothMultipliers": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 10
+              },
+              "minItems": 1,
+              "maxItems": 32
+            },
+            "robustnessNapMultipliers": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 10
+              },
+              "minItems": 1,
+              "maxItems": 32
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "authoredShots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/labVariant"
+          },
+          "minItems": 1,
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "level",
+        "seed",
+        "title",
+        "description",
+        "balls"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*$"
+    },
+    "kind": {
+      "enum": [
+        "level",
+        "draft"
+      ]
+    },
+    "variation": {
+      "type": "object",
+      "properties": {
+        "mirrorX": {
+          "type": "boolean"
+        },
+        "mirrorY": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "mirrorX",
+        "mirrorY"
+      ],
+      "additionalProperties": false
+    },
+    "scenario": {
+      "$ref": "#/$defs/scenario"
+    },
+    "lab": {
+      "$ref": "#/$defs/lab"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "kind",
+    "variation",
+    "scenario"
+  ],
+  "additionalProperties": false
+}

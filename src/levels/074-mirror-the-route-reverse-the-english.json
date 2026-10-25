@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-074",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 74,
+    "seed": 139437,
+    "title": "Mirror the route, reverse the English",
+    "description": "Predict the English needed to reproduce a reflected cushion route.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 2.04,
+          "y": 1.04
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.41,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.48,
+          "y": 0.41
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 0.99,
+          "y": 0.79
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.19,
+          "y": 0.35
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 0.39,
+          "y": 1.01
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "tournament",
+      "chapterTitle": "Tournament table",
+      "chapterIndex": 7,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "Mirror the layout and aim while keeping pace and longitudinal spin fixed. Choose left or right English, then compare the actual cushion routes.",
+      "takeaway": "A reflection reverses handedness: the mirrored route needs the opposite sign of English.",
+      "learning": {
+        "concept": "mirrored-english-sign",
+        "prerequisite": "asymmetric-strength-tolerance",
+        "comparison": "mirror-english"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Reverse the side spin with the reflection",
+        "gotcha": "Copying the original English sign changes the cushion exit even when the mirrored incoming path matches.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.135,
+      "maxCutAngle": 44
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.135
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

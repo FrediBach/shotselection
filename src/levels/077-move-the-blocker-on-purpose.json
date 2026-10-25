@@ -1,0 +1,148 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-077",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 77,
+    "seed": 142194,
+    "title": "Move the blocker on purpose",
+    "description": "Pot the 1, move ball 3 with the cue, and leave the 2 available.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.6,
+          "y": 0.98
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.14,
+          "y": 0.34
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.35,
+          "y": 0.12
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.567562,
+          "y": 0.262517
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.38,
+          "y": 0.38
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 2.14,
+          "y": 1.02
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "tournament",
+      "chapterTitle": "Tournament table",
+      "chapterIndex": 7,
+      "lessonIndex": 6,
+      "lessonCount": 10,
+      "lesson": "Predict which stroke deliberately contacts ball 3 after ball 1 and opens the next shot. Inspect the settled layout, then restore only the blocker to test what its movement achieved.",
+      "takeaway": "A planned collision earns its place when moving the blocker creates a useful next shot.",
+      "learning": {
+        "concept": "planned-blocker-movement",
+        "prerequisite": "defensive-miss-outcome",
+        "comparison": "planned-movement"
+      },
+      "briefing": {
+        "focus": "Plan the secondary contact and the finish",
+        "gotcha": "Unlike the accidental nudge in level 46, this contact is required. A pot and a good cue finish alone do not complete the assignment.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.127,
+      "maxCutAngle": 42
+    },
+    "plannedMovement": {
+      "blockerId": 3
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.127
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

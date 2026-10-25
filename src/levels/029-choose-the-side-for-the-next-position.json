@@ -1,0 +1,125 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-029",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 29,
+    "seed": 98082,
+    "title": "Choose the side for the next position",
+    "description": "Two legal next angles can send the cue toward opposite sides.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.99,
+          "y": 1.04
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.38,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.45,
+          "y": 0.83
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "position",
+      "chapterTitle": "Play for position",
+      "chapterIndex": 2,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Compare two in-zone finishes with opposite signed cuts to the same pocket for ball 2. Both cuts are allowed. Use the ideal stun departure arrows to choose the side that leads toward the small position preview for ball 3. The opener still offers an English option; the next-shot arrows assume no English. This is a planning check; you do not execute a third-ball run.",
+      "takeaway": "The size of a next cut tells you whether it is allowed; its sign helps identify the side the cue departs toward.",
+      "learning": {
+        "concept": "signed-next-angle",
+        "prerequisite": "position-overshoot",
+        "comparison": "signed-next-angle"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Choose the sign of the next cut",
+        "gotcha": "Two cuts inside the limit can send the cue toward opposite sides under the same stun-contact assumption.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.184,
+      "maxCutAngle": 60
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.184
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

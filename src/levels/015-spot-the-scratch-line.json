@@ -1,0 +1,109 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-015",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 15,
+    "seed": 85216,
+    "title": "Spot the scratch line",
+    "description": "Find a pot whose cue-ball continuation points toward a pocket.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.18,
+          "y": 0.9
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.3,
+          "y": 0.45
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.9,
+          "y": 0.75
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "open-table",
+      "chapterTitle": "Everyday pool",
+      "chapterIndex": 1,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "An attractive pot can leave a scratch line beyond contact. Compare an offered stroke with a faster demonstration using the same aim and spin. Predict which keeps the cue ball on the table, then inspect the actual route into the pocket before choosing your scored shot.",
+      "takeaway": "Read the cue-ball continuation toward pockets; extra pace can turn a legal pot into a scratch.",
+      "learning": {
+        "concept": "post-contact-scratch-line",
+        "prerequisite": "cut-paths",
+        "comparison": "scratch-line"
+      },
+      "briefing": {
+        "focus": "Identify the scratch line after contact",
+        "gotcha": "The object ball can drop in both demonstrations. A scratch still loses the shot, and these extra demonstration strokes are not scored choices.",
+        "stage": "develop"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.16299725937845116
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

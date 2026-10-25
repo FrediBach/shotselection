@@ -43,7 +43,10 @@ it('scores only real winning pots and reclassifies the same settled trial positi
   }
   expect(r).toEqual(before); expect(r.positionTolerance).toBe(0);
   expect(buildShotFeedback(p.scenario, r).reasons[0].title).toBe('No next ball, no position target');
-  const ordinary = analyzeShot({ ...p.scenario, finalBall: undefined }, r.best.plan, 64);
+  // Position scoring is explicit in the level JSON; removing the final-ball
+  // requirement alone must not turn it back on through the course number.
+  const ordinary = analyzeShot({ ...p.scenario, finalBall: undefined,
+    scoring: { ...p.scenario.scoring!, position: true } }, r.best.plan, 64);
   expect(ordinary.successRate).toBeLessThan(r.best.successRate);
   expect(finalBallComparison({ ...p, scenario: { ...p.scenario, finalBall: undefined } }, r)).toBeNull();
   expect(finalBallComparison(p, { ...r, candidates: r.candidates.map(s => ({ ...s, trialSuccesses: [] })) })).toBeNull();

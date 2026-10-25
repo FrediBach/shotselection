@@ -1,0 +1,149 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-049",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 49,
+    "seed": 116462,
+    "title": "Hold position in company",
+    "description": "A fixed-control experiment changes the route around a blocker while preserving position.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 2.07,
+          "y": 0.83
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.45,
+          "y": 0.37
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.32,
+          "y": 0.25
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.102655,
+          "y": 0.600895
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.1,
+          "y": 0.9
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 2.4,
+          "y": 0.8
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Predict whether removing only English from the reference stroke sends the cue past the same side or the opposite side of ball 3. Inspect both actual rebound paths, their clearance and the shared landing zone. Aim, pace, draw or follow and all starting balls stay fixed in this experiment.",
+      "takeaway": "English can open a different route around traffic while preserving a useful finish.",
+      "learning": {
+        "concept": "Use English to change the side of a blocker passed after a cushion.",
+        "prerequisite": "Check rebound clearance and preserve a usable finish.",
+        "comparison": "english-routing"
+      },
+      "englishPractice": 18,
+      "briefing": {
+        "focus": "Keep the stopping point in the plan",
+        "gotcha": "Following the moving cue ball around blockers can distract you from whether it will stop inside the zone.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.22,
+      "maxCutAngle": 47
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.22
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

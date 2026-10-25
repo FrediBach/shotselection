@@ -1,0 +1,145 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-048",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 48,
+    "seed": 115543,
+    "title": "Find the usable gap",
+    "description": "Two in-zone finishes leave similar cuts but different room through the same gap.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.52,
+          "y": 1
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.12,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 2,
+          "y": 0.8
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.48458,
+          "y": 0.615359
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 1.599842,
+          "y": 0.419975
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 2.15,
+          "y": 1.02
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 7,
+      "lessonCount": 10,
+      "lesson": "Compare two successful finishes aimed at the same next pocket. Predict which cue approach passes nearer the center between balls 3 and 4. Check both side clearances and the similar next-shot cuts, then inspect the actual next pots.",
+      "takeaway": "Aim through the center of a usable gap to leave clearance on both sides.",
+      "learning": {
+        "concept": "Aim through the center of a clearance corridor.",
+        "prerequisite": "Check full-ball clearance and next-shot angle.",
+        "comparison": "corridor-center"
+      },
+      "briefing": {
+        "focus": "Check width and angle together",
+        "gotcha": "A gap can look open from one finish and become unusable only a small distance to either side.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.15,
+      "maxCutAngle": 48
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.15
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

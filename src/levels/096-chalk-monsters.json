@@ -1,0 +1,115 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-096",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 96,
+    "seed": 159655,
+    "title": "Chalk monsters",
+    "description": "Grimy balls lose speed and grab at contact.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.75,
+          "y": 0.88
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.15,
+          "y": 0.31
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.88,
+          "y": 0.44
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "broken-table",
+      "chapterTitle": "Broken table",
+      "chapterIndex": 9,
+      "lessonIndex": 5,
+      "lessonCount": 10,
+      "lesson": "Dirty ball surfaces transfer speed and spin differently at impact. Compare a fuller contact with the thinner cut and include the distance left for the object ball. In the result, compare clean and dirty contact responses at matched arrival conditions: inspect outgoing speed separately from outgoing direction. The grime remains part of every scored trial.",
+      "takeaway": "When contacts are less clean, compare cut angle and remaining potting distance together.",
+      "learning": {
+        "concept": "dirty-contact-response",
+        "prerequisite": "reduced-spin-delivery",
+        "comparison": "dirty-contact"
+      },
+      "briefing": {
+        "focus": "Allow for a sticky contact",
+        "gotcha": "An open pocket does not guarantee clean transfer. Dirt affects the collision as well as rolling speed.",
+        "stage": "develop"
+      }
+    },
+    "conditions": {
+      "id": "dirty-balls",
+      "name": "Dirty balls",
+      "description": "Chalk and grime add drag, reduce collision bounce and increase friction between balls.",
+      "dirt": 0.65
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.12323100555166691
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

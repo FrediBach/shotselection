@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-067",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 67,
+    "seed": 133004,
+    "title": "Give the gap its due",
+    "description": "More space between the pair makes the transfer another precision task.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.48,
+          "y": 1.06
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.53
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.55,
+          "y": 0.97
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 6,
+      "lessonCount": 10,
+      "lesson": "Trace the first ball across the gap before judging the final pot. Compare that extra contact demand with the free-ball cut, including how each stroke controls the cue ball.",
+      "takeaway": "A gap between the pair gives a small error more room to change the second contact.",
+      "learning": {
+        "concept": "plant-transfer-gap",
+        "prerequisite": "plant-collision-throw",
+        "comparison": "plant-gap"
+      },
+      "briefing": {
+        "focus": "Budget margin for both contacts",
+        "gotcha": "The plant has two aiming demands. A clear first contact does not guarantee the second contact repeats.",
+        "stage": "apply"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09223761186219134
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

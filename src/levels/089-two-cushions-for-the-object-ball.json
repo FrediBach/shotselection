@@ -1,0 +1,148 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-089",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 89,
+    "seed": 153222,
+    "title": "Two cushions for the object ball",
+    "description": "Send ball 1 off two cushions before it reaches the side pocket.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.4775959899430717,
+          "y": 0.6132978759084682
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.6,
+          "y": 0.7
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Extend the object-ball bank by one rebound. Follow ball 1 to the first cushion, then the second, then the pocket. Inspect its measured pace before and after each cushion; the extra turn changes both the potting line and the speed budget.",
+      "takeaway": "Plan both object-ball rebounds and preserve enough pace for the final pocket journey.",
+      "learning": {
+        "concept": "two-object-ball-cushions",
+        "prerequisite": "bank-second-kiss",
+        "comparison": "two-object-bank"
+      },
+      "briefing": {
+        "focus": "Read the second object-ball rebound",
+        "gotcha": "Both required cushions belong to ball 1. Cue-ball rebounds cannot substitute, and a one-cushion pot is incomplete.",
+        "stage": "apply"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 1,
+      "pocketId": 1,
+      "aim": {
+        "x": 1.6,
+        "y": 0.7
+      },
+      "requiredPots": [
+        1
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ]
+      ],
+      "minObjectCushions": 2,
+      "description": "Bank ball 1 off two cushions into the side pocket and keep the cue safe."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.12389772383713445
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

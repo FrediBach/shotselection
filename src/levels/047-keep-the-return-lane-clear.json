@@ -1,0 +1,148 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-047",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 47,
+    "seed": 114624,
+    "title": "Keep the return lane clear",
+    "description": "A spare ball constrains the return leg of two successful cushion routes.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.85,
+          "y": 0.95
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.35,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.9,
+          "y": 0.8
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 0.096838,
+          "y": 0.169914
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.16,
+          "y": 0.37
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 0.4,
+          "y": 1
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 6,
+      "lessonCount": 10,
+      "lesson": "Compare two successful rebounds into the same zone. Predict which return leg leaves more room beside ball 3, then inspect the highlighted path and enlarged gap. Move only ball 3 slightly inward in a diagnostic test to verify where the narrow route becomes a contact.",
+      "takeaway": "Traffic must be checked on the return route as well as the first trip across the table.",
+      "learning": {
+        "concept": "Check clearance on the returning leg after a cushion rebound.",
+        "prerequisite": "Distinguish a nominal pass from a repeatable route with clearance.",
+        "comparison": "return-lane"
+      },
+      "briefing": {
+        "focus": "Inspect the route after a rebound",
+        "gotcha": "A cushion can send the cue ball back toward a ball that looked safely behind the initial direction.",
+        "stage": "apply"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.152,
+      "maxCutAngle": 48
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.152
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

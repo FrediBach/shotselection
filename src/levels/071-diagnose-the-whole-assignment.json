@@ -1,0 +1,132 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-071",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 71,
+    "seed": 136680,
+    "title": "Diagnose the whole assignment",
+    "description": "Find the weakest condition: legal pot, landing zone, or next-shot access.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.45,
+          "y": 0.97
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.16,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.86,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.51,
+          "y": 0.91
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.1,
+          "y": 1.02
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "tournament",
+      "chapterTitle": "Tournament table",
+      "chapterIndex": 7,
+      "lessonIndex": 0,
+      "lessonCount": 10,
+      "lesson": "Predict which requirement fails most often for each stroke. A trial can fail more than one requirement. Stroke C deliberately includes an aiming error; all three remain selectable so you can compare their actual failures.",
+      "takeaway": "Overlapping failure rates cannot be added as independent losses. Complete success requires every condition on the same trial.",
+      "learning": {
+        "concept": "assignment-failure-overlap",
+        "prerequisite": "plant-setup-sensitivity",
+        "comparison": "assignment-failure"
+      },
+      "briefing": {
+        "focus": "Diagnose overlapping failures",
+        "gotcha": "A cue ball can land in the zone after a missed pot, or pot the opener and leave no next shot. The most frequently failed condition is a symptom, not proof of a single cause.",
+        "stage": "introduce"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.144,
+      "maxCutAngle": 45
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.144
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "assignmentSpeedMultiplier": 1.04,
+      "assignmentAngleOffset": 0.01
+    }
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-066",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 66,
+    "seed": 132085,
+    "title": "Read collision throw",
+    "description": "An aligned pair still needs a careful reading of the transfer.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.49,
+          "y": 1.08
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.5
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.43
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.92,
+          "y": 0.79
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 5,
+      "lessonCount": 10,
+      "lesson": "Compare the initial pair line, the centers at transfer and ball 2’s actual outgoing direction. Inspect a friction-free transfer to isolate collision throw from the first ball’s delivery.",
+      "takeaway": "Pair alignment is a geometric starting point. Oblique contact and collision friction can change the target ball’s direction.",
+      "learning": {
+        "concept": "plant-collision-throw",
+        "prerequisite": "plant-target-distance",
+        "comparison": "plant-throw"
+      },
+      "briefing": {
+        "focus": "Read the transfer, not just the pair",
+        "gotcha": "The contact-center line can move before transfer, and friction can deflect the target away from that line too.",
+        "stage": "develop"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09325310166539827
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-043",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 43,
+    "seed": 110948,
+    "title": "Pass the nearby ball",
+    "description": "A nearby spare ball gives the cue-ball route a visible constraint.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.7,
+          "y": 0.89
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.13,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.89,
+          "y": 0.41
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.377115,
+          "y": 0.316428
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.39,
+          "y": 0.37
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 2,
+      "lessonCount": 10,
+      "lesson": "Compare a clear stroke with one that grazes ball 3 after ball 1 drops. Inspect the cue ball’s heading change, then repeat the grazed stroke with only ball 3 removed to isolate the collision’s effect on the finish.",
+      "takeaway": "A glancing contact can redirect the cue ball even after a successful pot.",
+      "learning": {
+        "concept": "Recognize a post-pot graze and its cue-ball deflection.",
+        "prerequisite": "Judge full-ball clearance around spare balls.",
+        "comparison": "spare-graze"
+      },
+      "briefing": {
+        "focus": "Allow clearance after contact",
+        "gotcha": "A glancing collision can change the stopping point without preventing the first pot.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.16,
+      "maxCutAngle": 51
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.16
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

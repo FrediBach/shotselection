@@ -1,0 +1,124 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-023",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 23,
+    "seed": 92568,
+    "title": "Compare center and edge",
+    "description": "Compare two legal finishes inside the same zone, with different boundary margins.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.82,
+          "y": 0.9
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.15,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.91,
+          "y": 0.9
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "position",
+      "chapterTitle": "Play for position",
+      "chapterIndex": 2,
+      "lessonIndex": 2,
+      "lessonCount": 10,
+      "lesson": "Both the central and near-edge finishes pot the 1 and preserve a shot on the 2. Predict which has more geometric room before leaving the common zone, then compare how many matched error trials remain inside. The counts test whole strokes, not position alone.",
+      "takeaway": "A central finish leaves more geometric margin. Check whether the complete stroke keeps that advantage under error.",
+      "learning": {
+        "concept": "zone-boundary-margin",
+        "prerequisite": "position-zone",
+        "comparison": "zone-margin"
+      },
+      "briefing": {
+        "focus": "Use the whole landing area",
+        "gotcha": "Reaching the edge once gives little evidence that the same stroke will hold the zone repeatedly.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.196,
+      "maxCutAngle": 64
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.196
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

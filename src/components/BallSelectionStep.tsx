@@ -15,12 +15,12 @@ interface Props {
   onSelect: (id: number) => void
 }
 
-function unavailableBallReason({ objective, bank, plant, trick }: Scenario, id: number) {
+function unavailableBallReason({ objective, bank, plant, trick, authoredShots }: Scenario, id: number) {
   if (trick) return `Part of the trick: play ball ${trick.ballId} first`
   if (objective) return id === objective.nextBallId ? 'Reserved for your next shot' : 'Traffic: read the route around this ball'
   if (bank) return 'Blocker: take a cushion-first route around this ball to reach the target'
   if (plant) return `Plant target: pot this ball by playing ball ${plant.ballId} first`
-  return 'No three playable finishes found for this ball'
+  return authoredShots ? 'No saved strokes for this ball' : 'No three playable finishes found for this ball'
 }
 
 function ballSelectionLabel({ plant }: Scenario, id: number) {
@@ -68,7 +68,7 @@ export default function BallSelectionStep({ reservedBallId, scenario, selectedBa
     <h2 ref={headingRef} tabIndex={-1}>Choose your ball.</h2>
     <p className="panel-description">{scenario.curriculum?.learning?.comparison === 'nominated-next-ball' ? 'Nominate your next ball below, then choose a different ball as the opener.' : scenario.curriculum?.learning?.comparison === 'backward-plan' ? 'Ball 1 opens the shot. First plan the contact on ball 2 using the comparison below; then choose the opening stroke.' : description}</p>
     <div className="ball-choices" role="group" aria-label="Object ball choices">{objectBalls.map(ball => <BallChoice reservedBallId={reservedBallId} key={ball.id} ball={ball} scenario={scenario} selected={selectedBall === ball.id} selectable={selectableBalls.has(ball.id)} preparing={preparing} ready={ready} ballChoiceLabel={ballChoiceLabel} onSelect={onSelect} />)}</div>
-    {ready && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">{reservedBallId ? `Ball ${reservedBallId} is reserved for your next shot. Other dimmed balls have no three playable finishes.` : unavailable}</p>}
-    <div className="wizard-hint"><MousePointer2 size={17} /><p>{scenario.curriculum?.learning?.comparison === 'backward-plan' ? 'Answer the contact question or show the plan without answering. Either reveals the landing area and lets you choose a stroke.' : singleChoice ? `${ballChoiceLabel(selectableBallIds[0])} ${scenario.trick ? 'starts this trick' : 'is the only playable ball'} and is selected automatically. Choose a stroke when you’re ready.` : hint}</p></div>
+    {ready && selectableBallIds.length < objectBalls.length && <p className="unavailable-note">{reservedBallId ? `Ball ${reservedBallId} is reserved for your next shot. Other dimmed balls have no three playable finishes.` : scenario.authoredShots ? "Dimmed balls have no saved stroke choices." : unavailable}</p>}
+    <div className="wizard-hint"><MousePointer2 size={17} /><p>{scenario.curriculum?.learning?.comparison === 'backward-plan' ? 'Answer the contact question or show the plan without answering. Either reveals the landing area and lets you choose a stroke.' : singleChoice ? `${ballChoiceLabel(selectableBallIds[0])} ${scenario.trick ? 'starts this trick' : scenario.authoredShots ? 'has the saved stroke choices' : 'is the only playable ball'} and is selected automatically. Choose a stroke when you’re ready.` : hint}</p></div>
   </>
 }

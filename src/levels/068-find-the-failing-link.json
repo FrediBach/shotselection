@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-068",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 68,
+    "seed": 133923,
+    "title": "Find the failing link",
+    "description": "Locate the first failed link in the plant’s sampled trials.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.6,
+          "y": 1.07
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.5
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.85,
+          "y": 0.85
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 7,
+      "lessonCount": 10,
+      "lesson": "Make a complete comparison: pair alignment, first-contact angle, potting distance, and finish. Decide which route has more room for the same small stroke errors.",
+      "takeaway": "A low success rate can hide different problems. Find the failing link before deciding what needs improvement.",
+      "learning": {
+        "concept": "plant-failure-links",
+        "prerequisite": "plant-transfer-gap",
+        "comparison": "plant-failure"
+      },
+      "briefing": {
+        "focus": "Locate the failing link",
+        "gotcha": "A missed target pot and a lost cue-ball finish call for different adjustments. Do not infer either from the total success rate alone.",
+        "stage": "apply"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09123318034575452
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

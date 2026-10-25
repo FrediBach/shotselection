@@ -1,0 +1,159 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-086",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 86,
+    "seed": 150465,
+    "title": "The draw-back double",
+    "description": "Pot the 1, then draw the cue ball back to pocket the 2.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.27,
+          "y": 0.65
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.262,
+          "y": 1
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 5,
+      "lessonCount": 10,
+      "lesson": "This classic double pot makes backspin visible: the cue ball hits the 1, reverses direction and reaches the 2 behind it. Inspect the recorded turn after the first contact and the speed remaining when the cue reaches ball 2. Compare pace and draw together while protecting the final cue-ball position.",
+      "takeaway": "Draw is most useful when the return path has a specific job and a safe finish.",
+      "learning": {
+        "concept": "draw-return-speed",
+        "prerequisite": "repeat-cue-contact",
+        "comparison": "draw-return"
+      },
+      "briefing": {
+        "focus": "Give the return journey a target",
+        "gotcha": "Potting the 1 is only the opening. The cue ball must return to contact and pot the 2 without following it into the pocket.",
+        "stage": "develop"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 1,
+      "pocketId": 1,
+      "aim": {
+        "x": 1.27,
+        "y": 0.32
+      },
+      "requiredPots": [
+        1,
+        2
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "description": "Pot the 1 and draw back into the 2 to pot both balls in one stroke."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.13636709013795187
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-053",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 53,
+    "seed": 120138,
+    "title": "Carry speed through the rail",
+    "description": "A longer cushion route needs enough speed left for the pot.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.94,
+          "y": 0.66
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.29,
+          "y": 0.27
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.115,
+          "y": 0.465
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 2,
+      "lessonCount": 10,
+      "lesson": "Allow for the distance to the cushion, the rebound, and the run to the 1. Compare launch speeds against the entire route, then judge where the cue ball will stop.",
+      "takeaway": "A kick route needs pace for both the approach and the shot after the rebound.",
+      "learning": {
+        "concept": "Budget pace beyond the first cushion.",
+        "prerequisite": "Connect a rebound to the potting contact.",
+        "comparison": "kick-pace"
+      },
+      "briefing": {
+        "focus": "Budget speed for the whole route",
+        "gotcha": "A cushion removes speed. A stroke that would work on a direct line can stop short on a longer kick route.",
+        "stage": "develop"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.10751804245448096
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

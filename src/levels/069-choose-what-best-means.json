@@ -1,0 +1,143 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-069",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 69,
+    "seed": 134842,
+    "title": "Choose what best means",
+    "description": "Compare completion frequency with the weighted score for two authored finishes.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.7,
+          "y": 1.02
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.276,
+          "y": 0.41
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.7,
+          "y": 0.85
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 8,
+      "lessonCount": 10,
+      "lesson": "Choose your objective: complete the shot more often, or maximize the weighted score. Compare plant C and free-ball C. Their target markers are authored finish requirements, not predictions of the nominal stopping point.",
+      "takeaway": "A higher completion rate need not produce a higher weighted score. Name the objective before calling a shot best.",
+      "learning": {
+        "concept": "plant-scoring-quality",
+        "prerequisite": "plant-failure-links",
+        "comparison": "plant-quality"
+      },
+      "briefing": {
+        "focus": "Completion rate or weighted score?",
+        "gotcha": "Target-centering credit and legal-pot credit also contribute to the score. The rankings can reverse, agree or tie in your sample.",
+        "stage": "apply"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09023968669567006
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ],
+      "plantQualityPlantOffset": [
+        0.02,
+        0
+      ],
+      "plantQualityFreeOffset": [
+        0.12,
+        -0.04
+      ]
+    }
+  }
+}

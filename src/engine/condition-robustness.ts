@@ -1,4 +1,5 @@
 import { repairWinners } from './equipment-repair';
+import { tuningList } from './lesson-tuning';
 import type { CharacterTalents, Scenario, ShotAnalysis, ShotPlan } from './types';
 
 /** Fixed uncertainty probes, sharing offered plans and indexed execution errors. */
@@ -6,11 +7,10 @@ export function compareConditionRobustness(source: Scenario, baseline: ShotAnaly
   analyze: (scenario: Scenario, plan: ShotPlan, samples: number, talents?: CharacterTalents) => ShotAnalysis) {
   const conditions = source.conditions;
   if (!conditions?.cloth || !conditions.nap) return undefined;
+  const percent = (multiplier: number) => `${multiplier < 1 ? '−' : '+'}${Number((Math.abs(multiplier - 1) * 100).toFixed(6))}%`;
   const probes = [
-    { label: 'Drag −10%', conditions: { ...conditions, cloth: conditions.cloth * .9 } },
-    { label: 'Drag +10%', conditions: { ...conditions, cloth: conditions.cloth * 1.1 } },
-    { label: 'Drift −20%', conditions: { ...conditions, nap: { x: conditions.nap.x * .8, y: conditions.nap.y * .8 } } },
-    { label: 'Drift +20%', conditions: { ...conditions, nap: { x: conditions.nap.x * 1.2, y: conditions.nap.y * 1.2 } } },
+    ...tuningList(source, 'robustnessClothMultipliers').map(multiplier => ({ label: `Drag ${percent(multiplier)}`, conditions: { ...conditions, cloth: conditions.cloth! * multiplier } })),
+    ...tuningList(source, 'robustnessNapMultipliers').map(multiplier => ({ label: `Drift ${percent(multiplier)}`, conditions: { ...conditions, nap: { x: conditions.nap!.x * multiplier, y: conditions.nap!.y * multiplier } } })),
   ];
   const variants = [
     { label: 'Reported conditions', scenario: source, shots: baseline },

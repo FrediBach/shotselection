@@ -1,0 +1,198 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-058",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 58,
+    "seed": 124733,
+    "title": "Thread the two-cushion kick",
+    "description": "Ball 10 obstructs the middle leg of one two-cushion route.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.65,
+          "y": 0.4
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.12
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.96,
+          "y": 0.26
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 0.783096,
+          "y": 0.253282
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.690424,
+          "y": 0.596026
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 0.452222,
+          "y": 0.370272
+        }
+      },
+      {
+        "id": 6,
+        "position": {
+          "x": 0.849191,
+          "y": 0.382025
+        }
+      },
+      {
+        "id": 7,
+        "position": {
+          "x": 0.7983,
+          "y": 0.5758
+        }
+      },
+      {
+        "id": 8,
+        "position": {
+          "x": 0.467,
+          "y": 0.262
+        }
+      },
+      {
+        "id": 9,
+        "position": {
+          "x": 0.9844,
+          "y": 0.5034
+        }
+      },
+      {
+        "id": 10,
+        "position": {
+          "x": 2.4322267744598483,
+          "y": 1.107997003151002
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 7,
+      "lessonCount": 10,
+      "lesson": "Compare two routes to the same pot. Check the segment between R1 and R2, then use the actual contact and a fixed-stroke removal test to explain why one route fails.",
+      "takeaway": "Each extra leg adds another corridor that must stay clear.",
+      "learning": {
+        "concept": "middle-kick-corridor",
+        "prerequisite": "ordered-kick-rebounds",
+        "comparison": "kick-middle"
+      },
+      "briefing": {
+        "focus": "Check every leg of the two-cushion kick",
+        "gotcha": "Looking only at the two rail points can hide a blocking ball between them.",
+        "stage": "apply"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 2
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.10179001318665869
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

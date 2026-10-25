@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-044",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 44,
+    "seed": 111867,
+    "title": "Change the next pocket",
+    "description": "Traffic blocks the preferred next pocket. A different pocket needs a different finish.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.88,
+          "y": 0.94
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.4,
+          "y": 0.34
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.228621,
+          "y": 0.51386
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.243264,
+          "y": 0.703778
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.14,
+          "y": 0.38
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "Start with the named preferred pocket for ball 2. A spare ball blocks that pocket line. Compare the alternative pocket from two opening finishes: the original finish leaves too much cut, while an adapted finish makes the new route playable.",
+      "takeaway": "When traffic forces a pocket change, plan the opening finish for the new contact point.",
+      "learning": {
+        "concept": "Change pocket and opening finish when traffic blocks the preferred pot.",
+        "prerequisite": "Plan a named next pocket and check both shot corridors.",
+        "comparison": "pocket-change"
+      },
+      "briefing": {
+        "focus": "Adapt the finish to a different pocket",
+        "gotcha": "Changing the next pocket alone may leave an unusable cut. Change the opening finish too.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.158,
+      "maxCutAngle": 50
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.158
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-083",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 83,
+    "seed": 147708,
+    "title": "The kiss shot",
+    "description": "Use the 2 to redirect the 1 into a corner pocket.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.6,
+          "y": 0.85
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 0.6,
+          "y": 0.38
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.619,
+          "y": 0.25
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 2,
+      "lessonCount": 10,
+      "lesson": "In this kiss shot the 1 glances off the 2 and changes direction into the pocket. The 2 acts like a movable cushion. Pause at the 1–2 contact and compare ball 1’s incoming path with its outgoing line toward the pocket. Ball 1 is the scoring ball; ball 2 redirects it.",
+      "takeaway": "A ball that blocks one line can create another when its contact angle is planned.",
+      "learning": {
+        "concept": "kiss-redirection",
+        "prerequisite": "split-outgoing-paths",
+        "comparison": "kiss-path"
+      },
+      "briefing": {
+        "focus": "Read the line after the kiss",
+        "gotcha": "The 1 must contact the 2 before it drops. A direct pot would miss the purpose of this setup.",
+        "stage": "develop"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 1,
+      "pocketId": 0,
+      "aim": {
+        "x": 0.6,
+        "y": 0.38
+      },
+      "requiredPots": [
+        1
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "description": "Send the 1 off the 2 and into a pocket, keeping the cue ball safe."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.15009140359299097
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

@@ -93,12 +93,37 @@ export interface TrickObjective {
   /** Object-ball cushions before the primary ball drops. */
   minObjectCushions?: number;
 }
+/** Authoring settings travel with a layout; simulation results are recomputed. */
+export interface LevelLabSettings {
+  samples: number;
+  talents?: CharacterTalents;
+  assistance?: Record<string, {
+    enabled: boolean;
+    locks: Partial<Record<keyof import('./lab').LabShotSettings, boolean>>;
+  }>;
+}
+export interface LevelAuthoring {
+  id: string;
+  kind: 'level' | 'draft';
+  variation: { mirrorX: boolean; mirrorY: boolean };
+  /** Imported/edited layouts must never fall back to a built-in course layout. */
+  imported?: boolean;
+  /** True when the source file supplied a landing zone instead of generating it. */
+  fixedObjective?: boolean;
+  lab?: LevelLabSettings;
+}
 export interface Scenario {
   level: number;
   seed: number;
   title: string;
   description: string;
   balls: Ball[];
+  scoring?: { position: boolean; tolerance: number };
+  shotGeneration?: { speedMultipliers: number[]; topSpins: number[] };
+  lessonTuning?: Record<string, number | number[]>;
+  /** Exact authored strokes, also editable as lab options. */
+  authoredShots?: import('./lab').LabVariant[];
+  authoring?: LevelAuthoring;
   conditions?: TableConditions;
   curriculum?: CurriculumLesson;
   objective?: PositionObjective;

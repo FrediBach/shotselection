@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-063",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 63,
+    "seed": 129328,
+    "title": "A pocket has edges",
+    "description": "Read a less generous plant line against a long free-ball route.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.67,
+          "y": 1.02
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.274,
+          "y": 0.39
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.27,
+          "y": 0.32
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.7,
+          "y": 0.85
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 2,
+      "lessonCount": 10,
+      "lesson": "Compare this offset pair with a centered reference at the same approach and spacing. Apply the same small aim changes to both and inspect where a target pot becomes a miss, independently of the cue-ball finish.",
+      "takeaway": "A playable plant still needs enough pocket margin to survive a small contact error.",
+      "learning": {
+        "concept": "plant-offset-margin",
+        "prerequisite": "plant-pair-line",
+        "comparison": "plant-margin"
+      },
+      "briefing": {
+        "focus": "Judge the spare pocket width",
+        "gotcha": "Seeing a line into the pocket is only the start. A line near a facing can turn a small error into a miss.",
+        "stage": "develop"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09636714497407903
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

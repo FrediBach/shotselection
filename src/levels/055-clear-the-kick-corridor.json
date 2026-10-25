@@ -1,0 +1,149 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-055",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 55,
+    "seed": 121976,
+    "title": "Clear the kick corridor",
+    "description": "Another traffic ball puts pressure on the route around the screen.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.92,
+          "y": 0.72
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.26,
+          "y": 0.29
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.09,
+          "y": 0.505
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.191057,
+          "y": 0.905252
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Check the full width of the cue ball along the approach and rebound. Compare the finishes only after you have accounted for every ball beside the kick corridor.",
+      "takeaway": "A cushion route is usable only when both legs have room for a whole ball.",
+      "learning": {
+        "concept": "A clear incoming leg can hide a blocked outgoing leg.",
+        "prerequisite": "Read the approach and travel after a rebound.",
+        "comparison": "kick-corridor"
+      },
+      "briefing": {
+        "focus": "Inspect both sides of the bounce",
+        "gotcha": "A clear line to the cushion does not guarantee a clear line away from it.",
+        "stage": "develop"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.10518913347106261
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

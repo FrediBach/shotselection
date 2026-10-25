@@ -1,0 +1,191 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-057",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 57,
+    "seed": 123814,
+    "title": "Link two cushions",
+    "description": "The route to the 1 now needs two cushion contacts before the hit.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 0.65,
+          "y": 0.45
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.12
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.96,
+          "y": 0.285
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 0.77694,
+          "y": 0.29545
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 0.69185,
+          "y": 0.64557
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 0.453066,
+          "y": 0.415114
+        }
+      },
+      {
+        "id": 6,
+        "position": {
+          "x": 0.848878,
+          "y": 0.428849
+        }
+      },
+      {
+        "id": 7,
+        "position": {
+          "x": 0.7983,
+          "y": 0.6258
+        }
+      },
+      {
+        "id": 8,
+        "position": {
+          "x": 0.467,
+          "y": 0.312
+        }
+      },
+      {
+        "id": 9,
+        "position": {
+          "x": 0.9844,
+          "y": 0.5534
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 6,
+      "lessonCount": 10,
+      "lesson": "Trace the cue ball from its start through the two marked rail points to ball 1. Predict their order, then reveal R1 and R2. The faint screens still block shorter routes; focus first on connecting the three legs.",
+      "takeaway": "A two-cushion route connects two rebound angles to one precise contact.",
+      "learning": {
+        "concept": "ordered-kick-rebounds",
+        "prerequisite": "kick-introduction",
+        "comparison": "kick-sequence"
+      },
+      "briefing": {
+        "focus": "Build a two-cushion approach",
+        "gotcha": "A cushion touched after hitting the 1 does not count toward the approach. Both rebounds must come first.",
+        "stage": "apply"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 2
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.10291067013313066
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

@@ -153,3 +153,9 @@
   .lab-morph-actions > .lab-field { max-width: none; flex-basis: 100%; }
   .lab-morph-actions > .ui-button, .lab-variation-actions > .ui-button { width: 100%; }
 }
+
+@media (max-width: 800px) {
+  .lab-run-saved { flex-wrap: wrap; }
+  .lab-run-saved .lab-run-summary { display: flex; flex-wrap: wrap; width: 100%; gap: 6px 12px; }
+  .lab-run-saved .lab-run-summary .ui-button { min-height: 32px; padding: 4px 0; font-size: .6875rem; }
+}

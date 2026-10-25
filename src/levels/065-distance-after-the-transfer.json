@@ -1,0 +1,135 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-065",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 65,
+    "seed": 131166,
+    "title": "Distance after the transfer",
+    "description": "A corner-pocket plant sends the 2 farther after the transfer.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1,
+          "y": 1.05
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 0.91068,
+          "y": 0.5149
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.85,
+          "y": 0.48
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 1.7,
+          "y": 0.85
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "plants",
+      "chapterTitle": "Plants",
+      "chapterIndex": 6,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Compare short and long target-ball runs to the same corner pocket, keeping approach and transfer gap fixed. Inspect how the same directional error creates more lateral deviation after the longer run, separately from cue-ball finish.",
+      "takeaway": "A longer journey after the second contact magnifies a small directional error in the plant.",
+      "learning": {
+        "concept": "plant-target-distance",
+        "prerequisite": "plant-angled-delivery",
+        "comparison": "plant-distance"
+      },
+      "briefing": {
+        "focus": "Follow the second ball to the pocket",
+        "gotcha": "A short gap between the pair does not make the final pot short. Include the distance beyond the 2.",
+        "stage": "develop"
+      }
+    },
+    "plant": {
+      "ballId": 1,
+      "targetBallId": 2,
+      "pocketId": 0
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.09427977150156137
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "plantSpeedMultipliers": [
+        0.8,
+        0.95,
+        1.15,
+        1.4,
+        1.7,
+        2.1,
+        2.6
+      ],
+      "plantTopSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    }
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-024",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 24,
+    "seed": 93487,
+    "title": "Plan backward from the 2",
+    "description": "Find the next contact point before choosing the opening stroke.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.81,
+          "y": 0.94
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.4,
+          "y": 0.33
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 0.52,
+          "y": 0.85
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "position",
+      "chapterTitle": "Play for position",
+      "chapterIndex": 2,
+      "lessonIndex": 3,
+      "lessonCount": 10,
+      "lesson": "Start with the highlighted pocket for ball 2. Choose which side its cue-ball contact center belongs on, then reveal sampled landing points that can reach that contact. Finally choose the opening stroke. Afterward, check the planned route from each actual finish.",
+      "takeaway": "Work backward: pocket, contact point, compatible landing area, then the opening stroke.",
+      "learning": {
+        "concept": "backward-contact-planning",
+        "prerequisite": "position-zone",
+        "comparison": "backward-plan"
+      },
+      "briefing": {
+        "focus": "Rebuild the plan from the next ball",
+        "gotcha": "The dots are geometric checks, not guaranteed pots. The scored objective still accepts any permitted next pocket; this planning route is practice.",
+        "stage": "develop"
+      }
+    },
+    "objective": {
+      "kind": "position",
+      "ballId": 1,
+      "nextBallId": 2,
+      "radius": 0.194,
+      "maxCutAngle": 63
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.194
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

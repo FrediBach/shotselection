@@ -1,0 +1,148 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-088",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 88,
+    "seed": 152303,
+    "title": "Avoid the second kiss",
+    "description": "Bank the 1 while keeping the cue clear of its return journey.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.4228491620111734,
+          "y": 0.26
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.39,
+          "y": 0.75
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "trick-shots",
+      "chapterTitle": "Trick shots",
+      "chapterIndex": 8,
+      "lessonIndex": 7,
+      "lessonCount": 10,
+      "lesson": "The returning object ball can hit the cue again and lose its potting line. Compare two practice strokes with the same aim and launch pace but different follow. Inspect where the cue meets the returning ball, then choose a complete scored stroke.",
+      "takeaway": "Plan the cue’s movement as well as the bank line so the balls do not meet again on the return.",
+      "learning": {
+        "concept": "bank-second-kiss",
+        "prerequisite": "object-ball-cushion",
+        "comparison": "double-kiss"
+      },
+      "briefing": {
+        "focus": "Keep the return path clear at the right time",
+        "gotcha": "A correct cushion line is not enough if the cue and returning object ball arrive together. Follow changes their movement and timing.",
+        "stage": "apply"
+      }
+    },
+    "trick": {
+      "ballId": 1,
+      "potBallId": 1,
+      "pocketId": 1,
+      "aim": {
+        "x": 1.39,
+        "y": 0.75
+      },
+      "requiredPots": [
+        1
+      ],
+      "requiredContacts": [
+        [
+          0,
+          1
+        ]
+      ],
+      "minObjectCushions": 1,
+      "description": "Bank the 1 off a cushion into the side pocket and keep the cue ball safe."
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.12792204976685692
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "trickSpeeds": [
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.25,
+        2.5,
+        2.8,
+        3.1,
+        3.4,
+        3.6
+      ],
+      "trickTopSpins": [
+        -1.8,
+        -1.4,
+        -1,
+        -0.6,
+        0,
+        0.6,
+        1.05,
+        1.5,
+        2
+      ]
+    }
+  }
+}

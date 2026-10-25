@@ -1,0 +1,138 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-045",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 45,
+    "seed": 112786,
+    "title": "Pot the ball that opens the corridor",
+    "description": "Two opening pots change the remaining layout in different ways.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.277717,
+          "y": 0.15979
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 2.1,
+          "y": 0.37
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.7,
+          "y": 0.7
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 0.780785,
+          "y": 0.316363
+        }
+      },
+      {
+        "id": 4,
+        "position": {
+          "x": 2.2,
+          "y": 1.05
+        }
+      },
+      {
+        "id": 5,
+        "position": {
+          "x": 0.35,
+          "y": 1
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "traffic",
+      "chapterTitle": "Navigate traffic",
+      "chapterIndex": 4,
+      "lessonIndex": 4,
+      "lessonCount": 10,
+      "lesson": "Compare potting ball 1 with potting ball 3. Predict which removes the blocker from ball 2’s next pocket line, then inspect the actual remaining layout and next-pot proof.",
+      "takeaway": "A useful opening pot can remove the ball that blocks the next route.",
+      "learning": {
+        "concept": "Removing a potted ball changes the next shot’s corridor.",
+        "prerequisite": "Check both shot corridors and the settled cue position.",
+        "comparison": "open-corridor"
+      },
+      "briefing": {
+        "focus": "Choose what to remove",
+        "gotcha": "An opening pot can succeed while leaving the next pocket line blocked.",
+        "stage": "develop"
+      }
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.11736084659697954
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.8,
+        0.95,
+        1.1,
+        1.2,
+        1.4,
+        1.5,
+        1.7,
+        1.85,
+        2.1,
+        2.3,
+        2.6,
+        3,
+        3.5
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

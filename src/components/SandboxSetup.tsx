@@ -4,15 +4,21 @@ import { POCKETS } from '../engine/constants'
 import { prepareSandboxRoundAsync } from '../engine/client'
 import { createSandboxScenario, SANDBOX_SCENARIOS, validateSandboxLayout } from '../engine/sandbox'
 import type { PlayerCharacter, PreparedRound, Scenario } from '../engine/types'
+import { levelFromScenario, parseLevelJson, scenarioFromLevel, serializeLevelJson } from '../engine/level-config'
+import type { LevelDefinition } from '../engine/level-config'
+import { createLabShot, MAX_LAB_VARIANTS } from '../engine/lab'
 import { Button } from './ui/button'
 import { TableConditionSummary } from './TableConditions'
 import BallLayoutEditor from './BallLayoutEditor'
-import LabMode from './LabMode'
+import LabMode, { type LabDraft } from './LabMode'
+import LevelJsonTools from './LevelJsonTools'
 import './SandboxSetup.css'
 
 type Placement = 'random' | 'manual'
 type PreparationRequest = { scenario: Scenario; placement: Placement; version: number }
+type ScenarioDraft = { scenario: Scenario; placement: Placement; prepared: PreparedRound | null }
 const freshSeed = () => Math.floor(Math.random() * 0x7fffffff)
+const exportLevel = (scenario: Scenario) => levelFromScenario(scenario, validateSandboxLayout(scenario) ? { kind: 'draft' } : {})
 
 type SandboxSetupProps = {
   onStart: (round: PreparedRound) => void
@@ -22,6 +28,9 @@ type SandboxSetupProps = {
 
 export default function SandboxSetup({ character, ...props }: SandboxSetupProps & { character: PlayerCharacter }) {
   const [mode, setMode] = useState<'scenario' | 'lab'>('scenario')
+  const scenarioDraft = useRef<ScenarioDraft | null>(null)
+  const labDraft = useRef<LabDraft | null>(null)
+  const labDocument = useRef<LevelDefinition | null>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => { heading.current?.focus({ preventScroll: true }) }, [])
 
@@ -37,21 +46,47 @@ export default function SandboxSetup({ character, ...props }: SandboxSetupProps 
       <p>Practice a scenario or build your own experiment. Compare how ball positions, strength, aim, and spin change your chances.</p>
     </div>
     {mode === 'scenario' && modeSwitcher}
-    {mode === 'lab' ? <LabMode character={character} modeSwitcher={modeSwitcher} /> : <ScenarioSetup {...props} />}
+    {mode === 'lab' ? <LabMode character={character} modeSwitcher={modeSwitcher} initialDraft={labDraft.current} initialDocument={labDocument.current} onDraftChange={draft => { labDraft.current = draft }} onUseInScenario={document => {
+      const fromLab = scenarioFromLevel(document)
+      const current = scenarioDraft.current?.scenario
+      const mergeDraft = document.kind === 'draft' && !document.scenario.curriculum && current
+      const scenario = mergeDraft ? {
+        ...current, balls: fromLab.balls, seed: fromLab.seed, conditions: fromLab.conditions ?? current.conditions,
+        authoredShots: fromLab.authoredShots,
+        authoring: current.authoring ? { ...current.authoring, variation: { mirrorX: false, mirrorY: false }, imported: true, lab: document.lab } : fromLab.authoring,
+      } : fromLab
+      if (mergeDraft && current.authoring?.fixedObjective === false && scenario.objective) {
+        scenario.objective = { ...scenario.objective }
+        delete scenario.objective.target
+        delete scenario.objective.regions
+      }
+      const validated = scenarioFromLevel(parseLevelJson(serializeLevelJson(exportLevel(scenario))))
+      scenarioDraft.current = { scenario: validated, placement: 'manual', prepared: null }
+      setMode('scenario')
+    }} /> : <ScenarioSetup {...props} initialDraft={scenarioDraft.current} onDraftChange={draft => { scenarioDraft.current = draft }} onOpenLab={document => {
+      labDraft.current = null
+      labDocument.current = document
+      setMode('lab')
+    }} />}
   </section>
 }
 
-function ScenarioSetup({ onStart, initialScenario, initialPlacement = 'random' }: SandboxSetupProps) {
-  const [scenario, setScenario] = useState(() => initialPlacement === 'manual' && initialScenario ? initialScenario : createSandboxScenario(initialScenario?.level ?? 1, freshSeed()))
-  const [placement, setPlacement] = useState<Placement>(initialPlacement)
-  const [prepared, setPrepared] = useState<PreparedRound | null>(null)
+function ScenarioSetup({ onStart, initialScenario, initialPlacement = 'random', initialDraft, onDraftChange, onOpenLab }: SandboxSetupProps & {
+  initialDraft: ScenarioDraft | null
+  onDraftChange: (draft: ScenarioDraft) => void
+  onOpenLab: (document: LevelDefinition) => void
+}) {
+  const [scenario, setScenario] = useState(() => initialDraft?.scenario ?? (initialPlacement === 'manual' && initialScenario ? initialScenario : createSandboxScenario(initialScenario?.level ?? 1, freshSeed())))
+  const [placement, setPlacement] = useState<Placement>(initialDraft?.placement ?? initialPlacement)
+  const [prepared, setPrepared] = useState<PreparedRound | null>(initialDraft?.prepared ?? null)
   const [error, setError] = useState<string | null>(null)
   const requestVersion = useRef(0)
-  const [request, setRequest] = useState<PreparationRequest | null>(() => initialPlacement === 'manual' ? null : { scenario, placement: 'random', version: 0 })
+  const [request, setRequest] = useState<PreparationRequest | null>(() => placement === 'manual' || prepared ? null : { scenario, placement: 'random', version: 0 })
   const group = SANDBOX_SCENARIOS.find(entry => entry.lessons.some(lesson => lesson.level === scenario.level))
   const geometryError = validateSandboxLayout(scenario)
   const busy = request !== null
 
+  useEffect(() => { onDraftChange({ scenario, placement, prepared }) }, [scenario, placement, prepared, onDraftChange])
 
   useEffect(() => {
     if (!request) return
@@ -104,7 +139,7 @@ function ScenarioSetup({ onStart, initialScenario, initialPlacement = 'random' }
   }
 
   function randomize() {
-    const nextScenario = createSandboxScenario(scenario.level, freshSeed())
+    const nextScenario = scenario.authoring?.imported ? { ...scenario, seed: freshSeed() } : createSandboxScenario(scenario.level, freshSeed())
     setScenario(nextScenario)
     checkLayout(nextScenario, 'random')
   }
@@ -115,15 +150,46 @@ function ScenarioSetup({ onStart, initialScenario, initialPlacement = 'random' }
     setScenario(nextScenario)
   }
 
-  return <div className="sandbox-layout">
+  function importLevel(json: string) {
+    const next = scenarioFromLevel(parseLevelJson(json))
+    cancelCheck()
+    setScenario(next)
+    setPlacement('manual')
+    setPrepared(null)
+  }
+
+  function openLab() {
+    try {
+      const next = { ...scenario }
+      if (!next.authoredShots?.length && prepared) {
+        const plans = prepared.balls.flatMap(ball => ball.options.map(option => option.plan))
+        if (plans.length > MAX_LAB_VARIANTS) throw new Error(`This setup has ${plans.length} strokes. The lab supports up to ${MAX_LAB_VARIANTS}; choose fewer authored strokes in Edit level JSON first.`)
+        next.authoredShots = plans.map(plan => {
+          const settings = { ballId: plan.ballId, pocketId: plan.pocketId, speed: plan.speed, topSpin: plan.topSpin, sideSpin: plan.sideSpin, aimOffset: 0 }
+          const direct = createLabShot(scenario, settings, plan.id, plan.label)
+          settings.aimOffset = ((plan.angle - direct.angle) * 180 / Math.PI + 540) % 360 - 180
+          return { id: plan.id, label: plan.label, settings, target: plan.target, ...(plan.potBallId !== undefined ? { potBallId: plan.potBallId } : {}) }
+        })
+      }
+      onOpenLab(exportLevel(next))
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'This setup could not be opened in the lab.') }
+  }
+
+  return <>
+    <LevelJsonTools getJson={() => serializeLevelJson(exportLevel(scenario))} onImport={importLevel} filename={`${scenario.authoring?.id ?? `level-${String(scenario.level).padStart(3, '0')}`}.json`}>
+      <Button type="button" variant="outline" size="sm" onClick={openLab}><FlaskConical size={14} /> Develop in lab</Button>
+    </LevelJsonTools>
+    <div className="sandbox-layout">
       <div className="sandbox-controls">
         <section className="sandbox-control-section" aria-labelledby="sandbox-scenario-heading">
           <h2 id="sandbox-scenario-heading"><span>01</span> CHOOSE A SCENARIO</h2>
           <label htmlFor="sandbox-scenario">Scenario</label>
           <select id="sandbox-scenario" value={scenario.level} onChange={event => chooseScenario(Number(event.target.value))}>
+            {!SANDBOX_SCENARIOS.some(entry => entry.lessons.some(lesson => lesson.level === scenario.level)) && <option value={scenario.level}>{scenario.title}</option>}
             {SANDBOX_SCENARIOS.map(entry => <optgroup key={entry.id} label={entry.title}>{entry.lessons.map(lesson => <option key={lesson.level} value={lesson.level}>{lesson.title}</option>)}</optgroup>)}
           </select>
           <div className="sandbox-scenario-description"><span>{group?.title}</span><p>{scenario.description}</p></div>
+          {scenario.authoring?.imported && <p className="sandbox-control-note"><strong>{scenario.title}</strong><br />Imported setup · exact saved positions{scenario.authoredShots?.length ? ` · ${scenario.authoredShots.length} authored strokes` : ''}</p>}
           {(scenario.finalBall || scenario.bank || scenario.plant || scenario.objective || scenario.trick) && <p className="sandbox-objective">
             {scenario.finalBall ? `Pot the final ball ${scenario.finalBall.ballId} without scratching. No position target.` : scenario.trick ? scenario.trick.description : scenario.bank ? `Reach ball ${scenario.bank.ballId} after at least ${scenario.bank.minCushions} cushion ${scenario.bank.minCushions === 1 ? 'rebound' : 'rebounds'}.` : scenario.plant ? `Play ball ${scenario.plant.ballId} into ball ${scenario.plant.targetBallId} for the ${POCKETS.find(pocket => pocket.id === scenario.plant?.pocketId)?.name ?? 'assigned'} pocket.` : `Pot ball ${scenario.objective!.ballId} and leave a usable shot on ball ${scenario.objective!.nextBallId}.`}
           </p>}
@@ -143,7 +209,7 @@ function ScenarioSetup({ onStart, initialScenario, initialPlacement = 'random' }
         <BallLayoutEditor key={`${scenario.level}-${scenario.seed}-${placement}`} scenario={scenario} editable={placement === 'manual'} onChange={editLayout} />
         <div className="sandbox-editor-footer">
           <div className={`sandbox-layout-status${error || (placement === 'manual' && geometryError) ? ' sandbox-layout-error' : ''}`} role="status" aria-live="polite">
-            {busy ? <><LoaderCircle className="sandbox-spinner" size={16} /><span>{request.placement === 'random' ? 'Finding a playable layout…' : 'Checking your layout…'}<small>You can keep adjusting the setup.</small></span></> : error || (placement === 'manual' && geometryError) ? <span>{error ?? geometryError}</span> : prepared ? <><CheckCircle2 size={16} /><span>Ready to play.<small>The engine found playable shots for this layout.</small></span></> : <span>Ready to test.<small>The engine will check these exact ball positions.</small></span>}
+            {busy ? <><LoaderCircle className="sandbox-spinner" size={16} /><span>{request.placement === 'random' ? 'Finding a playable layout…' : 'Checking your layout…'}<small>You can keep adjusting the setup.</small></span></> : error || (placement === 'manual' && geometryError) ? <span>{error ?? geometryError}</span> : prepared ? <><CheckCircle2 size={16} /><span>Ready to play.<small>{scenario.authoredShots ? "Your saved strokes are ready to compare, including any misses." : "The engine found playable shots for this layout."}</small></span></> : <span>Ready to test.<small>The engine will check these exact ball positions.</small></span>}
           </div>
           <div className="sandbox-editor-actions">
             <Button type="button" variant="outline" onClick={randomize}><RotateCcw size={15} /> {placement === 'manual' ? 'Random starting layout' : 'Generate another layout'}</Button>
@@ -152,4 +218,5 @@ function ScenarioSetup({ onStart, initialScenario, initialPlacement = 'random' }
         </div>
       </section>
   </div>
+  </>
 }

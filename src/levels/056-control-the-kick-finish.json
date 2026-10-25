@@ -1,0 +1,149 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-056",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 56,
+    "seed": 122895,
+    "title": "Control the kick finish",
+    "description": "Compare the final kick approach and the cue ball’s departure toward a scratch pocket.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.63,
+          "y": 0.69
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.29,
+          "y": 0.26
+        }
+      },
+      {
+        "id": 2,
+        "position": {
+          "x": 1.46,
+          "y": 0.475
+        }
+      },
+      {
+        "id": 3,
+        "position": {
+          "x": 0.88,
+          "y": 0.88
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "banks",
+      "chapterTitle": "Kick shots",
+      "chapterIndex": 5,
+      "lessonIndex": 5,
+      "lessonCount": 10,
+      "lesson": "Read the final leg after the cushion as the incoming direction at ball 1. Compare two approaches to the same pot, then trace their actual departures to see which scratches.",
+      "takeaway": "Controlling the cue ball after a kick is part of the shot, just as it is on a direct pot.",
+      "learning": {
+        "concept": "kick-scratch-exposure",
+        "prerequisite": "post-contact-scratch-line",
+        "comparison": "kick-finish"
+      },
+      "briefing": {
+        "focus": "Plan beyond the first contact",
+        "gotcha": "Rebound speed and spin affect the finish. A good contact on the 1 does not guarantee a safe stop.",
+        "stage": "develop"
+      }
+    },
+    "bank": {
+      "ballId": 1,
+      "minCushions": 1
+    },
+    "scoring": {
+      "position": true,
+      "tolerance": 0.1040436649500121
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankSpeeds": [
+        1.3,
+        1.6,
+        1.95,
+        2.35,
+        2.8,
+        3.3,
+        3.45,
+        3.6,
+        3.8
+      ],
+      "bankTopSpins": [
+        -1.1,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ],
+      "bankAngleCorrections": [
+        0,
+        -0.0005,
+        0.0005,
+        -0.001,
+        0.001,
+        -0.0015,
+        0.0015,
+        -0.002,
+        0.002
+      ]
+    }
+  }
+}

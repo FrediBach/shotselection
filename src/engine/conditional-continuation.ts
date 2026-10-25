@@ -1,5 +1,6 @@
 import { DEFAULT_CHARACTER } from './characters';
 import { distance, seededRandom } from './math';
+import { tuningList } from './lesson-tuning';
 import { directShotRoutes, evaluateShotObjective } from './objectives';
 import { simulateShot } from './physics';
 import { secondShotPlan, secondShotPotted } from './second-shot';
@@ -22,10 +23,10 @@ export function continuationPreview(source: Scenario, options: FinishOption[]) {
     if (!evaluateShotObjective(source, option.plan, nominal).legalPot) continue;
     const after = sequenceLayout(source, nominal);
     for (const route of directShotRoutes(after.balls, source.objective.nextBallId, source.objective.maxCutAngle)) {
-      for (const pace of [1.8, 1.5, 1.2, .95]) for (const spin of [0, -.7, 1]) {
+      for (const pace of tuningList(source, 'continuationReplySpeeds')) for (const spin of tuningList(source, 'continuationReplyTopSpins')) {
         const second = secondShotPlan(after, source.objective.nextBallId, route, pace, spin);
         if (!secondShotPotted(second.ballId, simulateShot(after, second, { record: false }))) continue;
-        const probes = [.99, 1, 1.01].map(multiplier => {
+        const probes = tuningList(source, 'continuationProbeMultipliers').map(multiplier => {
           const plan = { ...option.plan, speed: option.plan.speed * multiplier };
           const first = simulateShot(source, plan, { record: false, recordPaths: true });
           const legal = evaluateShotObjective(source, plan, first).legalPot;

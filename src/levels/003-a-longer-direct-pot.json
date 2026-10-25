@@ -1,0 +1,97 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-003",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 3,
+    "seed": 74188,
+    "title": "A longer direct pot",
+    "description": "Keep the contact line steady over a longer approach.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.06,
+          "y": 1.06
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 1.27,
+          "y": 0.32
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "fundamentals",
+      "chapterTitle": "First strokes",
+      "chapterIndex": 0,
+      "lessonIndex": 2,
+      "lessonCount": 10,
+      "lesson": "With a modest cut and a longer approach, compare how center ball, draw and follow change the finish. The extra distance makes a small aim error easier to see.",
+      "takeaway": "A direct pot needs an exact contact line; keep the cue ball out of the pockets.",
+      "briefing": {
+        "focus": "Hold the line over distance",
+        "gotcha": "A straight-looking pot can miss when the cue ball reaches the object ball even slightly off-center.",
+        "stage": "develop"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.18588447950922454
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}

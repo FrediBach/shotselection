@@ -1,0 +1,13 @@
+.level-json-tools { min-width: 0; margin: 0 0 22px; }
+.level-json-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.level-json-actions .ui-button { min-height: 36px; font-size: .75rem; }
+.level-json-notice, .level-json-error { margin: 10px 0 0; font-size: .75rem; line-height: 1.6; }
+.level-json-notice { color: var(--muted); }
+.level-json-error { color: #f0b49c; }
+.dialog-content.level-json-dialog { width: min(920px, calc(100vw - 32px)); }
+.level-json-dialog > label { display: block; margin: 20px 0 8px; font-size: .75rem; color: #c7d0be; }
+.level-json-dialog > textarea { display: block; width: 100%; min-height: 240px; height: 48dvh; resize: vertical; border: 1px solid var(--control-border); border-radius: 6px; padding: 14px; background: #111a13; color: #eaece5; font: .75rem/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; white-space: pre; }
+.level-json-dialog > textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.level-json-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.lab-mode > .level-json-tools { margin-bottom: 14px; }
+@media (max-width: 520px) { .level-json-actions { gap: 7px; } .level-json-actions > .ui-button { flex: 1 1 auto; } .level-json-dialog > textarea { padding: 10px; font-size: .6875rem; } }

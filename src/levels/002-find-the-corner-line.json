@@ -1,0 +1,97 @@
+{
+  "$schema": "./level.schema.json",
+  "schemaVersion": 1,
+  "id": "level-002",
+  "kind": "level",
+  "variation": {
+    "mirrorX": true,
+    "mirrorY": true
+  },
+  "scenario": {
+    "level": 2,
+    "seed": 73269,
+    "title": "Find the corner line",
+    "description": "Move from the side pocket to a simple corner pot.",
+    "balls": [
+      {
+        "id": 0,
+        "position": {
+          "x": 1.12,
+          "y": 0.82
+        }
+      },
+      {
+        "id": 1,
+        "position": {
+          "x": 0.53,
+          "y": 0.36
+        }
+      }
+    ],
+    "curriculum": {
+      "chapterId": "fundamentals",
+      "chapterTitle": "First strokes",
+      "chapterIndex": 0,
+      "lessonIndex": 1,
+      "lessonCount": 10,
+      "lesson": "Use the same pot-and-finish check at a corner pocket. Trace the object ball toward the pocket and picture the contact point on its opposite side.",
+      "takeaway": "Aim through the contact line; aiming at the center of an angled object ball changes its path.",
+      "briefing": {
+        "focus": "Read the contact line",
+        "gotcha": "On an angled shot, the cue ball needs to meet the object ball off-center to send it toward the pocket.",
+        "stage": "develop"
+      }
+    },
+    "scoring": {
+      "position": false,
+      "tolerance": 0.18793097431438135
+    },
+    "shotGeneration": {
+      "speedMultipliers": [
+        0.95,
+        1.2,
+        1.5,
+        1.85,
+        2.3
+      ],
+      "topSpins": [
+        -1.1,
+        0,
+        1.05
+      ]
+    },
+    "lessonTuning": {
+      "minFinishSeparation": 0.12,
+      "minSpeedDifference": 0.12,
+      "minSpinDifference": 0.35,
+      "maxCandidateSpeed": 3.6,
+      "expandedSpeeds": [
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6
+      ],
+      "expandedTopSpins": [
+        -1.6,
+        -1.1,
+        -0.6,
+        0,
+        0.5,
+        1.05,
+        1.6
+      ]
+    }
+  }
+}
