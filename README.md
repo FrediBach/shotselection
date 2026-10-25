@@ -4,6 +4,12 @@ A browser game about choosing a repeatable pool shot, taught through a 100-level
 
 Built with Vite, React, TypeScript, three.js / React Three Fiber, cannon-es, and shadcn-style Radix UI components.
 
+## Project documentation
+
+- [Creating and fine-tuning levels](docs/level-authoring.md): JSON settings, generated and authored shot options, sandbox/lab workflows, and validation.
+- [Architecture](docs/architecture.md): application flow, engine, rendering, persistence, and repository map.
+- [Agent guide](AGENTS.md): a quick starting point for agents working in this repository.
+
 ## Run locally
 
 Use a current Node.js LTS release compatible with Vite 7 (Node 20.19+ or 22.12+).
