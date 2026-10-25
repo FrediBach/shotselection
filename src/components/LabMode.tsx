@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { Copy, FlaskConical, LoaderCircle, LockKeyhole, Plus, RotateCcw, Sparkles, Trash2, UnlockKeyhole } from 'lucide-react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { ChevronLeft, ChevronRight, Copy, FlaskConical, LoaderCircle, LockKeyhole, Plus, RotateCcw, Sparkles, Trash2, UnlockKeyhole } from 'lucide-react'
 import { analyzeLabAsync, fitLabShotAsync } from '../engine/client'
 import { POCKETS, TABLE } from '../engine/constants'
 import { createLabScenario, DEFAULT_LAB_SHOT_SETTINGS, generateLabVariants, LAB_SHOT_LIMITS, MAX_LAB_BALLS, MAX_LAB_VARIANTS, resizeLabBalls } from '../engine/lab'
@@ -149,12 +149,33 @@ function LabResults({ result, variants, playerName }: { result: LabResult; varia
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showPaths, setShowPaths] = useState(true)
   const [showEnds, setShowEnds] = useState(true)
-  const shot = result.shots.find(entry => entry.plan.id === selectedId) ?? result.shots[0]
+  const inspector = useRef<HTMLDivElement>(null)
+  const selectedIndex = Math.max(0, result.shots.findIndex(entry => entry.plan.id === selectedId))
+  const shot = result.shots[selectedIndex]
+  useEffect(() => { inspector.current?.focus({ preventScroll: true }) }, [])
+
+  function stepOption(direction: number) {
+    setSelectedId(previous => {
+      const index = Math.max(0, result.shots.findIndex(entry => entry.plan.id === previous))
+      return result.shots[(index + direction + result.shots.length) % result.shots.length].plan.id
+    })
+  }
+
+  function navigateOptions(event: KeyboardEvent<HTMLElement>) {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || result.shots.length < 2) return
+    const target = event.target as HTMLElement
+    if (target.closest('input, select, textarea, [contenteditable]:not([contenteditable="false"]), [role="slider"], [role="spinbutton"]')) return
+    const direction = event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : 0
+    if (!direction) return
+    event.preventDefault()
+    stepOption(direction)
+  }
+
   if (!shot) return null
   const failures = [
     ['Ball not potted', shot.failures.misses], ['Wrong / no first contact', shot.failures.wrongContact], ['Wrong pocket', shot.failures.wrongPocket], ['Cue-ball scratch', shot.failures.scratch], ['Still moving at limit', shot.failures.unsettled],
   ] as const
-  return <section className="lab-results" aria-labelledby="lab-results-heading">
+  return <section className="lab-results" aria-labelledby="lab-results-heading" onKeyDown={navigateOptions}>
     <div className="lab-section-heading"><div><span className="eyebrow">03 · OBSERVE THE DIFFERENCE</span><h2 id="lab-results-heading">Compare the ensembles.</h2></div><span className="lab-badge">{result.samples} trials / option</span></div>
     <p className="lab-note">Every option uses {playerName}’s precision and the same seeded stroke errors for a paired comparison. Success means contacting your chosen ball first, potting it in your chosen pocket, and settling without a scratch.</p>
     <div className="lab-comparison-scroll"><table className="lab-comparison" aria-label="Lab comparison"><thead><tr><th scope="col">Option</th><th scope="col">Success</th><th scope="col">Pot</th><th scope="col">Scratch</th><th scope="col">Cue spread</th></tr></thead><tbody>{result.shots.map((entry, index) => <tr key={entry.plan.id} className={entry.plan.id === shot.plan.id ? 'lab-comparison-selected' : ''}>
@@ -162,8 +183,21 @@ function LabResults({ result, variants, playerName }: { result: LabResult; varia
       <td><strong>{percent(entry.successRate)}</strong></td><td>{percent(entry.potRate)}</td><td>{percent(entry.scratchRate)}</td><td>{entry.sampleEnds.length ? `${(entry.spread * 100).toFixed(1)} cm` : 'n/a'}</td>
     </tr>)}</tbody></table></div>
     <p className="lab-note lab-comparison-note">Pot counts the chosen pocket with correct first contact; a pot can still scratch or fail to settle. Cue spread is the RMS distance from the mean finish among settled, non-scratch cue balls (n/a when there are none). These are simulated estimates; use more trials to investigate close differences.</p>
-    <div className="lab-inspection-heading"><h3>{shot.plan.label} <span>· paths and finishes</span></h3><div className="lab-display-options"><label><input type="checkbox" checked={showPaths} onChange={event => setShowPaths(event.target.checked)} /> Trial paths</label><label><input type="checkbox" checked={showEnds} onChange={event => setShowEnds(event.target.checked)} /> Ball finishes</label></div></div>
-    <EnsembleDiagram scenario={result.scenario} shot={shot} showPaths={showPaths} showEnds={showEnds} />
+    <div ref={inspector} className="lab-inspector" role="group" aria-label="Ensemble inspector" aria-describedby="lab-inspector-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" tabIndex={0} onPointerDown={event => {
+      if (event.button === 0 && (event.target as Element).closest('.lab-ensemble-table')) inspector.current?.focus({ preventScroll: true })
+    }}>
+      <div className="lab-inspection-heading">
+        <div className="lab-option-navigation">
+          <Button type="button" variant="outline" size="icon" aria-label="Previous play option" title="Previous option (← or ↑)" disabled={result.shots.length < 2} onClick={() => stepOption(-1)}><ChevronLeft size={17} aria-hidden="true" /></Button>
+          <Button type="button" variant="outline" size="icon" aria-label="Next play option" title="Next option (→ or ↓)" disabled={result.shots.length < 2} onClick={() => stepOption(1)}><ChevronRight size={17} aria-hidden="true" /></Button>
+          <h3><span>{selectedIndex + 1} / {result.shots.length}</span> {shot.plan.label}</h3>
+        </div>
+        <div className="lab-display-options"><label><input type="checkbox" checked={showPaths} onChange={event => setShowPaths(event.target.checked)} /> Trial paths</label><label><input type="checkbox" checked={showEnds} onChange={event => setShowEnds(event.target.checked)} /> Ball finishes</label></div>
+      </div>
+      <p id="lab-inspector-help" className="lab-inspector-help">Use ← / → or ↑ / ↓ to step through options.</p>
+      <p className="lab-inspection-stats" aria-live="polite" aria-atomic="true"><span className="sr-only">Option {selectedIndex + 1} of {result.shots.length}, {shot.plan.label}. </span><span>Success <strong>{percent(shot.successRate)}</strong></span><span>Pot <strong>{percent(shot.potRate)}</strong></span><span>Scratch <strong>{percent(shot.scratchRate)}</strong></span><span>Cue spread <strong>{shot.sampleEnds.length ? `${(shot.spread * 100).toFixed(1)} cm` : 'n/a'}</strong></span></p>
+      <EnsembleDiagram scenario={result.scenario} shot={shot} showPaths={showPaths} showEnds={showEnds} />
+    </div>
     <p className="lab-legend"><span><i className="lab-key-cue" /> Cue path</span><span><i className="lab-key-object" /> Successful object path</span><span><i className="lab-key-miss" /> Failed object path</span><span>Solid lines: intended stroke · Rings: trial finishes</span><span>{showPaths ? `${shot.samplePaths.length} cue paths and ${shot.sampleObjectPaths.length} object paths shown.` : 'Trial paths hidden.'}</span></p>
     <div className="lab-failures"><div><h3>What went wrong?</h3><p>Counts out of {shot.samples} trials. A trial can have more than one failure.</p></div><dl>{failures.map(([label, count]) => <div key={label}><dt>{label}</dt><dd>{count}<span> / {shot.samples}</span></dd></div>)}</dl></div>
   </section>

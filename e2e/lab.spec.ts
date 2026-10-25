@@ -123,11 +123,8 @@ test('free layouts compare every requested stroke, including failures, with the 
   const comparison = page.getByRole('table', { name: 'Lab comparison', exact: true })
   await expect(comparison).toBeVisible({ timeout: 60_000 })
   await expect(comparison.getByRole('button', { name: 'Inspect Direct pot', exact: true })).toBeVisible()
-  await comparison.getByRole('button', { name: 'Inspect Too soft', exact: true }).click()
-  await expect(comparison.getByRole('button', { name: 'Inspect Too soft', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  const path = '/tmp/shot-selection-lab-desktop.png'
-  await page.screenshot({ path, fullPage: true })
-  await testInfo.attach('Lab ensemble comparison with a failed shot selected', { path, contentType: 'image/png' })
+  const inspector = page.getByRole('group', { name: 'Ensemble inspector', exact: true })
+  await expect(inspector).toBeFocused()
   const observed = await page.evaluate(() => (window as ObservedWindow).labObservation)
   expect(observed.requests).toHaveLength(1)
   expect(observed.requests[0]).toMatchObject({
@@ -150,6 +147,65 @@ test('free layouts compare every requested stroke, including failures, with the 
   expect(result.shots.every(shot => shot.samples === 32 && shot.sampleBallEnds.length === 32 && shot.sampleObjectPaths.length === 32)).toBe(true)
   expect(result.shots[0].potRate).toBeGreaterThan(0)
   expect(result.shots[1]).toMatchObject({ potRate: 0, successRate: 0, failures: { misses: 32, wrongContact: 32 } })
+  const stats = inspector.locator('.lab-inspection-stats')
+  const diagram = inspector.getByRole('img')
+  async function expectSelected(index: number) {
+    const shot = result.shots[index]
+    await expect(comparison.locator('button[aria-pressed="true"]')).toHaveAccessibleName(`Inspect ${shot.plan.label}`)
+    await expect(inspector.getByRole('heading')).toContainText(shot.plan.label)
+    await expect(diagram).toHaveAccessibleName(new RegExp(`^${shot.plan.label}:`))
+    for (const [label, value] of [
+      ['Success', `${(shot.successRate * 100).toFixed(1)}%`],
+      ['Pot', `${(shot.potRate * 100).toFixed(1)}%`],
+      ['Scratch', `${(shot.scratchRate * 100).toFixed(1)}%`],
+      ['Cue spread', shot.sampleEnds.length ? `${(shot.spread * 100).toFixed(1)} cm` : 'n/a'],
+    ]) await expect(stats).toContainText(new RegExp(`${label}\\s*${value.replace('.', '\\.')}`))
+  }
+  await expectSelected(0)
+  await expect(stats).toHaveAttribute('aria-live', 'polite')
+  expect(await stats.evaluate(element => element.nextElementSibling?.matches('svg.lab-ensemble-table'))).toBe(true)
+  await inspector.scrollIntoViewIfNeeded()
+  const scrollPosition = await page.evaluate(() => scrollY)
+  for (const [key, selected] of [['ArrowRight', 1], ['ArrowDown', 0], ['ArrowLeft', 1], ['ArrowUp', 0]] as const) {
+    await page.keyboard.press(key)
+    await expectSelected(selected)
+    expect(await page.evaluate(() => scrollY)).toBeCloseTo(scrollPosition, 1)
+  }
+  await page.keyboard.press('Shift+ArrowRight')
+  await expectSelected(0)
+  await comparison.getByRole('button', { name: 'Inspect Too soft', exact: true }).click()
+  await expectSelected(1)
+  await page.keyboard.press('ArrowRight')
+  await expectSelected(0)
+  const trialPaths = inspector.getByRole('checkbox', { name: 'Trial paths', exact: true })
+  await trialPaths.uncheck()
+  // Display controls keep their native keyboard behavior; clicking the table
+  // returns focus to the inspector for continued option stepping.
+  await page.keyboard.press('ArrowRight')
+  await expectSelected(0)
+  await diagram.click({ position: { x: 40, y: 40 } })
+  await expect(inspector).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await expectSelected(1)
+  await expect(trialPaths).not.toBeChecked()
+  await expect(inspector.getByRole('checkbox', { name: 'Ball finishes', exact: true })).toBeChecked()
+  await inspector.getByRole('button', { name: 'Next play option', exact: true }).click()
+  await expectSelected(0)
+  await inspector.getByRole('button', { name: 'Previous play option', exact: true }).click()
+  await expectSelected(1)
+  await trialPaths.check()
+  const path = '/tmp/shot-selection-lab-desktop.png'
+  await inspector.screenshot({ path })
+  await testInfo.attach('Lab ensemble inspector with a failed shot selected', { path, contentType: 'image/png' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  const mobilePath = '/tmp/shot-selection-lab-inspector-mobile.png'
+  await inspector.screenshot({ path: mobilePath })
+  await testInfo.attach('Compact ensemble stats and option stepping on mobile', { path: mobilePath, contentType: 'image/png' })
+  await page.setViewportSize({ width: 1440, height: 1050 })
+  await soft.getByRole('textbox', { name: 'Name', exact: true }).focus()
+  await page.keyboard.press('ArrowLeft')
+  await expectSelected(1)
   await expect(page.locator('#sandbox-table-description')).toHaveText(layout!)
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('shot-selection-session')!))).toMatchObject({
     mode: 'sandbox', character: PREMADE_CHARACTERS[1], completedLessons: 0, score: 0, rounds: 0,
@@ -213,8 +269,20 @@ test('morphs interpolate all stroke values and a cancelled run can be restarted'
   })
   expect(settings[3]).toEqual({ ballId: 1, pocketId: 1, speed: 2.1, topSpin: 1, sideSpin: 10, aimOffset: 2 })
   expect(observed.results[0].shots).toHaveLength(4)
-  await placeBall(page, 1, '130', '40')
-  await expect(page.getByRole('table', { name: 'Lab comparison', exact: true })).toHaveCount(0)
+  const comparison = page.getByRole('table', { name: 'Lab comparison', exact: true })
+  await page.keyboard.press('ArrowRight')
+  await expect(comparison.getByRole('button', { name: 'Inspect Step 2', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('ArrowDown')
+  await expect(comparison.getByRole('button', { name: 'Inspect Step 3', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('ArrowLeft')
+  await expect(comparison.getByRole('button', { name: 'Inspect Step 2', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: 'Place ball 1', exact: true }).click()
+  const x = page.getByRole('spinbutton', { name: 'X cm', exact: true })
+  const initialX = Number(await x.inputValue())
+  await page.getByRole('group', { name: 'Ball layout editor. Ball 1 selected.', exact: true }).focus()
+  await page.keyboard.press('ArrowLeft')
+  expect(Number(await x.inputValue())).toBeCloseTo(initialX - 1, 2)
+  await expect(comparison).toHaveCount(0)
 })
 
 test('mobile lab supports fifteen balls, rejects overlaps, and keeps controls within the viewport', async ({ page }, testInfo) => {

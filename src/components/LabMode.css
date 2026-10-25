@@ -89,9 +89,19 @@
 .lab-comparison button small { display: block; color: var(--muted); font-size: .6875rem; font-weight: 400; margin-top: 5px; line-height: 1.6; }
 .lab-comparison button:focus-visible { outline-offset: -4px; }
 .lab-comparison-note { font-size: .75rem; margin-top: 12px; }
-.lab-inspection-heading { margin-top: 30px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.lab-inspector { margin-top: 30px; border-radius: 6px; }
+.lab-inspector:focus-visible { outline: 2px solid var(--gold); outline-offset: 6px; }
+.lab-inspection-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
 .lab-inspection-heading h3 { font-weight: 450; font-size: 1.0625rem; margin: 0; }
-.lab-inspection-heading h3 > span { color: var(--muted); font-size: .8125rem; }
+.lab-inspection-heading h3 > span { color: var(--muted); font-size: .8125rem; white-space: nowrap; margin-right: 8px; }
+.lab-option-navigation { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.lab-option-navigation > .ui-button { flex: 0 0 40px; width: 40px; height: 40px; }
+.lab-option-navigation h3 { margin-left: 5px; overflow-wrap: anywhere; }
+.lab-inspector-help { color: var(--muted); font-size: .6875rem; line-height: 1.6; margin: 10px 0 0; }
+.lab-inspection-stats { display: flex; flex-wrap: wrap; gap: 7px 20px; color: var(--muted); font-size: .8125rem; font-variant-numeric: tabular-nums; line-height: 1.6; margin: 12px 0 0; }
+.lab-inspection-stats > span { white-space: nowrap; }
+.lab-inspection-stats strong { color: #e1e7da; font-weight: 500; margin-left: 4px; }
+.lab-inspection-stats > span:nth-child(2) strong { color: var(--gold); }
 .lab-display-options { display: flex; gap: 17px; color: #c2ccba; font-size: .75rem; }
 .lab-display-options label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .lab-display-options input { width: 16px; height: 16px; accent-color: #bba16f; }
