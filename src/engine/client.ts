@@ -1,5 +1,7 @@
 import type { AnalyzeOptions, PreparedRound, RoundAnalysis, Scenario, Selection, ShotPlan, ShotTolerance } from './types';
 import type { SandboxRequest } from './sandbox';
+import type { LabRequest, LabResult } from './lab';
+import type { LabAutoRequest, LabAutoResult } from './lab-auto';
 
 function runWorker<Result>(request: object, signal?: AbortSignal): Promise<Result> {
   return new Promise((resolve, reject) => {
@@ -24,6 +26,14 @@ export function prepareRoundAsync(scenario: Scenario, options: { signal?: AbortS
 
 export function prepareSandboxRoundAsync(request: SandboxRequest, options: { signal?: AbortSignal } = {}): Promise<PreparedRound> {
   return runWorker({ method: 'sandbox', request }, options.signal);
+}
+
+export function analyzeLabAsync(request: LabRequest, options: { signal?: AbortSignal } = {}): Promise<LabResult> {
+  return runWorker({ method: 'lab', request }, options.signal);
+}
+
+export function fitLabShotAsync(request: LabAutoRequest, options: { signal?: AbortSignal } = {}): Promise<LabAutoResult> {
+  return runWorker({ method: 'lab-auto', request }, options.signal);
 }
 
 export function analyzeRoundAsync(prepared: PreparedRound, selection: Selection, options: AnalyzeOptions & { signal?: AbortSignal } = {}): Promise<RoundAnalysis> {

@@ -2,7 +2,7 @@ import { Body, ContactMaterial, GSSolver, Material, Sphere, Vec3, World } from '
 import type { ContactEquation } from 'cannon-es';
 import { TABLE } from './constants';
 import { clamp } from './math';
-import { isPocketed, CUSHIONS } from './table-geometry';
+import { isPocketed, CUSHIONS, POCKET_GEOMETRY } from './table-geometry';
 import { clothFrictionAt, cueStroke } from './table-conditions';
 import type { Scenario, ShotPlan, Simulation, SimulateOptions, TableConditions, Vec2 } from './types';
 
@@ -150,7 +150,7 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       if (recordPaths) appendPathPoint(simulation.cueApproachPath, cue.body);
     }
   });
-  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, cueRebounds: [], ballContacts: [], objectCushions: 0, duration: 0, stopped: false };
+  const simulation: Simulation = { frames: [], finalBalls: [], soundEvents: [], cuePath: [], cueApproachPath: [], objectPath: [], cueEnd: { ...cue.body.position }, potted: [], pocketEvents: [], scratch: false, firstContact: null, cueBanksBeforeContact: 0, cueRebounds: [], ballContacts: [], objectCushions: 0, duration: 0, stopped: false };
   const plantFirst = options.recordPlantTransfer && scenario.plant ? bodies.find(ball => ball.id === scenario.plant!.ballId) : undefined;
   let recordingTransfer = false;
   if (plantFirst) simulation.plantTransferPath = [];
@@ -275,6 +275,8 @@ export function simulateShot(scenario: Scenario, plan: ShotPlan, options: Simula
       if (isPocketed(ball.body.position)) {
         ball.pocketed = true;
         simulation.potted.push(ball.id);
+        const pocket = POCKET_GEOMETRY.find(candidate => Math.hypot(ball.body.position.x - candidate.center.x, ball.body.position.y - candidate.center.y) < candidate.radius)!;
+        simulation.pocketEvents!.push({ ballId: ball.id, pocketId: pocket.id, time: soundTime });
         if (record) simulation.soundEvents.push({ type: 'pocket', time: soundTime, strength: clamp(Math.hypot(ball.body.velocity.x, ball.body.velocity.y) / 2.5, 0, 1) });
         world.removeBody(ball.body);
         ball.body.velocity.setZero();

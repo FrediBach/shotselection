@@ -70,6 +70,16 @@ When the usual direct-shot search cannot find three finishes for a manually plac
 
 Play uses the same character talents, 64-trial ensembles, 0–100 round scores, explanations, replays, and tolerance analysis as the course. **New sandbox round** returns to setup, and **Change setup** lets you adjust or replace a layout during play. Sandbox never accumulates total points, completed lessons, or progression. The selected mode and player survive reloads; reload returns to a fresh setup. **Change player or mode** returns to character selection.
 
+Choose **Lab mode** in the sandbox to build an experiment without a scenario. Place the cue ball and 1–15 object balls with the same position editor. Add up to 16 strokes, each with its own nominated ball and pocket, strength (cue speed), draw/follow, sidespin, and aim offset from the direct-pot line. Blocked routes and unsuccessful strokes remain available for comparison; only invalid positions and settings prevent a run.
+
+New options start with **Auto-adapt** enabled. Set any value to lock it, or use the lock beside a field to keep its current value. The engine adjusts only unlocked fields, including ball and pocket when those are unlocked, and checks the resulting stroke in the full simulation. Locked values remain editable: changing one sets a new constraint. Moving balls or changing a constraint refits assisted options after a short pause. **Find playable shot** fits one option; **Auto-fit options** fits the list under each option's locks. Turn off Auto-adapt to keep an exact manual stroke for an experiment.
+
+Fitting keeps the table unchanged and checks correct first contact, the nominated pocket, no scratch, and a settled finish. It searches a bounded set of strokes, so a failed search means no playable stroke was found under those locks, not that every possible shot has been ruled out. A failed search keeps the original values. A found stroke is a nominal success; run the ensembles to measure how consistently it works with the selected player's precision.
+
+Enter strokes individually or generate evenly spaced steps between two sets of settings. Steps include both endpoints and interpolate strength, draw/follow, sidespin, and aim offset together; keep a value equal at both ends to hold it fixed. The ball and pocket stay fixed within a generated sequence. Generated strokes start in manual mode to preserve the exact sweep. Their ball, pocket, and varying fields are locked so subsequent fitting can adapt the remaining values without changing the sweep. Generated strokes can be edited alongside individually entered strokes.
+
+Lab comparisons use the selected player's talents and the same seeded errors for every stroke. Success requires the nominated ball to enter the nominated pocket, correct first contact, no scratch, and all balls settled. Compare sampled success, pots, scratches, cue-ball spread, ensemble paths, and failure counts. Failure categories can overlap. Editing the experiment cancels pending work and clears old results so they cannot describe a different setup. Lab experiments are unscored and remain in memory for the current lab visit.
+
 ## Course progression and position lessons
 
 The course contains ten scenarios, each with ten numbered levels:

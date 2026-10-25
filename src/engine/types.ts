@@ -226,6 +226,8 @@ export interface Simulation {
   objectPath: Vec2[];
   cueEnd: Vec2;
   potted: number[];
+  /** Pocket wells actually entered, retained even when replay recording is disabled. */
+  pocketEvents?: { ballId: number; pocketId: number; time: number }[];
   scratch: boolean;
   firstContact: number | null;
   /** Speeds immediately before and after the solver step containing first contact. */
